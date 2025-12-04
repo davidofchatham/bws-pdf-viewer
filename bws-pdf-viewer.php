@@ -100,6 +100,15 @@ class BWS_PDF_Viewer {
      * Register scripts and styles
      */
     public function register_assets() {
+        // PDF.js library (main library, must be loaded first)
+        wp_register_script(
+            'bws-pdfjs-lib',
+            BWS_PDF_VIEWER_PLUGIN_URL . 'dist/pdf.js',
+            array(),
+            BWS_PDF_VIEWER_VERSION,
+            true
+        );
+
         // PDF.js worker
         wp_register_script(
             'bws-pdfjs-worker',
@@ -118,11 +127,11 @@ class BWS_PDF_Viewer {
             true
         );
 
-        // WordPress integration script
+        // WordPress integration script (depends on PDF.js library)
         wp_register_script(
             'bws-pdf-viewer-wp',
             BWS_PDF_VIEWER_PLUGIN_URL . 'includes/bws-pdf-viewer.js',
-            array('bws-pdf-viewer-lib', 'bws-pdfjs-worker'),
+            array('bws-pdf-viewer-lib', 'bws-pdfjs-lib', 'bws-pdfjs-worker'),
             BWS_PDF_VIEWER_VERSION,
             true
         );
@@ -176,7 +185,8 @@ class BWS_PDF_Viewer {
             return '<p class="bws-pdf-viewer-error">' . esc_html__('Error: No PDF URL specified.', 'bws-pdf-viewer') . '</p>';
         }
 
-        // Enqueue assets
+        // Enqueue assets (PDF.js library must be loaded first)
+        wp_enqueue_script('bws-pdfjs-lib');
         wp_enqueue_script('bws-pdfjs-worker');
         wp_enqueue_script('bws-pdf-viewer-lib');
         wp_enqueue_script('bws-pdf-viewer-wp');
