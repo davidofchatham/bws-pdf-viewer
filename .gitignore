@@ -3,3 +3,5 @@ _tmp/
 node_modules/
 dist/*
 !dist/flipbook-viewer.js
+!dist/pdf.worker.js
+!dist/pdf.worker.js.LICENSE.txt
