@@ -40,6 +40,7 @@ export function init(book, id, opts, cb) {
       },
       app,
       book,
+      shouldAnimate: opts.shouldAnimate !== false, // Default to true
     };
 
     const margin = opts.margin || 1;
