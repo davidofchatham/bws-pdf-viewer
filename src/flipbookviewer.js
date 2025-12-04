@@ -53,16 +53,22 @@ function setupControls(ctx, viewer) {
       ctx.pan = null;
       showPages(ctx, viewer);
     } else {
-      animate({
-        draw: curr => {
-          ctx.zoom = curr.zoom;
-          showPages(ctx, viewer);
-        },
-        duration: 500,
-        from: { zoom: ctx.zoom },
-        to: { zoom },
-        timing: t => t * t * (3.0 - 2.0 * t),
-      })
+      // Check if animations should be disabled
+      if(ctx.shouldAnimate === false) {
+        ctx.zoom = zoom;
+        showPages(ctx, viewer);
+      } else {
+        animate({
+          draw: curr => {
+            ctx.zoom = curr.zoom;
+            showPages(ctx, viewer);
+          },
+          duration: 500,
+          from: { zoom: ctx.zoom },
+          to: { zoom },
+          timing: t => t * t * (3.0 - 2.0 * t),
+        })
+      }
     }
   }
 
@@ -82,21 +88,29 @@ function setupControls(ctx, viewer) {
   }
 
   function flip_1(ctx) {
-    animate({
-      draw: curr => {
-        ctx.flipFrac = curr.flipFrac;
-        showFlip(ctx, viewer);
-      },
-      duration: 1111,
-      from: { flipFrac: 0 },
-      to: { flipFrac: 1 },
-      timing: t => t * t * (3.0 - 2.0 * t),
-      ondone: () => {
-        ctx.showNdx = ctx.flipNdx;
-        ctx.flipNdx = null;
-        showPages(ctx, viewer);
-      }
-    })
+    // Check if animations should be disabled
+    if(ctx.shouldAnimate === false) {
+      // Instant page change without animation
+      ctx.showNdx = ctx.flipNdx;
+      ctx.flipNdx = null;
+      showPages(ctx, viewer);
+    } else {
+      animate({
+        draw: curr => {
+          ctx.flipFrac = curr.flipFrac;
+          showFlip(ctx, viewer);
+        },
+        duration: 1111,
+        from: { flipFrac: 0 },
+        to: { flipFrac: 1 },
+        timing: t => t * t * (3.0 - 2.0 * t),
+        ondone: () => {
+          ctx.showNdx = ctx.flipNdx;
+          ctx.flipNdx = null;
+          showPages(ctx, viewer);
+        }
+      })
+    }
   }
 }
 
