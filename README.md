@@ -1,4 +1,4 @@
-# Flipbook Viewer
+# BWS PDF Viewer
 
 Amazing flip book component with animated pages - now available as a WordPress plugin!
 
@@ -12,7 +12,7 @@ This library is now available as a full-featured WordPress plugin! Simply use th
 
 **Quick Start:**
 ```
-[flipbook pdf="https://example.com/document.pdf"]
+[bws_pdf]https://example.com/document.pdf[/bws_pdf]
 ```
 
 See [WordPress Plugin Usage](#wordpress-plugin) below for full documentation.
@@ -138,23 +138,22 @@ The Flipbook Viewer WordPress plugin transforms this library into a powerful, ac
    - Upload to `/wp-content/plugins/flipbook-viewer`
    - Or install via WordPress plugin directory
 2. Activate through WordPress admin
-3. Configure defaults in Settings > Flipbook Viewer (optional)
+3. Configure defaults in Settings > BWS PDF Viewer (optional)
 4. Use shortcode in any post or page
 
 ### Basic Usage
 
 Embed a PDF with default settings:
 ```
-[flipbook pdf="https://example.com/document.pdf"]
+[bws_pdf]https://example.com/document.pdf[/bws_pdf]
 ```
 
 ### Shortcode Parameters
 
-All parameters are optional (except `pdf`). You can set defaults in the admin panel.
+The PDF URL is placed between the shortcode tags. All parameters are optional and can be set as attributes in the opening tag. You can set defaults in the admin panel.
 
 | Parameter | Description | Default | Options |
 |-----------|-------------|---------|---------|
-| `pdf` | PDF URL | **(required)** | Any valid URL |
 | `width` | Viewer width | `100%` | Any CSS value (100%, 800px, etc.) |
 | `height` | Viewer height | `auto` | Any CSS value or `auto` |
 | `background_color` | Background color | `#353535` | Hex color code |
@@ -190,38 +189,27 @@ All parameters are optional (except `pdf`). You can set defaults in the admin pa
 
 #### Narrow Column with Single Page View
 ```
-[flipbook pdf="https://example.com/doc.pdf" width="400px" layout="single"]
+[bws_pdf width="400px" layout="single"]https://example.com/doc.pdf[/bws_pdf]
 ```
 
 #### Custom Styled Flipbook
 ```
-[flipbook pdf="https://example.com/doc.pdf"
-    width="900px"
-    height="700px"
-    background_color="#f5f5f5"
-    box_color="#ffffff"
-    box_border="1"]
+[bws_pdf width="900px" height="700px" background_color="#f5f5f5" box_color="#ffffff" box_border="1"]https://example.com/doc.pdf[/bws_pdf]
 ```
 
 #### Traditional Book Starting with Cover
 ```
-[flipbook pdf="https://example.com/book.pdf"
-    book_layout="traditional"
-    layout="double"]
+[bws_pdf book_layout="traditional" layout="double"]https://example.com/book.pdf[/bws_pdf]
 ```
 
 #### Accessible Flipbook (No Animations)
 ```
-[flipbook pdf="https://example.com/doc.pdf"
-    enable_animations="false"
-    view_mode="singlepage"]
+[bws_pdf enable_animations="false" view_mode="singlepage"]https://example.com/doc.pdf[/bws_pdf]
 ```
 
 #### Responsive with Custom Breakpoint
 ```
-[flipbook pdf="https://example.com/doc.pdf"
-    layout="auto"
-    breakpoint="1024"]
+[bws_pdf layout="auto" breakpoint="1024"]https://example.com/doc.pdf[/bws_pdf]
 ```
 
 ### Keyboard Navigation

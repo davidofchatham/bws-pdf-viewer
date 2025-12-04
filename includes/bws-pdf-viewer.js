@@ -14,7 +14,7 @@
      * Initialize all flipbook containers on page load
      */
     function initFlipbooks() {
-        const containers = document.querySelectorAll('.flipbook-viewer-container');
+        const containers = document.querySelectorAll('.bws-pdf-viewer-container');
         containers.forEach(container => {
             const config = JSON.parse(container.dataset.config);
             initFlipbook(container, config);
@@ -29,7 +29,7 @@
 
         // Set up PDF.js worker
         if (typeof pdfjsLib !== 'undefined') {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = flipbookViewerData.pluginUrl + 'dist/pdf.worker.js';
+            pdfjsLib.GlobalWorkerOptions.workerSrc = bwsPdfViewerData.pluginUrl + 'dist/pdf.worker.js';
         }
 
         // Check for reduced motion preference
@@ -39,7 +39,7 @@
         // Load the PDF
         loadPDF(config.pdf, function(err, bookObj) {
             if (err) {
-                container.innerHTML = '<p class="flipbook-error">Error loading PDF: ' + err + '</p>';
+                container.innerHTML = '<p class="bws-pdf-viewer-error">Error loading PDF: ' + err + '</p>';
                 console.error('Flipbook error:', err);
                 return;
             }
@@ -84,7 +84,7 @@
             // Initialize the viewer
             flipbook.init(bookWrapper, container, viewerOpts, function(err, viewer) {
                 if (err) {
-                    container.innerHTML = '<p class="flipbook-error">Error initializing viewer: ' + err + '</p>';
+                    container.innerHTML = '<p class="bws-pdf-viewer-error">Error initializing viewer: ' + err + '</p>';
                     console.error('Flipbook initialization error:', err);
                     return;
                 }
@@ -365,7 +365,7 @@
     }
 
     // Expose for potential external use
-    window.FlipbookViewerWP = {
+    window.BwsPdfViewerWP = {
         initFlipbooks: initFlipbooks,
         activeViewers: activeViewers,
     };

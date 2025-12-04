@@ -1,4 +1,4 @@
-=== Flipbook Viewer ===
+=== BWS PDF Viewer ===
 Contributors: charles.lobo@gmail.com
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility
 Requires at least: 6.0
@@ -12,7 +12,7 @@ Amazing flip book component with animated pages. Embed PDFs using shortcode with
 
 == Description ==
 
-Flipbook Viewer is a powerful yet lightweight WordPress plugin that allows you to embed PDFs as beautiful, animated flipbooks directly into your posts and pages.
+BWS PDF Viewer is a powerful yet lightweight WordPress plugin that allows you to embed PDFs as beautiful, animated flipbooks directly into your posts and pages.
 
 **Key Features:**
 
@@ -30,15 +30,14 @@ Flipbook Viewer is a powerful yet lightweight WordPress plugin that allows you t
 
 Simply use the shortcode with your PDF URL:
 
-`[flipbook pdf="https://example.com/document.pdf"]`
+`[bws_pdf]https://example.com/document.pdf[/bws_pdf]`
 
 **With Custom Parameters:**
 
-`[flipbook pdf="https://example.com/document.pdf" width="800px" height="600px" layout="double" view_mode="flipbook"]`
+`[bws_pdf width="800px" height="600px" layout="double" view_mode="flipbook"]https://example.com/document.pdf[/bws_pdf]`
 
 **Available Parameters:**
 
-* `pdf` - PDF URL (required)
 * `width` - Width (default: 100%)
 * `height` - Height (default: auto)
 * `background_color` - Background color hex code
@@ -49,14 +48,16 @@ Simply use the shortcode with your PDF URL:
 * `breakpoint` - Container width in pixels for responsive switching
 * `enable_animations` - true or false
 
-All parameters can be configured with default values in Settings > Flipbook Viewer.
+The PDF URL is placed between the opening and closing shortcode tags. Parameters are added as attributes in the opening tag.
+
+All parameters can be configured with default values in Settings > BWS PDF Viewer.
 
 == Installation ==
 
-1. Upload the plugin files to the `/wp-content/plugins/flipbook-viewer` directory, or install the plugin through the WordPress plugins screen directly.
+1. Upload the plugin files to the `/wp-content/plugins/bws-pdf-viewer` directory, or install the plugin through the WordPress plugins screen directly.
 2. Activate the plugin through the 'Plugins' screen in WordPress.
-3. Use Settings > Flipbook Viewer to configure default options.
-4. Add the `[flipbook pdf="URL"]` shortcode to any post or page.
+3. Use Settings > BWS PDF Viewer to configure default options.
+4. Add the `[bws_pdf]URL[/bws_pdf]` shortcode to any post or page.
 
 == Frequently Asked Questions ==
 
@@ -86,7 +87,7 @@ Yes! Unlike most responsive solutions that only check viewport width, this plugi
 
 = How do I customize the appearance? =
 
-You can set default styles in Settings > Flipbook Viewer, or override them per-instance using shortcode parameters.
+You can set default styles in Settings > BWS PDF Viewer, or override them per-instance using shortcode parameters.
 
 == Screenshots ==
 

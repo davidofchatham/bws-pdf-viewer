@@ -1,6 +1,6 @@
 <?php
 /**
- * Admin interface for Flipbook Viewer
+ * Admin interface for BWS PDF Viewer
  */
 
 // Exit if accessed directly
@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-class Flipbook_Viewer_Admin {
+class BWS_PDF_Viewer_Admin {
 
     /**
      * Instance of this class
@@ -38,10 +38,10 @@ class Flipbook_Viewer_Admin {
      */
     public function add_admin_menu() {
         add_options_page(
-            __('Flipbook Viewer Settings', 'flipbook-viewer'),
-            __('Flipbook Viewer', 'flipbook-viewer'),
+            __('BWS PDF Viewer Settings', 'bws-pdf-viewer'),
+            __('BWS PDF Viewer', 'bws-pdf-viewer'),
             'manage_options',
-            'flipbook-viewer',
+            'bws-pdf-viewer',
             array($this, 'render_settings_page')
         );
     }
@@ -51,124 +51,124 @@ class Flipbook_Viewer_Admin {
      */
     public function register_settings() {
         register_setting(
-            'flipbook_viewer_options_group',
-            'flipbook_viewer_options',
+            'bws_pdf_viewer_options_group',
+            'bws_pdf_viewer_options',
             array($this, 'sanitize_options')
         );
 
         // Display Section
         add_settings_section(
-            'flipbook_viewer_display_section',
-            __('Default Display Settings', 'flipbook-viewer'),
+            'bws_pdf_viewer_display_section',
+            __('Default Display Settings', 'bws-pdf-viewer'),
             array($this, 'render_display_section'),
-            'flipbook-viewer'
+            'bws-pdf-viewer'
         );
 
         // Width
         add_settings_field(
             'width',
-            __('Width', 'flipbook-viewer'),
+            __('Width', 'bws-pdf-viewer'),
             array($this, 'render_width_field'),
-            'flipbook-viewer',
-            'flipbook_viewer_display_section'
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_display_section'
         );
 
         // Height
         add_settings_field(
             'height',
-            __('Height', 'flipbook-viewer'),
+            __('Height', 'bws-pdf-viewer'),
             array($this, 'render_height_field'),
-            'flipbook-viewer',
-            'flipbook_viewer_display_section'
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_display_section'
         );
 
         // Background Color
         add_settings_field(
             'background_color',
-            __('Background Color', 'flipbook-viewer'),
+            __('Background Color', 'bws-pdf-viewer'),
             array($this, 'render_background_color_field'),
-            'flipbook-viewer',
-            'flipbook_viewer_display_section'
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_display_section'
         );
 
         // Box Color
         add_settings_field(
             'box_color',
-            __('Box Color', 'flipbook-viewer'),
+            __('Box Color', 'bws-pdf-viewer'),
             array($this, 'render_box_color_field'),
-            'flipbook-viewer',
-            'flipbook_viewer_display_section'
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_display_section'
         );
 
         // Box Border
         add_settings_field(
             'box_border',
-            __('Box Border', 'flipbook-viewer'),
+            __('Box Border', 'bws-pdf-viewer'),
             array($this, 'render_box_border_field'),
-            'flipbook-viewer',
-            'flipbook_viewer_display_section'
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_display_section'
         );
 
         // Layout Section
         add_settings_section(
-            'flipbook_viewer_layout_section',
-            __('Layout Settings', 'flipbook-viewer'),
+            'bws_pdf_viewer_layout_section',
+            __('Layout Settings', 'bws-pdf-viewer'),
             array($this, 'render_layout_section'),
-            'flipbook-viewer'
+            'bws-pdf-viewer'
         );
 
         // Layout Mode
         add_settings_field(
             'layout',
-            __('Layout Mode', 'flipbook-viewer'),
+            __('Layout Mode', 'bws-pdf-viewer'),
             array($this, 'render_layout_field'),
-            'flipbook-viewer',
-            'flipbook_viewer_layout_section'
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_layout_section'
         );
 
         // Book Layout
         add_settings_field(
             'book_layout',
-            __('Book Layout', 'flipbook-viewer'),
+            __('Book Layout', 'bws-pdf-viewer'),
             array($this, 'render_book_layout_field'),
-            'flipbook-viewer',
-            'flipbook_viewer_layout_section'
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_layout_section'
         );
 
         // View Mode
         add_settings_field(
             'view_mode',
-            __('View Mode', 'flipbook-viewer'),
+            __('View Mode', 'bws-pdf-viewer'),
             array($this, 'render_view_mode_field'),
-            'flipbook-viewer',
-            'flipbook_viewer_layout_section'
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_layout_section'
         );
 
         // Breakpoint
         add_settings_field(
             'breakpoint',
-            __('Responsive Breakpoint', 'flipbook-viewer'),
+            __('Responsive Breakpoint', 'bws-pdf-viewer'),
             array($this, 'render_breakpoint_field'),
-            'flipbook-viewer',
-            'flipbook_viewer_layout_section'
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_layout_section'
         );
 
         // Enable Animations
         add_settings_field(
             'enable_animations',
-            __('Enable Animations', 'flipbook-viewer'),
+            __('Enable Animations', 'bws-pdf-viewer'),
             array($this, 'render_animations_field'),
-            'flipbook-viewer',
-            'flipbook_viewer_layout_section'
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_layout_section'
         );
 
         // Margin
         add_settings_field(
             'margin',
-            __('Margin', 'flipbook-viewer'),
+            __('Margin', 'bws-pdf-viewer'),
             array($this, 'render_margin_field'),
-            'flipbook-viewer',
-            'flipbook_viewer_layout_section'
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_layout_section'
         );
     }
 
@@ -244,29 +244,28 @@ class Flipbook_Viewer_Admin {
         // Show success message
         if (isset($_GET['settings-updated'])) {
             add_settings_error(
-                'flipbook_viewer_messages',
+                'bws_pdf_viewer_messages',
                 'flipbook_viewer_message',
-                __('Settings Saved', 'flipbook-viewer'),
+                __('Settings Saved', 'bws-pdf-viewer'),
                 'updated'
             );
         }
 
-        settings_errors('flipbook_viewer_messages');
+        settings_errors('bws_pdf_viewer_messages');
         ?>
         <div class="wrap">
             <h1><?php echo esc_html(get_admin_page_title()); ?></h1>
 
             <div class="notice notice-info">
                 <p>
-                    <strong><?php _e('Shortcode Usage:', 'flipbook-viewer'); ?></strong><br>
-                    <code>[flipbook pdf="URL_TO_PDF"]</code><br>
+                    <strong><?php _e('Shortcode Usage:', 'bws-pdf-viewer'); ?></strong><br>
+                    <code>[bws_pdf]https://example.com/document.pdf[/bws_pdf]</code><br>
                     <br>
-                    <strong><?php _e('Example with parameters:', 'flipbook-viewer'); ?></strong><br>
-                    <code>[flipbook pdf="https://example.com/document.pdf" width="800px" height="600px" layout="double"]</code><br>
+                    <strong><?php _e('Example with parameters:', 'bws-pdf-viewer'); ?></strong><br>
+                    <code>[bws_pdf width="800px" height="600px" layout="double"]https://example.com/document.pdf[/bws_pdf]</code><br>
                     <br>
-                    <strong><?php _e('Available parameters:', 'flipbook-viewer'); ?></strong><br>
+                    <strong><?php _e('Available parameters:', 'bws-pdf-viewer'); ?></strong><br>
                     <ul style="list-style: disc; margin-left: 20px;">
-                        <li><code>pdf</code> - PDF URL (required)</li>
                         <li><code>width</code> - Width (default: 100%)</li>
                         <li><code>height</code> - Height (default: auto)</li>
                         <li><code>background_color</code> - Background color (hex)</li>
@@ -277,14 +276,15 @@ class Flipbook_Viewer_Admin {
                         <li><code>breakpoint</code> - Container width breakpoint (px)</li>
                         <li><code>enable_animations</code> - true or false</li>
                     </ul>
+                    <p><em>Note: The PDF URL is placed between the opening and closing shortcode tags.</em></p>
                 </p>
             </div>
 
             <form action="options.php" method="post">
                 <?php
-                settings_fields('flipbook_viewer_options_group');
-                do_settings_sections('flipbook-viewer');
-                submit_button(__('Save Settings', 'flipbook-viewer'));
+                settings_fields('bws_pdf_viewer_options_group');
+                do_settings_sections('bws-pdf-viewer');
+                submit_button(__('Save Settings', 'bws-pdf-viewer'));
                 ?>
             </form>
         </div>
@@ -295,125 +295,125 @@ class Flipbook_Viewer_Admin {
      * Section renderers
      */
     public function render_display_section() {
-        echo '<p>' . __('Configure default display settings for the flipbook viewer. These can be overridden per shortcode.', 'flipbook-viewer') . '</p>';
+        echo '<p>' . __('Configure default display settings for the flipbook viewer. These can be overridden per shortcode.', 'bws-pdf-viewer') . '</p>';
     }
 
     public function render_layout_section() {
-        echo '<p>' . __('Configure layout and behavior settings.', 'flipbook-viewer') . '</p>';
+        echo '<p>' . __('Configure layout and behavior settings.', 'bws-pdf-viewer') . '</p>';
     }
 
     /**
      * Field renderers
      */
     public function render_width_field() {
-        $options = get_option('flipbook_viewer_options', array());
+        $options = get_option('bws_pdf_viewer_options', array());
         $value = isset($options['width']) ? $options['width'] : '100%';
         ?>
-        <input type="text" name="flipbook_viewer_options[width]" value="<?php echo esc_attr($value); ?>" class="regular-text">
-        <p class="description"><?php _e('Width of the viewer (e.g., 100%, 800px). Default: 100%', 'flipbook-viewer'); ?></p>
+        <input type="text" name="bws_pdf_viewer_options[width]" value="<?php echo esc_attr($value); ?>" class="regular-text">
+        <p class="description"><?php _e('Width of the viewer (e.g., 100%, 800px). Default: 100%', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_height_field() {
-        $options = get_option('flipbook_viewer_options', array());
+        $options = get_option('bws_pdf_viewer_options', array());
         $value = isset($options['height']) ? $options['height'] : 'auto';
         ?>
-        <input type="text" name="flipbook_viewer_options[height]" value="<?php echo esc_attr($value); ?>" class="regular-text">
-        <p class="description"><?php _e('Height of the viewer (e.g., auto, 600px). Default: auto (fits aspect ratio)', 'flipbook-viewer'); ?></p>
+        <input type="text" name="bws_pdf_viewer_options[height]" value="<?php echo esc_attr($value); ?>" class="regular-text">
+        <p class="description"><?php _e('Height of the viewer (e.g., auto, 600px). Default: auto (fits aspect ratio)', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_background_color_field() {
-        $options = get_option('flipbook_viewer_options', array());
+        $options = get_option('bws_pdf_viewer_options', array());
         $value = isset($options['background_color']) ? $options['background_color'] : '#353535';
         ?>
-        <input type="text" name="flipbook_viewer_options[background_color]" value="<?php echo esc_attr($value); ?>" class="color-field">
-        <p class="description"><?php _e('Background color (hex code). Default: #353535', 'flipbook-viewer'); ?></p>
+        <input type="text" name="bws_pdf_viewer_options[background_color]" value="<?php echo esc_attr($value); ?>" class="color-field">
+        <p class="description"><?php _e('Background color (hex code). Default: #353535', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_box_color_field() {
-        $options = get_option('flipbook_viewer_options', array());
+        $options = get_option('bws_pdf_viewer_options', array());
         $value = isset($options['box_color']) ? $options['box_color'] : '#353535';
         ?>
-        <input type="text" name="flipbook_viewer_options[box_color]" value="<?php echo esc_attr($value); ?>" class="color-field">
-        <p class="description"><?php _e('Box color (hex code). Default: #353535', 'flipbook-viewer'); ?></p>
+        <input type="text" name="bws_pdf_viewer_options[box_color]" value="<?php echo esc_attr($value); ?>" class="color-field">
+        <p class="description"><?php _e('Box color (hex code). Default: #353535', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_box_border_field() {
-        $options = get_option('flipbook_viewer_options', array());
+        $options = get_option('bws_pdf_viewer_options', array());
         $value = isset($options['box_border']) ? $options['box_border'] : 0;
         ?>
-        <input type="number" name="flipbook_viewer_options[box_border]" value="<?php echo esc_attr($value); ?>" min="0" step="1">
-        <p class="description"><?php _e('Border width in pixels. Default: 0', 'flipbook-viewer'); ?></p>
+        <input type="number" name="bws_pdf_viewer_options[box_border]" value="<?php echo esc_attr($value); ?>" min="0" step="1">
+        <p class="description"><?php _e('Border width in pixels. Default: 0', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_layout_field() {
-        $options = get_option('flipbook_viewer_options', array());
+        $options = get_option('bws_pdf_viewer_options', array());
         $value = isset($options['layout']) ? $options['layout'] : 'auto';
         ?>
-        <select name="flipbook_viewer_options[layout]">
-            <option value="auto" <?php selected($value, 'auto'); ?>><?php _e('Auto (responsive)', 'flipbook-viewer'); ?></option>
-            <option value="single" <?php selected($value, 'single'); ?>><?php _e('Single Page', 'flipbook-viewer'); ?></option>
-            <option value="double" <?php selected($value, 'double'); ?>><?php _e('Double Page Spread', 'flipbook-viewer'); ?></option>
+        <select name="bws_pdf_viewer_options[layout]">
+            <option value="auto" <?php selected($value, 'auto'); ?>><?php _e('Auto (responsive)', 'bws-pdf-viewer'); ?></option>
+            <option value="single" <?php selected($value, 'single'); ?>><?php _e('Single Page', 'bws-pdf-viewer'); ?></option>
+            <option value="double" <?php selected($value, 'double'); ?>><?php _e('Double Page Spread', 'bws-pdf-viewer'); ?></option>
         </select>
-        <p class="description"><?php _e('Page layout mode. Auto switches based on container width.', 'flipbook-viewer'); ?></p>
+        <p class="description"><?php _e('Page layout mode. Auto switches based on container width.', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_book_layout_field() {
-        $options = get_option('flipbook_viewer_options', array());
+        $options = get_option('bws_pdf_viewer_options', array());
         $value = isset($options['book_layout']) ? $options['book_layout'] : 'traditional';
         ?>
-        <select name="flipbook_viewer_options[book_layout]">
-            <option value="traditional" <?php selected($value, 'traditional'); ?>><?php _e('Traditional (page 1 alone, then spreads)', 'flipbook-viewer'); ?></option>
-            <option value="spread" <?php selected($value, 'spread'); ?>><?php _e('Spread (start with pages 1-2)', 'flipbook-viewer'); ?></option>
+        <select name="bws_pdf_viewer_options[book_layout]">
+            <option value="traditional" <?php selected($value, 'traditional'); ?>><?php _e('Traditional (page 1 alone, then spreads)', 'bws-pdf-viewer'); ?></option>
+            <option value="spread" <?php selected($value, 'spread'); ?>><?php _e('Spread (start with pages 1-2)', 'bws-pdf-viewer'); ?></option>
         </select>
-        <p class="description"><?php _e('Book layout style. Traditional shows page 1 as cover, then 2-3, 4-5, etc.', 'flipbook-viewer'); ?></p>
+        <p class="description"><?php _e('Book layout style. Traditional shows page 1 as cover, then 2-3, 4-5, etc.', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_view_mode_field() {
-        $options = get_option('flipbook_viewer_options', array());
+        $options = get_option('bws_pdf_viewer_options', array());
         $value = isset($options['view_mode']) ? $options['view_mode'] : 'flipbook';
         ?>
-        <select name="flipbook_viewer_options[view_mode]">
-            <option value="flipbook" <?php selected($value, 'flipbook'); ?>><?php _e('Flipbook (animated pages)', 'flipbook-viewer'); ?></option>
-            <option value="singlepage" <?php selected($value, 'singlepage'); ?>><?php _e('Single Page (scrollable)', 'flipbook-viewer'); ?></option>
+        <select name="bws_pdf_viewer_options[view_mode]">
+            <option value="flipbook" <?php selected($value, 'flipbook'); ?>><?php _e('Flipbook (animated pages)', 'bws-pdf-viewer'); ?></option>
+            <option value="singlepage" <?php selected($value, 'singlepage'); ?>><?php _e('Single Page (scrollable)', 'bws-pdf-viewer'); ?></option>
         </select>
-        <p class="description"><?php _e('Viewer mode. Flipbook shows animated page turns, Single Page shows scrollable pages.', 'flipbook-viewer'); ?></p>
+        <p class="description"><?php _e('Viewer mode. Flipbook shows animated page turns, Single Page shows scrollable pages.', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_breakpoint_field() {
-        $options = get_option('flipbook_viewer_options', array());
+        $options = get_option('bws_pdf_viewer_options', array());
         $value = isset($options['breakpoint']) ? $options['breakpoint'] : 768;
         ?>
-        <input type="number" name="flipbook_viewer_options[breakpoint]" value="<?php echo esc_attr($value); ?>" min="0" step="1">
-        <p class="description"><?php _e('Container width (in pixels) below which to switch to single page layout when layout is "auto". Default: 768px', 'flipbook-viewer'); ?></p>
+        <input type="number" name="bws_pdf_viewer_options[breakpoint]" value="<?php echo esc_attr($value); ?>" min="0" step="1">
+        <p class="description"><?php _e('Container width (in pixels) below which to switch to single page layout when layout is "auto". Default: 768px', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_animations_field() {
-        $options = get_option('flipbook_viewer_options', array());
+        $options = get_option('bws_pdf_viewer_options', array());
         $value = isset($options['enable_animations']) ? $options['enable_animations'] : true;
         ?>
         <label>
-            <input type="checkbox" name="flipbook_viewer_options[enable_animations]" value="1" <?php checked($value, true); ?>>
-            <?php _e('Enable flip animations (respects user prefers-reduced-motion setting)', 'flipbook-viewer'); ?>
+            <input type="checkbox" name="bws_pdf_viewer_options[enable_animations]" value="1" <?php checked($value, true); ?>>
+            <?php _e('Enable flip animations (respects user prefers-reduced-motion setting)', 'bws-pdf-viewer'); ?>
         </label>
-        <p class="description"><?php _e('When enabled, page flip animations will be shown unless the user has requested reduced motion in their system settings.', 'flipbook-viewer'); ?></p>
+        <p class="description"><?php _e('When enabled, page flip animations will be shown unless the user has requested reduced motion in their system settings.', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_margin_field() {
-        $options = get_option('flipbook_viewer_options', array());
+        $options = get_option('bws_pdf_viewer_options', array());
         $value = isset($options['margin']) ? $options['margin'] : 1;
         ?>
-        <input type="number" name="flipbook_viewer_options[margin]" value="<?php echo esc_attr($value); ?>" min="0" step="0.1">
-        <p class="description"><?php _e('Margin percentage around the viewer. Default: 1', 'flipbook-viewer'); ?></p>
+        <input type="number" name="bws_pdf_viewer_options[margin]" value="<?php echo esc_attr($value); ?>" min="0" step="0.1">
+        <p class="description"><?php _e('Margin percentage around the viewer. Default: 1', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 }
