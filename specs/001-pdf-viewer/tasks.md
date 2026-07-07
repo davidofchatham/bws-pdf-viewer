@@ -106,8 +106,8 @@ Key bugs found during planning:
 
 - [x] T026 Bump `BWS_PDF_VIEWER_VERSION` from `'3.0.0'` to `'3.1.0'` in `bws-pdf-viewer.php` (line ~21 constant, line ~10 Plugin header comment); this busts browser cache for all updated assets
 - [x] T027 [P] Run `npm run start` for final production build; verify zero webpack errors and zero ESLint errors; confirm `dist/flipbook-viewer.js`, `dist/pdf.js`, `dist/pdf.worker.js` are updated
-- [ ] T028 [P] Test two viewers on same page: embed two `[bws_pdf]` shortcodes in different column widths (e.g., one at 100%, one at 400px); verify each adapts layout independently (FR-003), both load, both have controls, and there are no JS errors in console
-- [ ] T029 [P] Test error state: set a shortcode PDF URL to an invalid path; verify the container remains visible (not collapsed), a `div[role="alert"].bws-pdf-viewer-error` appears inside it with the error message, and an `<a target="_blank">` link to the PDF URL is present
+- [x] T028 [P] Test two viewers on same page: embed two `[bws_pdf]` shortcodes in different column widths (e.g., one at 100%, one at 400px); verify each adapts layout independently (FR-003), both load, both have controls, and there are no JS errors in console — verified 2026-07-07 via `test/harness-t028.html` + Playwright/Chrome: wide container renders double-page spread (canvas ratio 1.67), narrow renders single page (ratio 0.67), 4 control buttons each, zero console errors
+- [x] T029 [P] Test error state: set a shortcode PDF URL to an invalid path; verify the container remains visible (not collapsed), a `div[role="alert"].bws-pdf-viewer-error` appears inside it with the error message, and an `<a target="_blank">` link to the PDF URL is present — verified 2026-07-07 via `test/harness-t029.html`: role=alert error div with message, "Open PDF directly" link (`target="_blank" rel="noopener noreferrer"`), loading indicator removed, container not collapsed
 
 ---
 
