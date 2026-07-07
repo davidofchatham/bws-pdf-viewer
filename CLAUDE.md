@@ -336,7 +336,7 @@ const div = h('div.class');
 - `layout` - "auto", "single", or "double"
 - `book_layout` - "traditional" or "spread"
 
-**Hybrid Viewer Attributes (v3.1+):**
+**Hybrid Viewer Attributes (added in the release formerly numbered 3.1; now 0.3.1 after the pre-1.0 scheme reset):**
 - `force_native` - "true", "false", or null (auto-detect)
   - Forces native or image mode regardless of device
 - `show_controls` - true/false (default: true)

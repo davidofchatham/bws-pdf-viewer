@@ -3,7 +3,7 @@ Contributors: charles.lobo@gmail.com
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
 Tested up to: 6.4
-Stable tag: 3.0.0
+Stable tag: 0.3.1
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -104,6 +104,13 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 4. Responsive layout adapting to narrow containers
 
 == Changelog ==
+
+= 0.3.1 =
+* VERSIONING RESET: Switched to a 0.x.x scheme to reflect pre-1.0 status — no
+  publicly usable release has shipped. This is the same codebase previously
+  numbered 3.1.0; the reset acknowledges the viewer is still pre-release.
+* Entries below (3.0.0 and earlier) are retained as historical development
+  record from before the reset.
 
 = 3.0.0 =
 * MAJOR UPDATE: Rebranded as general-purpose accessible PDF viewer
