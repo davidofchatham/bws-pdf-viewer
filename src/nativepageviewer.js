@@ -1,15 +1,45 @@
 'use strict'
 import { h } from '@tpp/htm-x';
 import * as EventEmitter from 'events';
+import {
+  TextLayerBuilder,
+  AnnotationLayerBuilder,
+  PDFLinkService,
+  EventBus,
+} from 'pdfjs-dist/web/pdf_viewer.mjs';
 
 /**
  * Native PDF.js Page Viewer
  *
- * Renders PDF pages using native PDF.js with:
- * - Canvas layer for visual rendering
- * - Text layer for selection and search
- * - Annotation layer for clickable links
- * - Lazy loading for performance
+ * Renders PDF pages using the official pdfjs-dist viewer components:
+ * - Canvas layer for visual rendering (page.render)
+ * - Text layer via TextLayerBuilder (selection + browser find)
+ * - Annotation layer via AnnotationLayerBuilder (clickable links)
+ * - Shared EventBus + PDFLinkService for internal/external link navigation
+ * - Lazy loading via IntersectionObserver; memory cleanup for distant pages
+ *
+ * PDF.js 6.1.200 builder API (verified against
+ * node_modules/pdfjs-dist/types/web/{text_layer_builder,annotation_layer_builder,pdf_link_service}.d.ts):
+ *
+ *   new TextLayerBuilder({ pdfPage })                       // builder auto-fetches text content
+ *     .div                       -> HTMLDivElement (append yourself)
+ *     .render({ viewport })      -> Promise<void>
+ *     .cancel()
+ *
+ *   new AnnotationLayerBuilder({ pdfPage, linkService, renderForms })  // renderForms is required
+ *     .div                       -> HTMLDivElement | null (populated after render)
+ *     .render({ viewport, intent })  -> Promise<void>   // intent defaults to "display"
+ *     .cancel()
+ *
+ *   new PDFLinkService({ eventBus, externalLinkTarget, externalLinkRel })
+ *     .setDocument(pdf)          // required for internal-destination resolution
+ *     .setViewer(shim)           // minimal shim below drives goToPage for internal links
+ *
+ * The builders auto-fetch getTextContent()/getAnnotations() from pdfPage — the old
+ * hand-rolled getTextContent()/getAnnotations() calls and manual span/anchor positioning
+ * (v5-era pdfjsLib.renderTextLayer / pdfjsLib.AnnotationLayer.render, both removed/changed
+ * in v6) are gone. `--scale-factor` MUST be set on each page container or the text layer
+ * mis-positions (classic v6 bug — research D4/D9).
  */
 
 class NativePageViewer extends EventEmitter {
@@ -45,6 +75,42 @@ class NativePageViewer extends EventEmitter {
 }
 
 /**
+ * Build a shared EventBus + PDFLinkService for the document.
+ *
+ * PDFLinkService resolves internal destinations against a "viewer"; we are not using the
+ * full PDFViewer, so we hand it a minimal shim that satisfies the members the link service
+ * touches for goToDestination and drives our own lazy-loaded goToPage. External links are
+ * handled entirely by externalLinkTarget/externalLinkRel on the service.
+ */
+function createLinkService(viewer, pdf) {
+  const eventBus = new EventBus();
+  const linkService = new PDFLinkService({
+    eventBus,
+    externalLinkTarget: 2,                              // LinkTarget.BLANK — open in new tab
+    externalLinkRel: 'noopener noreferrer nofollow',
+  });
+
+  // Minimal viewer shim: PDFLinkService.goToDestination / _goToDestinationHelper read
+  // pagesCount, currentPageNumber and call scrollPageIntoView({ pageNumber }). We map that
+  // onto our own goToPage so internal-destination links scroll to the target page.
+  const viewerShim = {
+    get pagesCount() { return viewer.page_count; },
+    get currentPageNumber() { return viewer.currentPage; },
+    set currentPageNumber(n) { /* driven via scrollPageIntoView below */ },
+    getPageView(index) { return null; },               // per-page view not tracked in lazy mode
+    scrollPageIntoView({ pageNumber }) {
+      if (pageNumber) viewer.goToPage(pageNumber);
+    },
+    isInPresentationMode: false,
+    focus() {},
+  };
+  linkService.setViewer(viewerShim);
+  linkService.setDocument(pdf);
+
+  return linkService;
+}
+
+/**
  * Main entry point for native page viewer
  */
 export function nativePageViewer(ctx, cb) {
@@ -56,6 +122,9 @@ export function nativePageViewer(ctx, cb) {
   }
 
   viewer.page_count = pdf.numPages;
+
+  // Shared link service for all annotation layers (internal + external links)
+  ctx.linkService = createLinkService(viewer, pdf);
 
   setupContainer(ctx, pdf, (err, scale) => {
     if (err) return cb(err);
@@ -178,6 +247,10 @@ function renderPage(ctx, container, pageNum, viewer) {
   pdf.getPage(pageNum).then(page => {
     const viewport = page.getViewport({ scale: ctx.scale });
 
+    // v6 requires --scale-factor on the page container so the text-layer spans
+    // (sized in scale-relative units) position correctly (research D4/D9).
+    container.style.setProperty('--scale-factor', viewport.scale);
+
     // Render canvas layer
     renderCanvas(container, page, viewport, err => {
       if (err) {
@@ -185,17 +258,13 @@ function renderPage(ctx, container, pageNum, viewer) {
         return;
       }
 
-      // Render text layer (for selection and search)
-      page.getTextContent().then(textContent => {
-        renderTextLayer(container, textContent, viewport);
-      }).catch(err => {
+      // Text layer (selection + browser find) via TextLayerBuilder
+      renderTextLayer(container, page, viewport).catch(err => {
         console.warn('Text layer rendering failed:', err);
       });
 
-      // Render annotation layer (for links)
-      page.getAnnotations().then(annotations => {
-        renderAnnotationLayer(container, annotations, viewport, page);
-      }).catch(err => {
+      // Annotation layer (links) via AnnotationLayerBuilder + shared linkService
+      renderAnnotationLayer(container, page, viewport, ctx.linkService).catch(err => {
         console.warn('Annotation layer rendering failed:', err);
       });
 
@@ -242,76 +311,34 @@ function renderCanvas(container, page, viewport, cb) {
 }
 
 /**
- * Render text layer (enables text selection and search)
+ * Render text layer via the official TextLayerBuilder (selection + browser find).
+ * The builder creates and populates its own `.div` (class "textLayer"); we append it
+ * and store the builder on the container for lazy-unload cleanup.
  */
-function renderTextLayer(container, textContent, viewport) {
-  const textLayerDiv = h('div.textLayer');
-  textLayerDiv.style.width = Math.floor(viewport.width) + 'px';
-  textLayerDiv.style.height = Math.floor(viewport.height) + 'px';
-
-  container.add(textLayerDiv);
-
-  // Use PDF.js built-in text layer renderer if available
-  if (typeof pdfjsLib !== 'undefined' && pdfjsLib.renderTextLayer) {
-    pdfjsLib.renderTextLayer({
-      textContentSource: textContent,
-      container: textLayerDiv,
-      viewport: viewport,
-      textDivs: [],
-    });
-  }
+function renderTextLayer(container, page, viewport) {
+  const builder = new TextLayerBuilder({ pdfPage: page });
+  container._textBuilder = builder;
+  container.add(builder.div);
+  return builder.render({ viewport });
 }
 
 /**
- * Render annotation layer (enables clickable links)
+ * Render annotation layer via the official AnnotationLayerBuilder (clickable links).
+ * Uses the shared PDFLinkService so internal destinations and external links both work.
+ * The builder populates `.div` during render; we append it after and store the builder
+ * for cleanup.
  */
-function renderAnnotationLayer(container, annotations, viewport, page) {
-  if (!annotations || annotations.length === 0) return;
+function renderAnnotationLayer(container, page, viewport, linkService) {
+  const builder = new AnnotationLayerBuilder({
+    pdfPage: page,
+    linkService,
+    renderForms: false,
+  });
+  container._annotationBuilder = builder;
 
-  const annotationLayerDiv = h('div.annotationLayer');
-  annotationLayerDiv.style.width = Math.floor(viewport.width) + 'px';
-  annotationLayerDiv.style.height = Math.floor(viewport.height) + 'px';
-
-  container.add(annotationLayerDiv);
-
-  // Use PDF.js built-in annotation layer renderer if available
-  if (typeof pdfjsLib !== 'undefined' && pdfjsLib.AnnotationLayer) {
-    pdfjsLib.AnnotationLayer.render({
-      annotations: annotations,
-      div: annotationLayerDiv,
-      viewport: viewport.clone({ dontFlip: true }),
-      page: page,
-      linkService: createLinkService(),
-      renderForms: false,
-    });
-  }
-}
-
-/**
- * Create a simple link service for annotations
- */
-function createLinkService() {
-  return {
-    externalLinkTarget: 2, // Open in new tab
-    externalLinkRel: 'noopener noreferrer',
-    externalLinkEnabled: true,
-
-    getDestinationHash: (dest) => {
-      return '#';
-    },
-
-    getAnchorUrl: (hash) => {
-      return hash;
-    },
-
-    executeNamedAction: (action) => {
-      console.log('Named action:', action);
-    },
-
-    executeSetOCGState: (action) => {
-      console.log('OCG state:', action);
-    },
-  };
+  return builder.render({ viewport, intent: 'display' }).then(() => {
+    if (builder.div) container.add(builder.div);
+  });
 }
 
 /**
@@ -325,7 +352,17 @@ function cleanupDistantPages(ctx, currentPageNum, viewer) {
     const distance = Math.abs(pageNum - currentPageNum);
 
     if (distance > distanceThreshold && container.dataset.loaded === 'true') {
-      // Unload page to free memory
+      // Cancel PDF.js builders so they release their rendering resources
+      if (container._textBuilder) {
+        container._textBuilder.cancel();
+        container._textBuilder = null;
+      }
+      if (container._annotationBuilder) {
+        container._annotationBuilder.cancel();
+        container._annotationBuilder = null;
+      }
+
+      // Unload DOM layers to free memory
       const canvas = container.querySelector('.pdf-canvas');
       const textLayer = container.querySelector('.textLayer');
       const annotationLayer = container.querySelector('.annotationLayer');
