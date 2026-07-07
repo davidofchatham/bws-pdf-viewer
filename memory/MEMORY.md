@@ -1,9 +1,20 @@
 # BWS PDF Viewer — Project Memory
 
-## Implementation Status (2026-03-02)
+## Implementation Status (2026-07-07)
 
-**Branch `001-pdf-viewer` — US1 + US2 implementation COMPLETE (T001–T027 done)**
-T028–T029 are manual WordPress integration tests remaining.
+**Branch `001-pdf-viewer` — US1 + US2 COMPLETE. All 29 tasks done (T001–T029).**
+
+T028/T029 verified 2026-07-07 via browser automation: `test/harness-t028.html`,
+`test/harness-t029.html`, `test/verify-t028-t029.js` (playwright-core + system
+Chrome, serve repo root with `npx http-server -p 8123`). All 9 assertions pass.
+
+Committed: `75a650d` (v3.1.0 implementation), `3db38fd` (verification harness).
+
+**Next scope (not yet tasked):**
+- US4 (P3): admin settings page — global default mode, mode disable, default controls
+- US5 (P2): mobile image-preview fallback on viewer init failure
+- End-to-end test with bws-portal-system via `bws_pdf_viewer_pdf_url` / `bws_pdf_viewer_plugin_url` filters
+- Cosmetic: narrow flipbook letterboxes page in tall dark box (dimension calc); traditional cover renders left-of-spread with blank right — confirm intended
 
 Files changed: `bws-pdf-viewer.php` (v3.1.0), `includes/bws-pdf-viewer.js` (full rewrite), `includes/bws-pdf-viewer.css`, `dist/` (rebuilt).
 
