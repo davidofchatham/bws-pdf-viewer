@@ -170,6 +170,23 @@ class BWS_PDF_Viewer_Admin {
             'bws-pdf-viewer',
             'bws_pdf_viewer_layout_section'
         );
+
+        // Portal System Integration Section
+        add_settings_section(
+            'bws_pdf_viewer_portal_section',
+            __('Portal System Integration', 'bws-pdf-viewer'),
+            array($this, 'render_portal_section'),
+            'bws-pdf-viewer'
+        );
+
+        // Enable Portal Integration
+        add_settings_field(
+            'enable_portal_integration',
+            __('Enable Portal Integration', 'bws-pdf-viewer'),
+            array($this, 'render_portal_integration_field'),
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_portal_section'
+        );
     }
 
     /**
@@ -219,7 +236,7 @@ class BWS_PDF_Viewer_Admin {
         }
 
         if (isset($input['view_mode'])) {
-            $sanitized['view_mode'] = in_array($input['view_mode'], array('flipbook', 'singlepage')) ? $input['view_mode'] : 'flipbook';
+            $sanitized['view_mode'] = in_array($input['view_mode'], array('flipbook', 'singlepage')) ? $input['view_mode'] : 'singlepage';
         }
 
         if (isset($input['breakpoint'])) {
@@ -228,6 +245,10 @@ class BWS_PDF_Viewer_Admin {
 
         if (isset($input['enable_animations'])) {
             $sanitized['enable_animations'] = (bool) $input['enable_animations'];
+        }
+
+        if (isset($input['enable_portal_integration'])) {
+            $sanitized['enable_portal_integration'] = (bool) $input['enable_portal_integration'];
         }
 
         return $sanitized;
@@ -245,7 +266,7 @@ class BWS_PDF_Viewer_Admin {
         if (isset($_GET['settings-updated'])) {
             add_settings_error(
                 'bws_pdf_viewer_messages',
-                'flipbook_viewer_message',
+                'bws_pdf_viewer_message',
                 __('Settings Saved', 'bws-pdf-viewer'),
                 'updated'
             );
@@ -295,7 +316,7 @@ class BWS_PDF_Viewer_Admin {
      * Section renderers
      */
     public function render_display_section() {
-        echo '<p>' . __('Configure default display settings for the flipbook viewer. These can be overridden per shortcode.', 'bws-pdf-viewer') . '</p>';
+        echo '<p>' . __('Configure default display settings for the PDF viewer. These can be overridden per shortcode.', 'bws-pdf-viewer') . '</p>';
     }
 
     public function render_layout_section() {
@@ -377,13 +398,13 @@ class BWS_PDF_Viewer_Admin {
 
     public function render_view_mode_field() {
         $options = get_option('bws_pdf_viewer_options', array());
-        $value = isset($options['view_mode']) ? $options['view_mode'] : 'flipbook';
+        $value = isset($options['view_mode']) ? $options['view_mode'] : 'singlepage';
         ?>
         <select name="bws_pdf_viewer_options[view_mode]">
-            <option value="flipbook" <?php selected($value, 'flipbook'); ?>><?php _e('Flipbook (animated pages)', 'bws-pdf-viewer'); ?></option>
-            <option value="singlepage" <?php selected($value, 'singlepage'); ?>><?php _e('Single Page (scrollable)', 'bws-pdf-viewer'); ?></option>
+            <option value="singlepage" <?php selected($value, 'singlepage'); ?>><?php _e('Single Page (recommended for accessibility)', 'bws-pdf-viewer'); ?></option>
+            <option value="flipbook" <?php selected($value, 'flipbook'); ?>><?php _e('Flipbook (animated page flips)', 'bws-pdf-viewer'); ?></option>
         </select>
-        <p class="description"><?php _e('Viewer mode. Flipbook shows animated page turns, Single Page shows scrollable pages.', 'bws-pdf-viewer'); ?></p>
+        <p class="description"><?php _e('Viewer mode. Single Page is more accessible with better screen reader support. Flipbook shows animated page turns.', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
@@ -414,6 +435,34 @@ class BWS_PDF_Viewer_Admin {
         ?>
         <input type="number" name="bws_pdf_viewer_options[margin]" value="<?php echo esc_attr($value); ?>" min="0" step="0.1">
         <p class="description"><?php _e('Margin percentage around the viewer. Default: 1', 'bws-pdf-viewer'); ?></p>
+        <?php
+    }
+
+    public function render_portal_section() {
+        $portal_active = function_exists('bws_portal_get_domain_context');
+        if ($portal_active) {
+            echo '<p>' . __('BWS Portal System detected. Enable integration to automatically rewrite PDF URLs for custom portal domains.', 'bws-pdf-viewer') . '</p>';
+        } else {
+            echo '<p class="description">' . __('BWS Portal System not detected. This setting will be ignored.', 'bws-pdf-viewer') . '</p>';
+        }
+    }
+
+    public function render_portal_integration_field() {
+        $options = get_option('bws_pdf_viewer_options', array());
+        $value = isset($options['enable_portal_integration']) ? $options['enable_portal_integration'] : true;
+        $portal_active = function_exists('bws_portal_get_domain_context');
+        ?>
+        <label>
+            <input type="checkbox" name="bws_pdf_viewer_options[enable_portal_integration]" value="1" <?php checked($value, true); ?> <?php disabled(!$portal_active); ?>>
+            <?php _e('Automatically rewrite PDF URLs for portal domains', 'bws-pdf-viewer'); ?>
+        </label>
+        <p class="description">
+            <?php if ($portal_active): ?>
+                <?php _e('When enabled, PDF URLs will be automatically adjusted to match the current portal domain.', 'bws-pdf-viewer'); ?>
+            <?php else: ?>
+                <?php _e('Install and activate BWS Portal System to enable this feature.', 'bws-pdf-viewer'); ?>
+            <?php endif; ?>
+        </p>
         <?php
     }
 }

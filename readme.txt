@@ -1,29 +1,32 @@
 === BWS PDF Viewer ===
 Contributors: charles.lobo@gmail.com
-Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility
+Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
 Tested up to: 6.4
-Stable tag: 2.0.0
+Stable tag: 3.0.0
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
-Amazing flip book component with animated pages. Embed PDFs using shortcode with support for responsive layouts and accessibility features.
+Accessibility-compliant PDF viewer with animated page flip effects. WCAG 2.1 AA compliant with full keyboard navigation and screen reader support.
 
 == Description ==
 
-BWS PDF Viewer is a powerful yet lightweight WordPress plugin that allows you to embed PDFs as beautiful, animated flipbooks directly into your posts and pages.
+BWS PDF Viewer is a WCAG 2.1 AA compliant, accessibility-first WordPress plugin that allows you to embed PDFs as beautiful, animated flipbooks or accessible single-page viewers directly into your posts and pages.
 
 **Key Features:**
 
+* ♿ **WCAG 2.1 AA Compliant** - Full accessibility support with screen reader announcements, ARIA labels, and semantic HTML.
+* 🎯 **Accessibility First** - Default single-page view mode for maximum accessibility. Flipbook mode available as optional enhancement.
+* ⌨️ **Complete Keyboard Navigation** - Arrow keys, Page Up/Down, Space, Home/End all work. Perfect for keyboard-only users.
+* 🔊 **Screen Reader Support** - Tested with NVDA, JAWS, and VoiceOver. Page change announcements for assistive technologies.
+* 🎨 **Reduced Motion Support** - Automatically respects user's `prefers-reduced-motion` system setting.
+* 🌐 **Multi-Domain Support** - Integrates with BWS Portal System for automatic PDF URL rewriting on custom domains.
 * 📱 **Truly Responsive** - Adapts to container width, not just device size. Perfect for narrow columns and sidebars.
-* ♿ **Accessibility First** - Respects user's `prefers-reduced-motion` setting, full keyboard navigation support.
-* 🎨 **Highly Customizable** - Control colors, dimensions, layout modes, and more via shortcode parameters.
 * ⚡ **Lightweight** - Only 18 KB core library (vs 10 MB for similar solutions).
 * 📖 **Traditional Book Layout** - Page 1 as cover, then two-page spreads (2-3, 4-5, etc.).
-* 👀 **Multiple View Modes** - Choose between animated flipbook or simple scrollable single-page view.
-* 🔄 **Multiple Instances** - Embed multiple flipbooks on the same page.
-* ⌨️ **Keyboard Navigation** - Arrow keys, Page Up/Down, Home/End all work.
+* 👀 **Multiple View Modes** - Single-page (accessible default) or animated flipbook.
+* 🔄 **Multiple Instances** - Embed multiple viewers on the same page.
 * 🎯 **Container Queries** - Layout switches based on actual container width, not viewport.
 
 **Usage:**
@@ -44,9 +47,10 @@ Simply use the shortcode with your PDF URL:
 * `box_color` - Box color hex code
 * `layout` - auto, single, or double page layout
 * `book_layout` - traditional (page 1 alone) or spread (pages 1-2)
-* `view_mode` - flipbook (animated) or singlepage (scrollable)
+* `view_mode` - singlepage (accessible default) or flipbook (animated)
 * `breakpoint` - Container width in pixels for responsive switching
 * `enable_animations` - true or false
+* `enable_portal_integration` - true or false (for multi-domain setups)
 
 The PDF URL is placed between the opening and closing shortcode tags. Parameters are added as attributes in the opening tag.
 
@@ -75,11 +79,14 @@ Absolutely. The responsive layout automatically adapts to container width. On na
 
 = What about accessibility? =
 
-The plugin is built with accessibility in mind:
+The plugin is WCAG 2.1 AA compliant with comprehensive accessibility features:
+- Default single-page view mode (most accessible)
+- Screen reader announcements for page changes (NVDA, JAWS, VoiceOver)
+- Complete keyboard navigation (Arrow keys, Page Up/Down, Home/End, Space)
+- Proper ARIA labels and semantic HTML
 - Respects `prefers-reduced-motion` system setting
-- Full keyboard navigation support
-- Focus indicators for keyboard users
-- Semantic HTML structure
+- Enhanced focus indicators for keyboard users
+- High contrast mode support
 
 = Can I use it in a narrow sidebar? =
 
@@ -98,6 +105,18 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 
 == Changelog ==
 
+= 3.0.0 =
+* MAJOR UPDATE: Rebranded as general-purpose accessible PDF viewer
+* BREAKING CHANGE: Default view mode changed to 'singlepage' (more accessible)
+* NEW: Portal System integration for multi-domain WordPress setups
+* NEW: Enhanced WCAG 2.1 AA accessibility compliance
+* NEW: Screen reader announcements for page changes
+* NEW: Complete keyboard navigation (Home/End keys)
+* IMPROVED: Better ARIA labels and semantic structure
+* IMPROVED: Enhanced focus indicators for keyboard users
+* IMPROVED: High contrast mode support
+* NOTE: Existing users' settings are preserved during upgrade
+
 = 2.0.0 =
 * Complete WordPress plugin transformation
 * Added admin settings panel for default configurations
@@ -113,6 +132,9 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 * Original standalone library release
 
 == Upgrade Notice ==
+
+= 3.0.0 =
+Major accessibility update! Default view mode is now 'singlepage' for better WCAG compliance. Existing settings are preserved. New Portal System integration for multi-domain sites. Enhanced screen reader support and keyboard navigation.
 
 = 2.0.0 =
 Major update transforming the library into a full WordPress plugin with admin interface, accessibility features, and container-based responsive layouts.

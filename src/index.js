@@ -3,6 +3,7 @@ import { getH } from '@tpp/htm-x';
 
 import { flipbookViewer } from "./flipbookviewer.js";
 import { singlePageViewer } from "./singlepageviewer.js";
+import { nativePageViewer } from "./nativepageviewer.js";
 import pkg from '../package.json';
 
 /*    way/
@@ -17,7 +18,7 @@ export function init(book, id, opts, cb) {
   if(!cb) cb = () => 1;
   const app = getH(id);
   if(!app) {
-    const emsg = ("flipbook-viewer: Failed to find container for viewer: " + id);
+    const emsg = ("bws-pdf-viewer: Failed to find container for viewer: " + id);
     console.error(emsg);
     cb(emsg);
     return;
@@ -25,7 +26,14 @@ export function init(book, id, opts, cb) {
 
   if(opts.singlepage) {
 
-    singlePageViewer({ app, book }, ret_1);
+    // Choose between native PDF.js viewer and image-based viewer
+    if(opts.nativeMode && book.pdf) {
+      // Native mode: direct PDF.js rendering with text/annotation layers
+      nativePageViewer({ app, book, opts }, ret_1);
+    } else {
+      // Image mode: convert pages to images (mobile/fallback)
+      singlePageViewer({ app, book }, ret_1);
+    }
 
   } else {
 

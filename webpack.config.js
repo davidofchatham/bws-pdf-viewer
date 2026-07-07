@@ -11,7 +11,16 @@ const base = {
         umdNamedDefine: true,
       },
     },
-    'pdf.worker': 'pdfjs-dist/build/pdf.worker.entry',
+    // PDF.js library with automatic worker setup (zero-config webpack approach)
+    'pdf': {
+      import: 'pdfjs-dist/webpack.mjs',
+      library: {
+        name: 'pdfjsLib',
+        type: 'umd',
+        umdNamedDefine: true,
+      },
+    },
+    // Test book provider
     'book.pdf': {
       import: './test/book-pdf.js',
       library: {
@@ -23,14 +32,23 @@ const base = {
   },
   output: {
     filename: '[name].js',
+    chunkFilename: 'pdf.worker.js',
     path: path.resolve(__dirname, 'dist'),
     clean: true,
+  },
+  resolve: {
+    extensions: ['.js', '.mjs', '.json'],
   },
   module: {
     rules: [
       {
         test: /\.svg$/,
         loader: 'svg-inline-loader'
+      },
+      {
+        test: /\.mjs$/,
+        include: /node_modules/,
+        type: 'javascript/auto'
       }
     ]
   }
