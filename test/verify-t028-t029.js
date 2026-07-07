@@ -32,7 +32,7 @@ async function main() {
     });
     page.on('response', (r) => { if (r.status() >= 400 && !r.url().includes('favicon.ico')) errors.push(`HTTP ${r.status()}: ${r.url()}`); });
 
-    await page.goto(BASE + '/harness-t028.html', { waitUntil: 'load' });
+    await page.goto(BASE + '/test/harness-t028.html', { waitUntil: 'load' });
     try {
       await page.waitForSelector('#bws-pdf-a canvas', { timeout: 15000 });
       await page.waitForSelector('#bws-pdf-b canvas', { timeout: 15000 });
@@ -80,7 +80,7 @@ async function main() {
   // ---------- T029: invalid PDF URL error state ----------
   {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-    await page.goto(BASE + '/harness-t029.html', { waitUntil: 'load' });
+    await page.goto(BASE + '/test/harness-t029.html', { waitUntil: 'load' });
     try {
       await page.waitForSelector('#bws-pdf-err .bws-pdf-viewer-error[role="alert"]', { timeout: 15000 });
       pass('T029: div[role=alert].bws-pdf-viewer-error appeared');

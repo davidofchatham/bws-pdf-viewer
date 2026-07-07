@@ -15,7 +15,8 @@
   "license": "MIT",
   "homepage": "https://github.com/davidofchatham/bws-pdf-viewer",
   "devDependencies": {
-    "pdfjs-dist": "^5.4.530",
+    "pdfjs-dist": "6.1.200",
+    "playwright-core": "^1.61.1",
     "svg-inline-loader": "^0.8.2",
     "webpack": "^5.104.1",
     "webpack-cli": "^4.10.0",

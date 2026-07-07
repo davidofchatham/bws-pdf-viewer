@@ -49,8 +49,8 @@ NVDA (Windows) or VoiceOver (iOS):
 - Existing pages (unedited) with: no attributes; `show_controls="false"`;
   `show_fullscreen="false"`; `show_print="false"` → each renders per its attributes (US3).
 - Two embeds on one page, different column widths → independent layouts, both toolbars work.
-- iOS Safari 14+: fullscreen button ABSENT (not disabled); numeric keyboard raised by page
-  input; touch targets comfortable.
+- iOS Safari 18+ (PDF.js 6 floor): fullscreen button ABSENT (not disabled); numeric keyboard
+  raised by page input; touch targets comfortable.
 
 ## 5. Release gate
 

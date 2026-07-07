@@ -612,7 +612,8 @@
             return callback('PDF.js library not loaded');
         }
 
-        const loadingTask = pdfjsLib.getDocument(pdfUrl);
+        // PDF.js v6+ requires a parameter object (string argument removed)
+        const loadingTask = pdfjsLib.getDocument({ url: pdfUrl });
         loadingTask.promise.then(function(pdf) {
             const cache = {};
             const book = {

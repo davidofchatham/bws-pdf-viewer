@@ -33,16 +33,16 @@ Files changed: `bws-pdf-viewer.php` (v3.1.0), `includes/bws-pdf-viewer.js` (full
 ---
 
 ## Constitution
-- `.specify/memory/constitution.md` — v1.1.0, ratified 2026-03-02, amended 2026-03-02
+- `.specify/memory/constitution.md` — v1.2.0, ratified 2026-03-02, amended 2026-07-07 (browser floor now inherits bundled PDF.js release)
 - Five core principles: I. Accessibility (WCAG 2.2 AA), II. User Experience, III. Interoperability, IV. Code Quality, V. Testing Standards
 - Plan-template.md updated with concrete constitution check gates
 
 ## Key Principles Summary
 - Accessibility: WCAG 2.2 AA mandatory — keyboard nav, focus indicators, aria-labels, text layer searchable
 - UX: First page ≤2s on 10Mbps; ResizeObserver for layout; mobile breakpoint ≤767px (max-width:767px); flip/slide animations off with reduced-motion, fades permitted
-- Interoperability: Modern browsers + Safari 14/iOS 14; no hardcoded URLs; viewer engine URLs dynamically resolved; multi-domain URL rewriting MUST be supported (via BWS Portal System or internal)
+- Interoperability: browser floor inherited from bundled PDF.js (v6: Chrome 125+, Safari 18+/iOS 18+, Firefox ESR); no hardcoded URLs; viewer engine URLs dynamically resolved; multi-domain URL rewriting MUST be supported (via BWS Portal System or internal)
 - Code Quality: ESLint zero errors; no hardcoded URLs/secrets; abstraction by developer confirmation
-- Testing: Manual — dev server + WordPress install; all three viewer modes; desktop + Safari iOS 14+
+- Testing: Manual — dev server + WordPress install; all three viewer modes; desktop + Safari iOS 18+
 
 ## Project Structure
 - Main plugin: `bws-pdf-viewer.php`

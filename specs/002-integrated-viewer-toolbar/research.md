@@ -2,8 +2,8 @@
 
 **Feature**: 002-integrated-viewer-toolbar | **Date**: 2026-07-07
 
-All decisions verified against the installed dependency tree (pdfjs-dist 5.4.530) and current
-source, not documentation from memory.
+All decisions verified against the installed dependency tree (pdfjs-dist 6.1.200 — upgraded
+from 5.4.530 before implementation, see D11) and current source, not documentation from memory.
 
 ## D1 — PDF.js component selection for document mode
 
@@ -69,7 +69,7 @@ single-step navigation keeps its existing animation.
 ## D4 — CSS strategy for official layer styles
 
 **Decision**: No webpack CSS pipeline. Port the required rules for `.textLayer` and
-`.annotationLayer` from `pdfjs-dist/web/pdf_viewer.css` (v5.4.530) into
+`.annotationLayer` from `pdfjs-dist/web/pdf_viewer.css` (v6.1.200) into
 `includes/bws-pdf-viewer.css`, replacing the current hand-written layer styles, and set the
 `--scale-factor` CSS custom property on each page container (required by v5 layer rendering).
 
@@ -155,7 +155,7 @@ two-line addition to the existing flow rather than new machinery.
 **Alternatives considered**:
 - Persist/restore whole viewer state object — rejected: only page position is required.
 
-## D9 — TextLayerBuilder/AnnotationLayerBuilder integration shape (v5.4 API)
+## D9 — TextLayerBuilder/AnnotationLayerBuilder integration shape (verified on v6.1)
 
 **Decision**: Per rendered page in `nativepageviewer.js`:
 - Text: `new TextLayerBuilder({ pdfPage: page })`, `await builder.render({ viewport })`, append
@@ -188,3 +188,33 @@ constitution §V (WordPress install, iOS Safari) remains in quickstart.md.
 **Rationale**: The 001 harness proved the pattern (playwright-core + system Chrome, no
 WordPress needed for the JS layer). Toolbar and layer swaps are exactly the changes it can
 catch cheaply and repeatably.
+
+## D11 — PDF.js upgraded to 6.1.200 before implementation (2026-07-07)
+
+**Decision**: Upgrade pdfjs-dist 5.4.530 → 6.1.200 (latest) as a pre-implementation step of
+this feature, per developer instruction ("make sure PDF.js is up to date before we build").
+
+**What changed / verified**:
+- `pdfjs-dist/webpack.mjs` zero-config entry unchanged in v6 — webpack config untouched.
+- `web/pdf_viewer.mjs` still exports all five symbols D1 relies on, plus `PDFFindController`.
+- Builder API shapes (D9) verified against v6 typed declarations: `TextLayerBuilder({ pdfPage,
+  onAppend, ... })`, `AnnotationLayerBuilder({ pdfPage, linkService, onAppend, ... })`, both
+  expose `.div`, `render({ viewport [, intent] })`, `cancel()` — D9 holds unchanged.
+- **api-major hit**: `getDocument(string)` removed — fixed `includes/bws-pdf-viewer.js`
+  (`getDocument({ url: pdfUrl })`) and `test/book-pdf.js`. Only two call sites in repo.
+- **api-major non-hits**: `PDFDocumentProxy.destroy` removal, `getAttachments` Map return,
+  `getXfaPageViewport` move — no usages in repo (grep-verified).
+- **Browser floor raised by upstream**: v6 requires Chrome 125+ / Safari 18+ / Firefox ESR
+  even in its legacy build (mozilla/pdf.js#21152). Constitution amended to v1.2.0 to inherit
+  the bundled PDF.js floor. Note: the prior Safari 14 baseline was already unmet — shipped
+  v5.4 required Safari 16.4+.
+- Full rebuild + feature-001 regression harness re-run on 6.1.200: all 9 checks pass, zero
+  console errors (worker zero-config confirmed working).
+
+**Alternatives considered**:
+- Stay on 5.x (5.7.284, last v5) — rejected: developer asked for current; 5.x line no longer
+  receives releases; building feature 002's layer integration on a dead major invites a
+  second migration immediately after.
+- Switch to `pdfjs-dist/legacy/webpack.mjs` for older browsers — rejected: v6 legacy floor is
+  the same Chrome 125/Safari 18 (transpile targets, mozilla/pdf.js gulpfile ENV_TARGETS);
+  it would add core-js polyfill weight for no compatibility gain.

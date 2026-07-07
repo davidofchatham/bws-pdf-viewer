@@ -18,13 +18,16 @@ full prebuilt PDF.js web viewer or iframe.
 ## Technical Context
 
 **Language/Version**: JavaScript ES2020 (browser), PHP 7.4+ (WordPress 5.9+)
-**Primary Dependencies**: pdfjs-dist 5.4.530 (installed; `web/pdf_viewer.mjs` exports confirmed:
-TextLayerBuilder, AnnotationLayerBuilder, PDFLinkService, SimpleLinkService, EventBus,
-PDFFindController), @tpp/htm-x, webpack 5.104
+**Primary Dependencies**: pdfjs-dist 6.1.200 (upgraded from 5.4.530 pre-implementation;
+`web/pdf_viewer.mjs` exports confirmed: TextLayerBuilder, AnnotationLayerBuilder,
+PDFLinkService, SimpleLinkService, EventBus, PDFFindController; builder constructor/render/
+cancel shapes verified against v6 typed declarations — see research D9/D11), @tpp/htm-x,
+webpack 5.104
 **Storage**: N/A (WordPress options unchanged by this feature)
 **Testing**: Manual per constitution §V + existing Playwright/Chrome harness pattern
 (`test/verify-t028-t029.js`) extended for toolbar assertions
-**Target Platform**: Browsers per compatibility matrix (Chrome/Firefox/Edge last 2, Safari 14+/iOS 14+)
+**Target Platform**: Browsers per compatibility matrix (constitution v1.2.0: Chrome 125+,
+Safari 18+/iOS 18+, Firefox ESR, Edge last 2 — floor inherited from PDF.js 6)
 **Project Type**: WordPress plugin — JS library (`src/` → `dist/` UMD) + PHP/JS integration layer (`includes/`)
 **Performance Goals**: First page ≤2s on 10 Mbps (unchanged); page-jump navigation completes ≤2s (SC-005)
 **Constraints**: Reuse-first (FR-016); no iframe/full prebuilt viewer (FR-015); WCAG 2.2 AA
@@ -54,7 +57,7 @@ PDFFindController), @tpp/htm-x, webpack 5.104
       developer in this feature's originating conversation — reuse-first is the user's own
       constraint, not a unilateral abstraction.
 - [x] **V. Testing** — Manual plan in quickstart.md covers dev server, WordPress install, all
-      three modes (flipbook, document/native, image), desktop + iOS Safari 14+, plus automated
+      three modes (flipbook, document/native, image), desktop + iOS Safari 18+, plus automated
       browser-harness assertions for toolbar DOM/ARIA and regression checks from feature 001.
 
 ## Project Structure
