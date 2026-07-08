@@ -3,7 +3,7 @@ Contributors: charles.lobo@gmail.com
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
 Tested up to: 6.4
-Stable tag: 0.4.2
+Stable tag: 0.4.3
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -29,7 +29,7 @@ viewers in WordPress posts and pages.
 * **Keyboard navigation** - Arrow keys, Page Up/Down, Space, Home/End.
 * **Screen readers** - Tested with NVDA, JAWS, and VoiceOver.
 * **Reduced motion** - Respects `prefers-reduced-motion`.
-* **Multi-domain** - Integrates with BWS Portal System for PDF URL rewriting on custom domains.
+* **Multi-domain** - Filter hooks for rewriting asset and PDF URLs on multi-domain installs and CDNs.
 * **Container-based responsive** - Adapts to container width, not just device size.
 * **Lightweight** - 18 KB core library (vs ~10 MB for comparable solutions).
 * **Traditional book layout** - Page 1 as cover, then two-page spreads (2-3, 4-5, etc.).
@@ -63,7 +63,7 @@ Simply use the shortcode with your PDF URL:
 * `show_fullscreen` - true or false (fullscreen button)
 * `show_print` - true or false (print button)
 
-Portal integration for multi-domain setups is a site-wide admin setting, not a shortcode attribute.
+Multi-domain URL rewriting (assets and PDF source) is handled via the `bws_pdf_viewer_plugin_url` and `bws_pdf_viewer_pdf_url` filter hooks, not a shortcode attribute or admin setting. See README.md.
 
 The PDF URL is placed between the opening and closing shortcode tags. Parameters are added as attributes in the opening tag.
 
@@ -117,6 +117,14 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 4. Responsive layout adapting to narrow containers
 
 == Changelog ==
+
+= 0.4.3 =
+* REMOVE: Dead "Enable Portal Integration" admin setting. It was read by no
+  runtime code (an orphan left after multi-domain URL rewriting moved to filter
+  hooks) and misled admins into thinking it handled portal asset rewriting.
+* DOCS: Rewrote the multi-domain section around the `bws_pdf_viewer_plugin_url`
+  and `bws_pdf_viewer_pdf_url` filter hooks; removed the stale checkbox and
+  Cloudflare-CORS configuration steps.
 
 = 0.4.2 =
 * FIX: Page-jump, Home/End, and reinit page-restore now land on the correct

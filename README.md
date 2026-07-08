@@ -264,60 +264,33 @@ Files are built to `/dist` directory.
 
 ---
 
-## Portal System Integration
+## Filter Hooks
 
-### Overview
+The viewer exposes two WordPress filter hooks for rewriting URLs at runtime. They exist for multi-domain setups (one WordPress install serving several domains), CDNs, or any case where the assets and PDF must resolve to a different origin than `plugin_dir_url()` returns. Both are no-ops unless something registers them, so single-domain installs are unaffected.
 
-BWS PDF Viewer integrates with [BWS Portal System](https://github.com/davidofchatham/bws-portal-system) for multi-domain WordPress setups. When enabled, PDF URLs are automatically rewritten to match the current portal domain.
+- **`bws_pdf_viewer_plugin_url`** — the asset base URL (`plugin_dir_url()`), used for `pdf.js`, `flipbook-viewer.js`, `bws-pdf-viewer.js`, the CSS, **and `pdf.worker.js`**. The returned value must end with a trailing slash; it also feeds the `bwsPdfViewerData.pluginUrl` value passed to JS.
+- **`bws_pdf_viewer_pdf_url`** — the PDF source URL from the shortcode content, filtered before sanitisation.
 
-### Requirements
+### Example: serve assets from the current host
 
-- BWS Portal System plugin active
-- Cloudflare with CORS Transform Rules configured (for cross-domain asset loading)
-- See Portal System documentation: `cors/LITESPEED-CLOUDFLARE-SOLUTION.md`
+The assets **must** be same-origin with the page: a `new Worker()` script (used for `pdf.worker.js`) cannot be loaded cross-origin — the browser throws a `SecurityError`. (Plain `<script src>` tags tolerate cross-origin; the Worker does not.) If your install is reachable under more than one hostname, rewrite the asset base URL to whichever host the visitor is on:
 
-### How It Works
-
-1. **Plugin Assets**: Served from main domain with Cloudflare CORS headers
-2. **PDF Documents**: URLs automatically rewritten to match current portal domain
-3. **Detection**: Automatic - no configuration needed when portal system is active
-4. **Performance**: No overhead when portal system is not active
-
-### Configuration
-
-Navigate to **Settings > BWS PDF Viewer > Portal System Integration**:
-
-- **Enable Portal Integration**: Automatically rewrite PDF URLs for portal domains (default: enabled)
-- **Status**: Shows whether BWS Portal System is detected
-
-### Example
-
-**Main Domain Setup:**
-```
-Main site: https://main-site.com
-Portal 1: https://client1-portal.com
-Portal 2: https://client2-portal.com
+```php
+add_filter('bws_pdf_viewer_plugin_url', function ($url) {
+    if (empty($_SERVER['HTTP_HOST'])) return $url;
+    $parts = wp_parse_url($url);
+    if (empty($parts['host'])) return $url;
+    $host = strtolower($_SERVER['HTTP_HOST']);
+    if (strtolower($parts['host']) === $host) return $url; // already same-origin
+    $scheme = is_ssl() ? 'https' : ($parts['scheme'] ?? 'https');
+    return $scheme . '://' . $host . ($parts['path'] ?? '') .
+        (isset($parts['query']) ? '?' . $parts['query'] : '');
+});
 ```
 
-**PDF URL Rewriting:**
-- On main-site.com: `https://main-site.com/wp-content/uploads/file.pdf`
-- On client1-portal.com: `https://client1-portal.com/wp-content/uploads/file.pdf`
-- On client2-portal.com: `https://client2-portal.com/wp-content/uploads/file.pdf`
+### PDF fetch and CORS
 
-### Enabling / Disabling
-
-Portal integration is a site-wide admin setting (**Settings > BWS PDF Viewer > Portal System Integration**), not a shortcode attribute. It applies to all instances when the BWS Portal System plugin is active.
-
-### Troubleshooting
-
-**PDF not loading on portal domain:**
-1. Verify Cloudflare CORS headers are configured
-2. Check browser console for CORS errors
-3. Ensure PDF URL is internal (same WordPress installation)
-4. Verify portal integration is enabled in settings
-
-**External PDFs:**
-External PDF URLs (from different domains) are not rewritten. Only internal PDFs (from wp-content/uploads) are modified.
+The PDF is a separate concern from the assets. If the page references a PDF on a **different origin** than the page itself, PDF.js's fetch is subject to CORS on the PDF host. Rewrite the source to a same-origin URL with `bws_pdf_viewer_pdf_url` where the file is reachable there; genuinely cross-origin PDFs need an `Access-Control-Allow-Origin` header on the PDF host or a same-origin proxy.
 
 ---
 

@@ -179,23 +179,6 @@ class BWS_PDF_Viewer_Admin {
             'bws-pdf-viewer',
             'bws_pdf_viewer_layout_section'
         );
-
-        // Portal System Integration Section
-        add_settings_section(
-            'bws_pdf_viewer_portal_section',
-            __('Portal System Integration', 'bws-pdf-viewer'),
-            array($this, 'render_portal_section'),
-            'bws-pdf-viewer'
-        );
-
-        // Enable Portal Integration
-        add_settings_field(
-            'enable_portal_integration',
-            __('Enable Portal Integration', 'bws-pdf-viewer'),
-            array($this, 'render_portal_integration_field'),
-            'bws-pdf-viewer',
-            'bws_pdf_viewer_portal_section'
-        );
     }
 
     /**
@@ -259,10 +242,6 @@ class BWS_PDF_Viewer_Admin {
         // Checkbox: an unchecked box submits no value, so persist false on absence
         // rather than falling back to the default (which would make it un-uncheckable).
         $sanitized['default_show_controls'] = ! empty($input['default_show_controls']);
-
-        if (isset($input['enable_portal_integration'])) {
-            $sanitized['enable_portal_integration'] = (bool) $input['enable_portal_integration'];
-        }
 
         return $sanitized;
     }
@@ -460,34 +439,6 @@ class BWS_PDF_Viewer_Admin {
         ?>
         <input type="number" name="bws_pdf_viewer_options[margin]" value="<?php echo esc_attr($value); ?>" min="0" step="0.1">
         <p class="description"><?php _e('Margin percentage around the viewer. Default: 1', 'bws-pdf-viewer'); ?></p>
-        <?php
-    }
-
-    public function render_portal_section() {
-        $portal_active = function_exists('bws_portal_get_domain_context');
-        if ($portal_active) {
-            echo '<p>' . __('BWS Portal System detected. Enable integration to automatically rewrite PDF URLs for custom portal domains.', 'bws-pdf-viewer') . '</p>';
-        } else {
-            echo '<p class="description">' . __('BWS Portal System not detected. This setting will be ignored.', 'bws-pdf-viewer') . '</p>';
-        }
-    }
-
-    public function render_portal_integration_field() {
-        $options = get_option('bws_pdf_viewer_options', array());
-        $value = isset($options['enable_portal_integration']) ? $options['enable_portal_integration'] : true;
-        $portal_active = function_exists('bws_portal_get_domain_context');
-        ?>
-        <label>
-            <input type="checkbox" name="bws_pdf_viewer_options[enable_portal_integration]" value="1" <?php checked($value, true); ?> <?php disabled(!$portal_active); ?>>
-            <?php _e('Automatically rewrite PDF URLs for portal domains', 'bws-pdf-viewer'); ?>
-        </label>
-        <p class="description">
-            <?php if ($portal_active): ?>
-                <?php _e('When enabled, PDF URLs will be automatically adjusted to match the current portal domain.', 'bws-pdf-viewer'); ?>
-            <?php else: ?>
-                <?php _e('Install and activate BWS Portal System to enable this feature.', 'bws-pdf-viewer'); ?>
-            <?php endif; ?>
-        </p>
         <?php
     }
 }
