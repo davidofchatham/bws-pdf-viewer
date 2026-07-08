@@ -6,7 +6,8 @@
   "scripts": {
     "start": "npm run clean && webpack build --env production",
     "test": "webpack serve --env development --open",
-    "clean": "npx -y del-cli dist && npx -y make-dir-cli dist"
+    "clean": "npx -y del-cli dist && npx -y make-dir-cli dist",
+    "lint": "eslint src includes test webpack.config.js eslint.config.js"
   },
   "repository": {
     "type": "git",
@@ -15,6 +16,7 @@
   "license": "MIT",
   "homepage": "https://github.com/davidofchatham/bws-pdf-viewer",
   "devDependencies": {
+    "eslint": "^9.39.4",
     "pdfjs-dist": "6.1.200",
     "playwright-core": "^1.61.1",
     "svg-inline-loader": "^0.8.2",
