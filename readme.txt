@@ -3,7 +3,7 @@ Contributors: charles.lobo@gmail.com
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
 Tested up to: 6.4
-Stable tag: 0.3.1
+Stable tag: 0.4.0
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -104,6 +104,27 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 4. Responsive layout adapting to narrow containers
 
 == Changelog ==
+
+= 0.4.0 =
+* NEW: Integrated viewer toolbar — a single docked overlay bar shared by both
+  flipbook and document modes (prev/next, editable page-number jump field with
+  "of N" count, fullscreen, print), replacing the previous detached control bar.
+* NEW: Type a page number and press Enter to jump directly to it; out-of-range
+  input clamps, invalid input restores the current page.
+* ACCESSIBILITY: Toolbar now uses the WAI-ARIA toolbar pattern (role="toolbar",
+  roving arrow-key focus, one Tab stop), labelled controls, retained "Page N of M"
+  screen-reader announcements, visible focus indicators, and >=24x24px targets.
+* CHANGED: Document (native) mode now renders its text and annotation layers with
+  the official PDF.js viewer components (TextLayerBuilder / AnnotationLayerBuilder
+  + a shared link service), replacing hand-rolled positioning. Internal-destination
+  links now navigate; external links open in a new tab with a safe rel. This lays
+  groundwork for in-document search.
+* CHANGED: Upgraded bundled PDF.js to 6.1.200. Browser floor is now Chrome 125+,
+  Safari 18+ / iOS 18+, and current Firefox (inherited from PDF.js 6).
+* NOTE: The control bar moved from below the viewer to inside the viewer container.
+  Sites that styled the old bar's outer margin may see minor spacing changes.
+* Existing shortcode attributes (show_controls, show_fullscreen, show_print) are
+  unchanged.
 
 = 0.3.1 =
 * VERSIONING RESET: Switched to a 0.x.x scheme to reflect pre-1.0 status — no
