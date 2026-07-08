@@ -11,6 +11,100 @@
     let currentFocusedViewer = null;
 
     // -------------------------------------------------------------------------
+    // Localisation (T023)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Return the UI strings for toolbar controls. Strings are sourced from the
+     * server-provided bwsPdfViewerData.i18n object (populated via wp_localize_script,
+     * which runs them through WordPress translation) with English fallbacks so the
+     * viewer works even if no i18n payload is present. No new i18n infrastructure is
+     * invented here — this simply reads the existing localisation channel (reuse-first).
+     */
+    function getStrings() {
+        const i18n = (window.bwsPdfViewerData && window.bwsPdfViewerData.i18n) || {};
+        return {
+            toolbarLabel:        i18n.toolbarLabel        || 'PDF viewer controls',
+            prev:                i18n.prev                || 'Previous',
+            prevLabel:           i18n.prevLabel           || 'Previous page',
+            next:                i18n.next                || 'Next',
+            nextLabel:           i18n.nextLabel           || 'Next page',
+            of:                  i18n.of                  || 'of',
+            pageNumberLabel:     i18n.pageNumberLabel     || 'Page number',
+            fullscreen:          i18n.fullscreen          || 'Fullscreen',
+            fullscreenLabel:     i18n.fullscreenLabel     || 'Enter fullscreen',
+            exitFullscreen:      i18n.exitFullscreen      || 'Exit Fullscreen',
+            exitFullscreenLabel: i18n.exitFullscreenLabel || 'Exit fullscreen',
+            print:               i18n.print               || 'Print',
+            printLabel:          i18n.printLabel          || 'Print PDF',
+        };
+    }
+
+    // -------------------------------------------------------------------------
+    // Toolbar roving focus — WAI-ARIA toolbar keyboard pattern (T018)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Implement the APG toolbar roving-tabindex pattern on a controls bar:
+     * exactly one control is tabbable (tabindex 0), the rest are -1; ArrowLeft/Right
+     * move focus within the toolbar (wrapping); Home/End jump to first/last.
+     * The page-jump input is exempt while focused so arrows edit its value instead
+     * of moving focus (research D6).
+     */
+    function setupToolbarRovingFocus(controlsDiv) {
+        function items() {
+            return Array.prototype.slice.call(
+                controlsDiv.querySelectorAll('button, input')
+            );
+        }
+
+        const initial = items();
+        initial.forEach(function(el, i) {
+            el.setAttribute('tabindex', i === 0 ? '0' : '-1');
+        });
+
+        function focusAt(list, idx) {
+            const clamped = (idx + list.length) % list.length;
+            list.forEach(function(el) { el.setAttribute('tabindex', '-1'); });
+            const target = list[clamped];
+            target.setAttribute('tabindex', '0');
+            target.focus();
+        }
+
+        controlsDiv.addEventListener('keydown', function(e) {
+            // Let the page input own Left/Right (and Home/End) for text editing.
+            if (e.target.classList.contains('bws-pdf-page-input') &&
+                (e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
+                 e.key === 'Home' || e.key === 'End')) {
+                return;
+            }
+
+            const list = items();
+            const current = list.indexOf(e.target);
+            if (current === -1) return;
+
+            switch (e.key) {
+                case 'ArrowRight':
+                    e.preventDefault();
+                    focusAt(list, current + 1);
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    focusAt(list, current - 1);
+                    break;
+                case 'Home':
+                    e.preventDefault();
+                    focusAt(list, 0);
+                    break;
+                case 'End':
+                    e.preventDefault();
+                    focusAt(list, list.length - 1);
+                    break;
+            }
+        });
+    }
+
+    // -------------------------------------------------------------------------
     // Public API
     // -------------------------------------------------------------------------
 
@@ -232,14 +326,19 @@
     function addNavigationControls(viewerData) {
         const { container, config } = viewerData;
 
+        const t = getStrings();
+
         const controlsDiv = document.createElement('div');
         controlsDiv.className = 'bws-pdf-viewer-controls';
+        // T010: WAI-ARIA toolbar semantics (toolbar-dom.md invariant 2)
+        controlsDiv.setAttribute('role', 'toolbar');
+        controlsDiv.setAttribute('aria-label', t.toolbarLabel);
 
         // --- Previous button ---
         const prevBtn = document.createElement('button');
         prevBtn.className = 'bws-pdf-prev';
-        prevBtn.textContent = '\u2190 Previous';
-        prevBtn.setAttribute('aria-label', 'Previous page');
+        prevBtn.textContent = '\u2190 ' + t.prev;
+        prevBtn.setAttribute('aria-label', t.prevLabel);
         prevBtn.setAttribute('type', 'button');
 
         prevBtn.addEventListener('click', function() {
@@ -248,17 +347,32 @@
             else if (viewer && viewer.goToPage && viewer.currentPage > 1) viewer.goToPage(viewer.currentPage - 1);
         });
 
-        // --- Page counter ---
+        // --- Page-nav group: editable page-jump input + display-only counter ---
+        // T011: net-new page-jump control (the only net-new control this feature adds).
+        const pageNav = document.createElement('span');
+        pageNav.className = 'bws-pdf-viewer-page-nav';
+
+        const pageInput = document.createElement('input');
+        pageInput.className = 'bws-pdf-page-input';
+        pageInput.setAttribute('type', 'text');
+        pageInput.setAttribute('inputmode', 'numeric');
+        pageInput.setAttribute('pattern', '[0-9]*');
+        pageInput.setAttribute('aria-label', t.pageNumberLabel);
+
+        // Display-only "of N" counter. No longer aria-live; announcements come from
+        // the dedicated SR live region (toolbar-dom.md invariants 8 and 10).
         const pageCounter = document.createElement('span');
         pageCounter.className = 'bws-pdf-viewer-page-counter';
-        pageCounter.setAttribute('aria-live', 'polite');
-        pageCounter.setAttribute('aria-atomic', 'true');
+        pageCounter.setAttribute('aria-hidden', 'true');
+
+        pageNav.appendChild(pageInput);
+        pageNav.appendChild(pageCounter);
 
         // --- Next button ---
         const nextBtn = document.createElement('button');
         nextBtn.className = 'bws-pdf-next';
-        nextBtn.textContent = 'Next \u2192';
-        nextBtn.setAttribute('aria-label', 'Next page');
+        nextBtn.textContent = t.next + ' \u2192';
+        nextBtn.setAttribute('aria-label', t.nextLabel);
         nextBtn.setAttribute('type', 'button');
 
         nextBtn.addEventListener('click', function() {
@@ -267,13 +381,58 @@
             else if (viewer && viewer.goToPage && viewer.currentPage < viewer.page_count) viewer.goToPage(viewer.currentPage + 1);
         });
 
-        // Counter update — reads from viewerData.viewer each call so it stays correct
+        // --- Page-jump commit state machine (data-model.md) ---
+        // `editing` guards updateCounter from clobbering the field mid-type.
+        let editing = false;
+
+        function restorePageInput() {
+            const viewer = viewerData.viewer;
+            pageInput.value = (viewer && viewer.currentPage) || 1;
+        }
+
+        function commitPageInput() {
+            const viewer = viewerData.viewer;
+            editing = false;
+            if (!viewer || !viewer.goToPage) { restorePageInput(); return; }
+
+            const raw = pageInput.value.trim();
+            const n = parseInt(raw, 10);
+            if (raw === '' || isNaN(n)) {
+                // non-numeric / empty -> restore current page, no navigation
+                restorePageInput();
+                return;
+            }
+            const total = viewer.page_count || 1;
+            const clamped = Math.max(1, Math.min(n, total));
+            viewer.goToPage(clamped);
+            // The 'seen' -> onSeen -> updateCounter path refreshes the field to the
+            // landed page; set it now too in case goToPage is a no-op (already there).
+            pageInput.value = clamped;
+        }
+
+        pageInput.addEventListener('focus', function() { editing = true; });
+        pageInput.addEventListener('blur', commitPageInput);
+        pageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                commitPageInput();
+                pageInput.blur();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                editing = false;
+                restorePageInput();
+                pageInput.blur();
+            }
+        });
+
+        // Counter update: reads from viewerData.viewer each call so it stays correct
         // after responsive reinit replaces the viewer instance.
         function updateCounter() {
             const viewer = viewerData.viewer;
             const current = (viewer && viewer.currentPage) || 1;
             const total   = (viewer && viewer.page_count) || 0;
-            pageCounter.textContent = 'Page ' + current + ' of ' + total;
+            if (!editing) pageInput.value = current;
+            pageCounter.textContent = t.of + ' ' + total;
             prevBtn.disabled = current <= 1;
             nextBtn.disabled = current >= total;
         }
@@ -329,8 +488,8 @@
             if (fsEnabled) {
                 const fsBtn = document.createElement('button');
                 fsBtn.className = 'bws-pdf-fullscreen';
-                fsBtn.textContent = 'Fullscreen';
-                fsBtn.setAttribute('aria-label', 'Enter fullscreen');
+                fsBtn.textContent = t.fullscreen;
+                fsBtn.setAttribute('aria-label', t.fullscreenLabel);
                 fsBtn.setAttribute('type', 'button');
 
                 fsBtn.addEventListener('click', function() {
@@ -341,11 +500,11 @@
                     }
                 });
 
-                // T016: Update button label when fullscreen state changes
+                // T016/T021: Update button label when fullscreen state changes
                 var onFsChange = function() {
                     const isFs = (document.fullscreenElement === container || document.webkitFullscreenElement === container);
-                    fsBtn.textContent      = isFs ? 'Exit Fullscreen' : 'Fullscreen';
-                    fsBtn.setAttribute('aria-label', isFs ? 'Exit fullscreen' : 'Enter fullscreen');
+                    fsBtn.textContent      = isFs ? t.exitFullscreen : t.fullscreen;
+                    fsBtn.setAttribute('aria-label', isFs ? t.exitFullscreenLabel : t.fullscreenLabel);
                 };
                 document.addEventListener('fullscreenchange', onFsChange);
                 document.addEventListener('webkitfullscreenchange', onFsChange);
@@ -354,21 +513,26 @@
             }
         }
 
-        // --- Print button (T015) ---
+        // --- Print button ---
         if (config.showPrint !== false) {
             const printBtn = document.createElement('button');
             printBtn.className = 'bws-pdf-print';
-            printBtn.textContent = 'Print';
-            printBtn.setAttribute('aria-label', 'Print PDF');
+            printBtn.textContent = t.print;
+            printBtn.setAttribute('aria-label', t.printLabel);
             printBtn.setAttribute('type', 'button');
             printBtn.addEventListener('click', function() { window.print(); });
             controlsDiv.appendChild(printBtn);
         }
 
-        // Assemble: prev | counter | next [| fullscreen] [| print]
+        // T015: Assemble in order: prev | page-nav (input + counter) | next [| fullscreen] [| print].
+        // fullscreen/print were appended above; prepend the leading three in reverse so the
+        // final order is prev, pageNav, next, fullscreen, print.
+        controlsDiv.insertBefore(nextBtn, controlsDiv.firstChild);
+        controlsDiv.insertBefore(pageNav, controlsDiv.firstChild);
         controlsDiv.insertBefore(prevBtn, controlsDiv.firstChild);
-        controlsDiv.insertBefore(pageCounter, controlsDiv.children[1] || null);
-        controlsDiv.insertBefore(nextBtn, controlsDiv.children[2] || null);
+
+        // T018: roving tabindex — first control focusable, rest -1; arrows move focus.
+        setupToolbarRovingFocus(controlsDiv);
 
         container.appendChild(controlsDiv);
         updateCounter();
@@ -439,6 +603,10 @@
         const { container, config } = viewerData;
         viewerData.reiniting = true;
 
+        // T026: capture current page BEFORE teardown so we can restore reading
+        // position on the new viewer instance (FR-011, research D8).
+        const savedPage = (viewerData.viewer && viewerData.viewer.currentPage) || 1;
+
         // Remove existing canvas (flipbook renders into a <canvas> element)
         const oldCanvas = container.querySelector('canvas');
         if (oldCanvas) oldCanvas.remove();
@@ -482,6 +650,11 @@
             if (config.showControls !== false) {
                 addNavigationControls(viewerData);
             }
+
+            // T026: restore reading position on the new viewer instance.
+            if (savedPage > 1 && newViewer && newViewer.goToPage) {
+                newViewer.goToPage(savedPage);
+            }
         });
     }
 
@@ -508,6 +681,11 @@
 
         container.addEventListener('keydown', function(e) {
             if (currentFocusedViewer !== containerId) return;
+
+            // T019: events originating inside the toolbar are handled by the toolbar's
+            // own roving-focus / page-input logic — do not also flip pages here
+            // (resolves the arrows-flip-pages conflict, research D6).
+            if (e.target.closest && e.target.closest('.bws-pdf-viewer-controls')) return;
 
             const viewer = viewerData.viewer; // T022: read dynamically — survives reinit
             if (!viewer) return;
