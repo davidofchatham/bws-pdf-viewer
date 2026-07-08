@@ -125,6 +125,10 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 * DOCS: Rewrote the multi-domain section around the `bws_pdf_viewer_plugin_url`
   and `bws_pdf_viewer_pdf_url` filter hooks; removed the stale checkbox and
   Cloudflare-CORS configuration steps.
+* CHANGE: Relabeled the admin view-mode option "Single Page" to "Continuous"
+  (it scrolls through all pages; the old name misread as one-page-at-a-time).
+  Stored value now defaults to `document`; the legacy `singlepage` value is
+  still accepted. No runtime behavior change.
 
 = 0.4.2 =
 * FIX: Page-jump, Home/End, and reinit page-restore now land on the correct
