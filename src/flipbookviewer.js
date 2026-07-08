@@ -347,16 +347,23 @@ function showPages(ctx, viewer) {
   function show_pgs_1(left, right, cb) {
     const layout = calcLayout(ctx);
 
-    if(ctx.zoom == 0) show_bx_1(layout);
-
     // V21: when exactly one side is a real page (traditional cover, or a trailing
     // odd page), center that lone page instead of pinning it to its half with a
-    // blank adjacent slot. A full spread (both present) draws normally.
-    if(left && !right) {
-      show_pg_1(left, centeredHalf(layout));
-    } else if(right && !left) {
-      show_pg_1(right, centeredHalf(layout));
+    // blank adjacent slot. The traditional book wrapper fills the empty half with a
+    // BLANK page object (num===0), not null — so absence is `!pg || pg.num===0`,
+    // not just `!pg`. A full spread (both real) draws normally.
+    const leftReal  = isRealPage(left);
+    const rightReal = isRealPage(right);
+    if(leftReal && !rightReal) {
+      const loc = centeredHalf(layout);
+      if(ctx.zoom == 0) show_bx_1(loc);
+      show_pg_1(left, loc);
+    } else if(rightReal && !leftReal) {
+      const loc = centeredHalf(layout);
+      if(ctx.zoom == 0) show_bx_1(loc);
+      show_pg_1(right, loc);
     } else {
+      if(ctx.zoom == 0) show_bx_1(layout);
       const page_l = Object.assign({}, layout);
       const page_r = Object.assign({}, layout);
       page_l.width /= 2;
@@ -370,6 +377,15 @@ function showPages(ctx, viewer) {
 
   function show_pg_1(pg, loc) {
     canvas.ctx.drawImage(pg.img, loc.left, loc.top, loc.width, loc.height);
+  }
+
+  /*    way/
+   * V21: a page is "real" (occupies its slot) unless it's the traditional
+   * wrapper's blank filler, which carries num===0. Sources that don't tag pages
+   * with a numeric `num` are always treated as real.
+   */
+  function isRealPage(pg) {
+    return !!pg && pg.num !== 0;
   }
 
   /*    way/

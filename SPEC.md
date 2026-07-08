@@ -88,11 +88,13 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   single↔double rebuild path (that's flipbook-only) (see B3). Cites I.wp.
 - **V19. URL-load failure shows inline error + link.** network/404/timeout → inline message +
   direct new-tab link; container MUST NOT collapse. Cites I.wp.
-- **V21. Lone flipbook page centers, fills width.** when exactly one of {left,right} is a real page
+- **V21. Lone flipbook page centers, fills width.** when exactly one of {left,right} is a REAL page
   in a spread (traditional cover, or trailing odd page), draw it CENTERED on the canvas (offset
-  `layout.left + layout.width/4`, width `layout.width/2`) — never pinned to its half with blank
-  adjacent slot. 1-page book already forced `single` layout in I.wp; this covers the multi-page
-  spread edges (see B9, 001 FR-002). Cites I.flip.
+  `layout.left + layout.width/4`, width `layout.width/2`), box drawn to match — never pinned to its
+  half with blank adjacent slot. "Absent" is `!pg || pg.num===0`, NOT just `!pg`: the traditional
+  wrapper fills the empty half with a BLANK page object (`num:0`), not null, so a `!pg`-only check
+  fails to center the cover (see B9, B11). 1-page book already forced `single` layout in I.wp; this
+  covers the multi-page spread edges (001 FR-002). Cites I.flip.
 - **V22. Fullscreen relayouts flipbook, not document.** `fullscreenchange` MUST recompute flipbook
   canvas dimensions against the (enter/exit) container size and relayout so the page scales to fill —
   reuse the responsive reinit path, preserve current page (V17). Document/native mode is exempt
@@ -140,3 +142,4 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | B8 | 2026-07-07 | spread-layout goToPage + onSeen display-index↔page# mapping mismatch | V12 |
 | B9 | 2026-07-08 | flipbook lone page (cover/last-odd) drawn in its half-slot, off-center dead space — `show_pgs_1` always pins present page to page_l/page_r; regression vs 001 FR-002 | V21 |
 | B10 | 2026-07-08 | fullscreen expands container but canvas keeps pre-fullscreen px size, stuck top-left — layout computed once at init, `fullscreenchange` never relayouts | V22 |
+| B11 | 2026-07-08 | B9 fix incomplete — centered on `!pg` but traditional wrapper fills empty half with a blank page object (`num:0`), not null; cover still left-pinned. Fixed via `isRealPage` (`num!==0`) | V21 |
