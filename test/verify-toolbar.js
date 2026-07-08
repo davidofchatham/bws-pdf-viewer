@@ -188,6 +188,27 @@ async function main() {
   if (rjump && Number(preserved) >= 3) pass(`reinit: page preserved across layout change (landed ${preserved})`);
   else fail(`reinit: page not preserved (jumped to 4, landed ${preserved})`);
 
+  // ---------- Spread-layout goToPage lands on the correct spread ----------
+  // book_layout="spread": page 1 alone on the right of spread 0, then 2-3, 4-5, …
+  // goToPage uses floor(pageNum/2), so jumping to page 5 shows spread 2 (pages 4-5)
+  // and the counter reports that spread's left page = 4. (Previously the traditional-
+  // only formula landed on the wrong spread here.)
+  await page.waitForSelector('#bws-pdf-spread .bws-pdf-viewer-controls', { timeout: 20000 });
+  await page.waitForTimeout(500);
+  const spreadJump = await jump('bws-pdf-spread', '5', 'Enter');
+  if (String(spreadJump.currentPage) === '4') {
+    pass(`spread: goToPage(5) lands on spread with left page 4 (got ${spreadJump.currentPage})`);
+  } else {
+    fail(`spread: goToPage(5) landed wrong (currentPage=${spreadJump.currentPage}, expected 4)`);
+  }
+  // A jump to an even page should land that page as the spread's left page.
+  const spreadJump2 = await jump('bws-pdf-spread', '6', 'Enter');
+  if (String(spreadJump2.currentPage) === '6') {
+    pass(`spread: goToPage(6) lands on spread with left page 6 (got ${spreadJump2.currentPage})`);
+  } else {
+    fail(`spread: goToPage(6) landed wrong (currentPage=${spreadJump2.currentPage}, expected 6)`);
+  }
+
   // ---------- Zero console errors ----------
   if (errors.length === 0) pass('zero JS console errors');
   else fail('JS errors: ' + JSON.stringify(errors));

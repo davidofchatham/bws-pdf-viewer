@@ -3,7 +3,7 @@ Contributors: charles.lobo@gmail.com
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
 Tested up to: 6.4
-Stable tag: 0.4.1
+Stable tag: 0.4.2
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -104,6 +104,12 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 4. Responsive layout adapting to narrow containers
 
 == Changelog ==
+
+= 0.4.2 =
+* FIX: Page-jump, Home/End, and reinit page-restore now land on the correct
+  spread in flipbook mode with book_layout="spread". The mapping was traditional-
+  layout-only and put spread-layout jumps one spread off. Both layouts now share
+  a single floor(page/2) spread calculation.
 
 = 0.4.1 =
 * FIX: Document (native + image) mode no longer re-initialises on container resize.

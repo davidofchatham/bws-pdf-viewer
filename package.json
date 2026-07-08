@@ -1,6 +1,6 @@
 {
   "name": "bws-pdf-viewer",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "WordPress PDF viewer plugin with optional page flip animation, using HTML5 canvas and PDF.js",
   "main": "bws-pdf-viewer.php",
   "scripts": {

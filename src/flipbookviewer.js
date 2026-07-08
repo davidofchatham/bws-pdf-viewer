@@ -75,8 +75,11 @@ function setupControls(ctx, viewer) {
   /*    way/
    * jump directly to a 1-based page with no flip animation.
    * Respects the in-flight-flip guard exactly as flip_forward does.
-   * The display-index → spread mapping mirrors the traditional-layout book
-   * wrapper (page 1 alone on spread 0): page 1 → display 0; page n≥2 → display n.
+   * showPages renders spread `showNdx` as book.getPage(showNdx*2) and (showNdx*2+1).
+   * Both layouts place page P in spread floor(P/2):
+   *   traditional (wrapped): display 0→p1, 2→p2, 3→p3 …  → p1 in spread 0, p2/p3 spread 1
+   *   spread (raw, 1-based):  getPage(0)=∅, 1=p1, 2=p2 … → p1 in spread 0, p2/p3 spread 1
+   * so the single expression is correct for both — no layout branch needed.
    * showPages emits the 0-based 'seen' index itself, so we do not emit here
    * (preserves the payload convention — contracts/viewer-api.md).
    */
@@ -84,8 +87,7 @@ function setupControls(ctx, viewer) {
     if(ctx.flipNdx || ctx.flipNdx === 0) return;
     const total = ctx.book.numPages();
     if(pageNum < 1 || pageNum > total) return;
-    const displayNdx = (pageNum === 1) ? 0 : pageNum;
-    ctx.showNdx = Math.floor(displayNdx / 2);
+    ctx.showNdx = Math.floor(pageNum / 2);
     showPages(ctx, viewer);
   }
 

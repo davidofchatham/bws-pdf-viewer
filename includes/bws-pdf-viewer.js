@@ -444,9 +444,11 @@
         }
 
         // T021: Flipbook viewer emits a 0-based display index via the 'seen' event.
-        // Map it to a 1-based page number for the counter.
-        // Traditional layout: display 0 → page 1; display 2 → page 2; display 3 → page 3, etc.
-        // Conversion: keep the display index unless it is 0 (first spread left), which maps to page 1.
+        // Map it to the 1-based page number shown in the counter: the left page of
+        // the current spread. Spread s = floor(idx/2); its left page is s*2, except
+        // spread 0 which shows page 1 (the cover, traditional; or page 1 alone-on-
+        // right, spread layout). This holds for both book_layout modes — same as
+        // flipbookviewer.js goToPage's floor(pageNum/2) mapping.
         function onSeen(displayIndexOrPageNum) {
             const viewer = viewerData.viewer;
             if (!viewer) return;
@@ -456,17 +458,8 @@
                 viewer.currentPage = displayIndexOrPageNum;
             } else {
                 // Flipbook mode: event emits 0-based display index.
-                // We always show the left-page number of the current spread.
-                const idx = displayIndexOrPageNum;
-                const isLeft = (idx % 2 === 0);
-                let pageNum;
-                if (isLeft) {
-                    pageNum = (idx === 0) ? 1 : idx;
-                } else {
-                    // Right-page event — resolve to same spread's left page number
-                    pageNum = (idx === 1) ? 1 : (idx - 1);
-                }
-                viewer.currentPage = pageNum;
+                const spread = Math.floor(displayIndexOrPageNum / 2);
+                viewer.currentPage = (spread === 0) ? 1 : spread * 2;
             }
 
             updateCounter();
