@@ -228,7 +228,7 @@ class BWS_PDF_Viewer_Admin {
         }
 
         if (isset($input['view_mode'])) {
-            $sanitized['view_mode'] = in_array($input['view_mode'], array('flipbook', 'singlepage')) ? $input['view_mode'] : 'singlepage';
+            $sanitized['view_mode'] = in_array($input['view_mode'], array('flipbook', 'document', 'singlepage')) ? $input['view_mode'] : 'document';
         }
 
         if (isset($input['breakpoint'])) {
@@ -285,7 +285,7 @@ class BWS_PDF_Viewer_Admin {
                         <li><code>box_color</code> - Box color (hex)</li>
                         <li><code>layout</code> - auto, single, or double</li>
                         <li><code>book_layout</code> - traditional or spread</li>
-                        <li><code>view_mode</code> - flipbook or singlepage</li>
+                        <li><code>view_mode</code> - document (continuous) or flipbook</li>
                         <li><code>breakpoint</code> - Container width breakpoint (px)</li>
                         <li><code>enable_animations</code> - true or false</li>
                     </ul>
@@ -390,13 +390,17 @@ class BWS_PDF_Viewer_Admin {
 
     public function render_view_mode_field() {
         $options = get_option('bws_pdf_viewer_options', array());
-        $value = isset($options['view_mode']) ? $options['view_mode'] : 'singlepage';
+        $value = isset($options['view_mode']) ? $options['view_mode'] : 'document';
+        // 'singlepage' is a legacy stored value normalised to 'document' at render time.
+        if ($value === 'singlepage') {
+            $value = 'document';
+        }
         ?>
         <select name="bws_pdf_viewer_options[view_mode]">
-            <option value="singlepage" <?php selected($value, 'singlepage'); ?>><?php _e('Single Page (recommended for accessibility)', 'bws-pdf-viewer'); ?></option>
+            <option value="document" <?php selected($value, 'document'); ?>><?php _e('Continuous (recommended for accessibility)', 'bws-pdf-viewer'); ?></option>
             <option value="flipbook" <?php selected($value, 'flipbook'); ?>><?php _e('Flipbook (animated page flips)', 'bws-pdf-viewer'); ?></option>
         </select>
-        <p class="description"><?php _e('Viewer mode. Single Page is more accessible with better screen reader support. Flipbook shows animated page turns.', 'bws-pdf-viewer'); ?></p>
+        <p class="description"><?php _e('Viewer mode. Continuous scrolls through pages and is more accessible with better screen reader support. Flipbook shows animated page turns.', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
