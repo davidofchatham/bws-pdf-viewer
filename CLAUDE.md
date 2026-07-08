@@ -348,3 +348,17 @@ The core library supports any book source via the book interface:
 ```
 
 See `test/book-imgs.js` for an image-based book example.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues in `davidofchatham/bws-pdf-viewer` (fork; `gh` default pinned to origin) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical five-role vocabulary (`needs-triage` / `needs-info` / `ready-for-agent` / `ready-for-human` / `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at repo root. See `docs/agents/domain.md`.
