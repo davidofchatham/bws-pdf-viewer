@@ -1,4 +1,4 @@
-# SPEC — BWS PDF Viewer (0.4.2, pre-release / in-flight)
+# SPEC — BWS PDF Viewer (0.4.4, pre-release / in-flight)
 
 Living ledger. 001-pdf-viewer (viewer core) coded; 002-integrated-viewer-toolbar (shared toolbar +
 PDF.js component adoption) coded on branch `002-integrated-viewer-toolbar` — NOT yet tested/PR'd/merged.
@@ -51,9 +51,14 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   fade/instant only. Cites I.wp, I.flip.
 - **V5. Config precedence honored 3-tier.** defaults→admin option→shortcode; att wins per-key;
   admin default applies only when att absent. `show_controls` MUST follow this (see B6). Cites I.php.
-- **V6. Page nav always present; only optional controls togglable.** prev/next + counter always
-  rendered (never removed by config); prev/next MAY disable at first/last page (edge state). Optional
-  fullscreen/print gated by `show_fullscreen`/`show_print`/`show_controls`. Cites I.controls,I.php.
+- **V6. Page nav context-dependent; optional controls togglable.** page-nav group (prev/next +
+  page-input + "of N" counter) rendered ONLY when navigation is meaningful = flipbook multi-page.
+  HIDDEN when meaningless: continuous/document mode (`config.singlepage` true — all pages stacked/
+  scrolled) OR single-page file (`numPages()===1`, any mode). When shown, prev/next MAY disable at
+  first/last page (edge state). Toolbar bar still renders for fullscreen/print unless `show_controls`
+  false; fullscreen/print gated by `show_fullscreen`/`show_print`/`show_controls`. (Amended 2026-07-08,
+  issue #8 — reverses old "nav always rendered" rule; toolbar docks at bottom, not floated, so
+  scroll-tracking count adds no value.) Cites I.controls,I.php.
 - **V7. Native mode uses maintained PDF.js layer builders.** canvas + TextLayerBuilder (selection +
   browser find) + AnnotationLayerBuilder (links) + shared link service; internal links navigate,
   external new-tab. No hand-rolled layer positioning. Cites I.native.
@@ -83,6 +88,15 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   single↔double rebuild path (that's flipbook-only) (see B3). Cites I.wp.
 - **V19. URL-load failure shows inline error + link.** network/404/timeout → inline message +
   direct new-tab link; container MUST NOT collapse. Cites I.wp.
+- **V21. Lone flipbook page centers, fills width.** when exactly one of {left,right} is a real page
+  in a spread (traditional cover, or trailing odd page), draw it CENTERED on the canvas (offset
+  `layout.left + layout.width/4`, width `layout.width/2`) — never pinned to its half with blank
+  adjacent slot. 1-page book already forced `single` layout in I.wp; this covers the multi-page
+  spread edges (see B9, 001 FR-002). Cites I.flip.
+- **V22. Fullscreen relayouts flipbook, not document.** `fullscreenchange` MUST recompute flipbook
+  canvas dimensions against the (enter/exit) container size and relayout so the page scales to fill —
+  reuse the responsive reinit path, preserve current page (V17). Document/native mode is exempt
+  (V18): reflows via CSS `max-width:100%`, MUST NOT reinit. Cites I.wp,I.controls (see B10).
 - **V20. [deferred] Site-wide mode disable not built.** `disabled_modes` default exists in
   `bws-pdf-viewer.php` but no admin UI renders/sanitizes it; `view_mode` is single-select (pick
   one — neither document nor flipbook is individually disableable). If per-mode enable/disable
@@ -109,6 +123,9 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | T14 | -  | zoom controls (deferred unless trivial from component adoption) | . |
 | T15 | -  | in-viewer search (future; enabled-by not part-of 002) | V7 |
 | T16 | -  | Gutenberg block authoring interface (deferred, shortcode-only this release) | V8 |
+| T19 | .  | context-aware page-nav hide (continuous mode / 1-page file) + toolbar restyle (#7,#8) | V6,V10,I.controls,I.css |
+| T20 | .  | center lone flipbook page (cover/trailing-odd) — fix show_pgs_1 (#5) | V21,I.flip |
+| T21 | .  | relayout flipbook on fullscreenchange, document exempt (#6) | V22,I.wp,I.controls |
 
 ## §B — bugs
 | id | date       | cause | fix |
@@ -121,3 +138,5 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | B6 | 2026-07-07 | `show_controls` precedence broke documented 3-tier model; unchecked state not persisted | V5 |
 | B7 | 2026-07-07 | next-button string concat instead of numeric add (page-jump math) | V12 |
 | B8 | 2026-07-07 | spread-layout goToPage + onSeen display-index↔page# mapping mismatch | V12 |
+| B9 | 2026-07-08 | flipbook lone page (cover/last-odd) drawn in its half-slot, off-center dead space — `show_pgs_1` always pins present page to page_l/page_r; regression vs 001 FR-002 | V21 |
+| B10 | 2026-07-08 | fullscreen expands container but canvas keeps pre-fullscreen px size, stuck top-left — layout computed once at init, `fullscreenchange` never relayouts | V22 |

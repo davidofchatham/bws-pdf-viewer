@@ -3,7 +3,7 @@ Contributors: charles.lobo@gmail.com
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
 Tested up to: 6.4
-Stable tag: 0.4.3
+Stable tag: 0.4.4
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -117,6 +117,21 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 4. Responsive layout adapting to narrow containers
 
 == Changelog ==
+
+= 0.4.4 =
+* FIX: Flipbook cover/lone page now centers and fills the spread width instead of
+  drawing in its left half with blank dead space beside it (traditional cover and
+  trailing odd page). Restores the original single-page centering rule. (#5)
+* FIX: Entering/exiting fullscreen now relayouts the flipbook so the canvas rescales
+  to fill the fullscreen area, instead of keeping its pre-fullscreen size stuck at
+  the top-left. Document mode is unaffected (reflows via CSS). (#6)
+* CHANGE: The page-nav controls (prev/next + page-jump field + counter) are now hidden
+  in Continuous/document mode and for single-page files, where paging is meaningless —
+  all pages are already visible. Fullscreen and print stay. Flipbook multi-page still
+  shows full nav. (#8)
+* STYLE: Restyled the toolbar to a neutral flat PDF.js-like aesthetic (dark slate bar,
+  monochrome buttons, subtle borders/hover) instead of the three bright WordPress-admin
+  hues. Exposed `--bws-*` CSS variables so a theme or admin can override the palette. (#7)
 
 = 0.4.3 =
 * REMOVE: Dead "Enable Portal Integration" admin setting. It was read by no

@@ -105,22 +105,31 @@ async function main() {
     });
   };
 
-  // Valid in-range jump (document mode, 12-page fixture)
-  let r = await jump('bws-pdf-doc', '5', 'Enter');
-  if (String(r.currentPage) === '5' && String(r.value) === '5') pass('jump: valid page navigates + syncs input');
+  // V6 (amended 2026-07-08, issue #8): the page-nav group is hidden in document/
+  // continuous mode — all pages are stacked, so prev/next + page-jump are
+  // meaningless. The page-jump state machine is therefore verified against a
+  // FLIPBOOK container (#bws-pdf-flip: double/traditional, 12-page fixture) where
+  // navigation is meaningful. Flipbook counter maps a jumped page to its spread's
+  // left page (floor mapping): goToPage(5) lands the spread whose left page is 4.
+  // NOTE: if IDEAS #1 "Contained Continuous" ships (a viewport-bounded continuous
+  // mode), page-nav returns for that mode and needs its own coverage here.
+
+  // Valid in-range jump — flipbook maps page 5 -> spread left page 4.
+  let r = await jump('bws-pdf-flip', '5', 'Enter');
+  if (String(r.currentPage) === '4' && String(r.value) === '4') pass('jump: valid page navigates + syncs input (flip spread map 5->4)');
   else fail('jump: valid failed: ' + JSON.stringify(r));
 
-  // Out-of-range clamps to last page
-  r = await jump('bws-pdf-doc', '999', 'Enter');
+  // Out-of-range clamps to last page (12, even -> its own spread left page).
+  r = await jump('bws-pdf-flip', '999', 'Enter');
   if (String(r.currentPage) === '12') pass('jump: out-of-range clamps to last page (12)');
   else fail('jump: clamp failed: ' + JSON.stringify(r));
 
   // Non-numeric restores current page, no navigation
-  await page.click('#bws-pdf-doc .bws-pdf-page-input');
-  await page.fill('#bws-pdf-doc .bws-pdf-page-input', 'abc');
-  await page.press('#bws-pdf-doc .bws-pdf-page-input', 'Enter');
+  await page.click('#bws-pdf-flip .bws-pdf-page-input');
+  await page.fill('#bws-pdf-flip .bws-pdf-page-input', 'abc');
+  await page.press('#bws-pdf-flip .bws-pdf-page-input', 'Enter');
   await page.waitForTimeout(400);
-  r = await page.$eval('#bws-pdf-doc', (c) => ({
+  r = await page.$eval('#bws-pdf-flip', (c) => ({
     value: c.querySelector('.bws-pdf-page-input').value,
     currentPage: window.BwsPdfViewerWP.activeViewers.get(c.id)?.viewer?.currentPage,
   }));
@@ -128,28 +137,45 @@ async function main() {
   else fail('jump: non-numeric restore failed: ' + JSON.stringify(r));
 
   // Escape restores without navigating
-  await page.click('#bws-pdf-doc .bws-pdf-page-input');
-  await page.fill('#bws-pdf-doc .bws-pdf-page-input', '3');
-  await page.press('#bws-pdf-doc .bws-pdf-page-input', 'Escape');
+  await page.click('#bws-pdf-flip .bws-pdf-page-input');
+  await page.fill('#bws-pdf-flip .bws-pdf-page-input', '3');
+  await page.press('#bws-pdf-flip .bws-pdf-page-input', 'Escape');
   await page.waitForTimeout(300);
-  r = await page.$eval('#bws-pdf-doc', (c) => ({
+  r = await page.$eval('#bws-pdf-flip', (c) => ({
     value: c.querySelector('.bws-pdf-page-input').value,
     currentPage: window.BwsPdfViewerWP.activeViewers.get(c.id)?.viewer?.currentPage,
   }));
   if (String(r.currentPage) === '12' && String(r.value) === '12') pass('inv5: Escape restores without navigating');
   else fail('inv5: Escape failed: ' + JSON.stringify(r));
 
-  // ---------- Invariant 10: counter aria-hidden; input carries the page ----------
+  // ---------- V6: page-nav HIDDEN in document/continuous mode ----------
+  const docNav = await page.evaluate(() => {
+    const c = document.getElementById('bws-pdf-doc');
+    return {
+      hasInput: !!c.querySelector('.bws-pdf-page-input'),
+      hasPrev: !!c.querySelector('.bws-pdf-prev'),
+      hasNext: !!c.querySelector('.bws-pdf-next'),
+      // fullscreen/print must still be present (bar renders, only nav hidden)
+      hasFullscreen: !!c.querySelector('.bws-pdf-fullscreen'),
+      hasPrint: !!c.querySelector('.bws-pdf-print'),
+    };
+  });
+  if (!docNav.hasInput && !docNav.hasPrev && !docNav.hasNext) pass('V6: document mode hides page-nav (no prev/next/input)');
+  else fail('V6: document mode still shows page-nav: ' + JSON.stringify(docNav));
+  if (docNav.hasFullscreen && docNav.hasPrint) pass('V6: document-mode toolbar keeps fullscreen + print');
+  else fail('V6: document-mode fullscreen/print missing: ' + JSON.stringify(docNav));
+
+  // ---------- Invariant 10: counter aria-hidden; input carries the page (flip) ----------
   const counter = await page.evaluate(() => {
-    const c = document.querySelector('#bws-pdf-doc .bws-pdf-viewer-page-counter');
+    const c = document.querySelector('#bws-pdf-flip .bws-pdf-viewer-page-counter');
     return { ariaHidden: c?.getAttribute('aria-hidden'), text: c?.textContent };
   });
   if (counter.ariaHidden === 'true' && /of\s+12/.test(counter.text)) pass(`inv10: counter aria-hidden, text "${counter.text}"`);
   else fail('inv10: counter wrong: ' + JSON.stringify(counter));
 
-  // ---------- Invariant 8: SR live region carries "Page N of M" ----------
+  // ---------- Invariant 8: SR live region carries "Page N of M" (flip) ----------
   const announcer = await page.evaluate(() => {
-    const a = document.querySelector('#bws-pdf-doc .bws-pdf-viewer-sr-announcer');
+    const a = document.querySelector('#bws-pdf-flip .bws-pdf-viewer-sr-announcer');
     return { live: a?.getAttribute('aria-live'), text: a?.textContent };
   });
   if (announcer.live === 'polite' && /Page\s+\d+\s+of\s+12/.test(announcer.text)) pass(`inv8: live region "${announcer.text}"`);

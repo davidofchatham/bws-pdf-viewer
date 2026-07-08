@@ -110,14 +110,27 @@
    T015/T016: last child of the container so it inherits :fullscreen; PDF.js-idiom
    dark compact overlay bar. flex-wrap so narrow containers wrap rather than clip. */
 .bws-pdf-viewer-controls {
+    /* Theme surface — override any --bws-* var from a host theme or admin. */
+    --bws-toolbar-bg:        #38383d;
+    --bws-btn-fg:            #f0f0f0;
+    --bws-btn-bg:            transparent;
+    --bws-btn-border:        rgba(255, 255, 255, 0.18);
+    --bws-btn-hover-bg:      rgba(255, 255, 255, 0.08);
+    --bws-btn-active-bg:     rgba(255, 255, 255, 0.14);
+    --bws-btn-disabled-fg:   rgba(255, 255, 255, 0.35);
+    --bws-focus-ring:        #4ea3e0;
+    --bws-input-bg:          #ffffff;
+    --bws-input-fg:          #222222;
+    --bws-input-border:      rgba(255, 255, 255, 0.28);
+
     order: 99; /* keep the bar last visually even if DOM order shifts */
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     padding: 6px 10px;
-    background-color: #353535;
+    background-color: var(--bws-toolbar-bg);
     box-sizing: border-box;
     width: 100%;
 }
@@ -127,7 +140,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: #f0f0f0;
+    color: var(--bws-btn-fg);
     font-size: 14px;
 }
 
@@ -137,78 +150,57 @@
     min-height: 24px;
     padding: 4px 6px;
     text-align: center;
-    border: 1px solid #777;
+    border: 1px solid var(--bws-input-border);
     border-radius: 4px;
-    background-color: #ffffff;
-    color: #222;
+    background-color: var(--bws-input-bg);
+    color: var(--bws-input-fg);
     font-size: 14px;
     line-height: 1.4;
 }
 
 .bws-pdf-page-input:focus-visible {
-    outline: 2px solid #4ea3e0;
+    outline: 2px solid var(--bws-focus-ring);
     outline-offset: 1px;
-    border-color: #4ea3e0;
+    border-color: var(--bws-focus-ring);
 }
 
+/* Flat monochrome buttons — PDF.js-idiom neutral bar. All hues come from
+   --bws-* vars so a host theme/admin can override without touching selectors. */
 .bws-pdf-viewer-controls button {
     /* Minimum 24×24px target (WCAG 2.2 §2.5.8) — comfortably exceeded */
     min-width: 44px;
     min-height: 36px;
     padding: 6px 14px;
-    background-color: #0073aa;
-    color: #ffffff;
-    border: none;
+    background-color: var(--bws-btn-bg);
+    color: var(--bws-btn-fg);
+    border: 1px solid var(--bws-btn-border);
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
     line-height: 1.4;
-    transition: background-color 0.2s;
+    transition: background-color 0.15s, border-color 0.15s;
 }
 
 .bws-pdf-viewer-controls button:hover {
-    background-color: #005a87;
+    background-color: var(--bws-btn-hover-bg);
+}
+
+.bws-pdf-viewer-controls button:active {
+    background-color: var(--bws-btn-active-bg);
 }
 
 .bws-pdf-viewer-controls button:disabled {
-    background-color: #cccccc;
-    color: #666666;
+    color: var(--bws-btn-disabled-fg);
+    border-color: transparent;
+    background-color: transparent;
     cursor: not-allowed;
 }
 
 /* Focus indicator — min 3:1 contrast ratio, min 2px (WCAG 2.2 §2.4.11) */
 .bws-pdf-viewer-controls button:focus-visible {
-    outline: 3px solid #0073aa;
-    outline-offset: 3px;
-    box-shadow: 0 0 0 5px rgba(0, 115, 170, 0.25);
-}
-
-/* Fullscreen button */
-.bws-pdf-viewer-controls .bws-pdf-fullscreen {
-    background-color: #46b450;
-}
-
-.bws-pdf-viewer-controls .bws-pdf-fullscreen:hover {
-    background-color: #358c3e;
-}
-
-.bws-pdf-viewer-controls .bws-pdf-fullscreen:focus-visible {
-    outline-color: #46b450;
-    box-shadow: 0 0 0 5px rgba(70, 180, 80, 0.25);
-}
-
-/* Print button */
-.bws-pdf-viewer-controls .bws-pdf-print {
-    background-color: #826eb4;
-}
-
-.bws-pdf-viewer-controls .bws-pdf-print:hover {
-    background-color: #6a5997;
-}
-
-.bws-pdf-viewer-controls .bws-pdf-print:focus-visible {
-    outline-color: #826eb4;
-    box-shadow: 0 0 0 5px rgba(130, 110, 180, 0.25);
+    outline: 3px solid var(--bws-focus-ring);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(78, 163, 224, 0.25);
 }
 
 /* High contrast mode — ensure buttons remain visible */
@@ -221,7 +213,7 @@
 /* Page counter (display-only "of N" text on the dark bar) */
 .bws-pdf-viewer-page-counter {
     font-size: 14px;
-    color: #f0f0f0;
+    color: var(--bws-btn-fg);
 }
 
 /* Accessibility: Skip to content link */

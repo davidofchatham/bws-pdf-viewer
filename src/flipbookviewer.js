@@ -349,18 +349,37 @@ function showPages(ctx, viewer) {
 
     if(ctx.zoom == 0) show_bx_1(layout);
 
-    const page_l = Object.assign({}, layout);
-    const page_r = Object.assign({}, layout);
-    page_l.width /= 2;
-    page_r.width /= 2;
-    page_r.left = layout.mid;
-    if(left) show_pg_1(left, page_l);
-    if(right) show_pg_1(right, page_r);
+    // V21: when exactly one side is a real page (traditional cover, or a trailing
+    // odd page), center that lone page instead of pinning it to its half with a
+    // blank adjacent slot. A full spread (both present) draws normally.
+    if(left && !right) {
+      show_pg_1(left, centeredHalf(layout));
+    } else if(right && !left) {
+      show_pg_1(right, centeredHalf(layout));
+    } else {
+      const page_l = Object.assign({}, layout);
+      const page_r = Object.assign({}, layout);
+      page_l.width /= 2;
+      page_r.width /= 2;
+      page_r.left = layout.mid;
+      if(left) show_pg_1(left, page_l);
+      if(right) show_pg_1(right, page_r);
+    }
     cb();
   }
 
   function show_pg_1(pg, loc) {
     canvas.ctx.drawImage(pg.img, loc.left, loc.top, loc.width, loc.height);
+  }
+
+  /*    way/
+   * V21: a single page occupies one half-width, centered in the full spread box.
+   */
+  function centeredHalf(layout) {
+    const loc = Object.assign({}, layout);
+    loc.width = layout.width / 2;
+    loc.left = layout.left + layout.width / 4;
+    return loc;
   }
 
   function show_bx_1(loc) {

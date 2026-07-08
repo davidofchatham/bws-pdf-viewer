@@ -328,6 +328,14 @@
 
         const t = getStrings();
 
+        // V6: page-nav group is context-dependent. Hide prev/next + page-input +
+        // counter when navigation is meaningless — continuous/document mode (all
+        // pages stacked/scrolled) or a single-page file (nothing to page through).
+        // Flipbook multi-page is the only case that shows nav. Fullscreen/print are
+        // unaffected and still render per their own gating.
+        const pageCount = viewerData.bookWrapper ? viewerData.bookWrapper.numPages() : 0;
+        const showPageNav = !config.singlepage && pageCount > 1;
+
         const controlsDiv = document.createElement('div');
         controlsDiv.className = 'bws-pdf-viewer-controls';
         // T010: WAI-ARIA toolbar semantics (toolbar-dom.md invariant 2)
@@ -434,6 +442,7 @@
         // Counter update: reads from viewerData.viewer each call so it stays correct
         // after responsive reinit replaces the viewer instance.
         function updateCounter() {
+            if (!showPageNav) return; // nav hidden — nothing to sync
             const viewer = viewerData.viewer;
             const current = (viewer && viewer.currentPage) || 1;
             const total   = (viewer && viewer.page_count) || 0;
@@ -533,9 +542,16 @@
         // T015: Assemble in order: prev | page-nav (input + counter) | next [| fullscreen] [| print].
         // fullscreen/print were appended above; prepend the leading three in reverse so the
         // final order is prev, pageNav, next, fullscreen, print.
-        controlsDiv.insertBefore(nextBtn, controlsDiv.firstChild);
-        controlsDiv.insertBefore(pageNav, controlsDiv.firstChild);
-        controlsDiv.insertBefore(prevBtn, controlsDiv.firstChild);
+        // V6: page-nav group only when navigation is meaningful (flipbook multi-page).
+        if (showPageNav) {
+            controlsDiv.insertBefore(nextBtn, controlsDiv.firstChild);
+            controlsDiv.insertBefore(pageNav, controlsDiv.firstChild);
+            controlsDiv.insertBefore(prevBtn, controlsDiv.firstChild);
+        }
+
+        // Nothing to show (nav hidden + fullscreen/print both off/unsupported) —
+        // skip the empty bar rather than render a bare dark strip.
+        if (!controlsDiv.firstChild) return null;
 
         // T018: roving tabindex — first control focusable, rest -1; arrows move focus.
         setupToolbarRovingFocus(controlsDiv);
@@ -572,7 +588,39 @@
         // teardown does not clean up — so never reinit those modes.
         if (config.singlepage) return;
 
-        if (config.layout !== 'auto') return; // fixed layout — nothing to do
+        // V22: relayout the flipbook when entering/exiting fullscreen so the canvas
+        // rescales to the fullscreen dimensions instead of keeping its pre-fullscreen
+        // pixel size stuck top-left (B10). Attached for BOTH auto and fixed layouts —
+        // fixed layouts don't reflow on width via the ResizeObserver below, but the
+        // canvas still must rescale to the fullscreen size. Document mode is exempt
+        // (returned above): it reflows via CSS max-width:100%.
+        const onFullscreenRelayout = function() {
+            const isFs = (document.fullscreenElement === container ||
+                          document.webkitFullscreenElement === container);
+            const wasFs = (document.fullscreenElement || document.webkitFullscreenElement);
+            // Only act on transitions involving THIS container (enter its own fs, or
+            // exit while it was the fs element). Other containers' events are ignored.
+            if (!isFs && wasFs) return;
+
+            // Defer one frame so the browser has applied the fullscreen box size
+            // before we read container dimensions.
+            requestAnimationFrame(function() {
+                if (viewerData.reiniting) return;
+                const width = container.offsetWidth;
+                const targetLayout = (config.layout === 'auto')
+                    ? (width >= config.breakpoint ? 'double' : 'single')
+                    : viewerData.layout;
+                reinitViewer(containerId, viewerData, targetLayout, initialOpts);
+            });
+        };
+        document.addEventListener('fullscreenchange', onFullscreenRelayout);
+        document.addEventListener('webkitfullscreenchange', onFullscreenRelayout);
+        viewerData.fullscreenRelayoutTeardown = function() {
+            document.removeEventListener('fullscreenchange', onFullscreenRelayout);
+            document.removeEventListener('webkitfullscreenchange', onFullscreenRelayout);
+        };
+
+        if (config.layout !== 'auto') return; // fixed layout — no single↔double observer
 
         if (typeof ResizeObserver === 'undefined') {
             console.warn('ResizeObserver not supported — responsive layout adaptation disabled');
