@@ -82,17 +82,17 @@ The plugin supports three viewer modes:
    - Uses `flipbookviewer.js`
    - Always uses image-based rendering
 
-2. **Single-Page Mode - Native** (Desktop, `view_mode="singlepage"`)
+2. **Document Mode - Native** (Desktop, `view_mode="document"`)
    - Uses `nativepageviewer.js`
    - Direct PDF.js rendering with three layers:
      - **Canvas layer**: Visual rendering of PDF content
-     - **Text layer**: Enables text selection and search (positioned absolutely over canvas)
+     - **Text layer**: Enables text selection and browser find (Ctrl+F); positioned over canvas
      - **Annotation layer**: Enables clickable links and form interactions
    - Lazy loading with IntersectionObserver (200px rootMargin buffer)
    - Memory management: Cleans up pages >5 away from current view
    - Auto-enabled on: desktop (screen ≥1024px OR !touch)
 
-3. **Single-Page Mode - Image** (Mobile, `view_mode="singlepage"`)
+3. **Document Mode - Image** (Mobile, `view_mode="document"`)
    - Uses `singlepageviewer.js`
    - Converts PDF pages to images
    - Lightweight for mobile devices
@@ -102,47 +102,20 @@ The plugin supports three viewer modes:
 - Automatic: Hybrid detection based on touch capability + screen width
 - Override: `force_native="true"` or `force_native="false"` shortcode attribute
 
-Implementation: `initViewer()` in `includes/bws-pdf-viewer.js:30`
+Implementation: `initViewer()` in `includes/bws-pdf-viewer.js`.
 
 #### Native Viewer Layer Architecture
 
-The native PDF.js viewer creates a three-layer rendering system for each page:
+Native document mode renders each page as three stacked layers — canvas (visual),
+text (selection + browser find), annotation (links). Text and annotation layers are
+built with the official PDF.js `TextLayerBuilder` and `AnnotationLayerBuilder` plus a
+shared link service; internal links navigate, external links open in a new tab.
 
-**HTML Structure:**
-```html
-<div class="page-container" data-page-number="1">
-  <canvas class="pdf-canvas"></canvas>         <!-- Visual rendering -->
-  <div class="textLayer"></div>                <!-- Text selection -->
-  <div class="annotationLayer"></div>          <!-- Links & forms -->
-</div>
-```
-
-**Layer Details:**
-1. **Canvas Layer** (`pdf-canvas`)
-   - Renders PDF visual content at devicePixelRatio for HiDPI displays
-   - Created via `page.render()` from PDF.js
-
-2. **Text Layer** (`textLayer`)
-   - Positioned absolutely over canvas with `opacity: 0.2`
-   - Contains transparent `<span>` elements for each text fragment
-   - Enables native browser text selection and search (Ctrl+F)
-   - Created via `page.getTextContent()` and manual span positioning
-
-3. **Annotation Layer** (`annotationLayer`)
-   - Positioned absolutely over canvas
-   - Contains clickable `<a>` elements for PDF links
-   - Hover highlights links with yellow background
-   - Created via `page.getAnnotations()` and manual positioning
-
-**CSS Requirements:**
-- All layers must be `position: absolute` with matching dimensions
-- Text layer spans need exact positioning via `transform` and `font-size`
-- See `includes/bws-pdf-viewer.css:157-260` for complete styles
-
-**Performance:**
-- Uses IntersectionObserver to lazy-load pages (200px buffer)
-- Cleanup function removes canvas/text/annotation for distant pages (>5 away)
-- Only 5-7 pages kept in memory at once
+Structural details (element classes, positioning, cleanup thresholds) live in the
+code and its CSS — read `nativepageviewer.js` and the layer styles in
+`includes/bws-pdf-viewer.css`. Behavioral facts worth knowing up front:
+- Lazy-loads pages via IntersectionObserver (~200px buffer).
+- Keeps only ~5–7 pages in memory; distant pages are torn down.
 
 ### Data Flow
 
@@ -167,13 +140,13 @@ The plugin supports two book layouts controlled by `book_layout` parameter:
 - **traditional** (default): Page 1 displayed alone as cover, then pages 2-3, 4-5, etc.
 - **spread**: Start with pages 1-2, then 3-4, 5-6, etc.
 
-Traditional layout is implemented via `createBookWrapper()` in `includes/bws-pdf-viewer.js:121` which intercepts `getPage()` calls and returns `null` for display position 1 (right side of first spread).
+Traditional layout is implemented via `createBookWrapper()` in `includes/bws-pdf-viewer.js`, which intercepts `getPage()` calls and returns `null` for display position 1 (right side of first spread).
 
 ### Container-Based Responsiveness
 
 Unlike viewport-based responsive design, this plugin uses **ResizeObserver** to detect actual container width (not viewport width). This allows multiple flipbooks on the same page to each adapt to their specific container size.
 
-Implementation: `setupResponsiveBehavior()` in `includes/bws-pdf-viewer.js:261`
+Implementation: `setupResponsiveBehavior()` in `includes/bws-pdf-viewer.js`.
 
 When `layout="auto"`:
 - Container width >= `breakpoint` (default 768px) → double-page spread
@@ -185,7 +158,7 @@ When `layout="auto"`:
 - **Keyboard Navigation**: Arrow keys, Page Up/Down, Space for navigation (container must be focused)
 - **Focus Management**: Containers made focusable with `tabindex="0"`
 
-Implementation: `setupKeyboardNavigation()` in `includes/bws-pdf-viewer.js:293`
+Implementation: `setupKeyboardNavigation()` in `includes/bws-pdf-viewer.js`.
 
 ## Important Notes
 
@@ -198,7 +171,7 @@ WordPress scripts are loaded in this order:
 
 **Note:** The worker (`pdf.worker.js`) is automatically loaded by `pdf.js` via webpack's dynamic import. No separate script registration needed.
 
-Defined in `BWS_PDF_Viewer::register_assets()` in `bws-pdf-viewer.php:103`
+Defined in `BWS_PDF_Viewer::register_assets()`.
 
 ### @tpp/htm-x Import Usage
 
@@ -234,13 +207,13 @@ All asset URLs use `plugin_dir_url()` which dynamically generates URLs based on 
 2. Admin settings from `get_option('bws_pdf_viewer_options')`
 3. Shortcode attributes override everything
 
-Merged in `BWS_PDF_Viewer::shortcode_handler()` at `bws-pdf-viewer.php:164`
+Merged in `BWS_PDF_Viewer::shortcode_handler()`.
 
 ### HiDPI Support
 
 Both the core library and WordPress integration detect `window.devicePixelRatio` and render canvas at higher resolution for Retina displays.
 
-See `outputScale` in `src/flipbookviewer.js:7` and `includes/bws-pdf-viewer.js:190`
+See `outputScale` in `src/flipbookviewer.js` and `includes/bws-pdf-viewer.js`.
 
 ## File Structure
 
@@ -330,30 +303,35 @@ const div = h('div.class');
 ### Shortcode Attributes
 
 **Basic Attributes:**
-- `view_mode` - "singlepage" (default) or "flipbook"
+- `view_mode` - "document" (default) or "flipbook"; "singlepage" is a legacy alias for "document"
 - `width` - Container width (default: "100%")
 - `height` - Container height (default: "auto")
 - `layout` - "auto", "single", or "double"
 - `book_layout` - "traditional" or "spread"
 
-**Hybrid Viewer Attributes (added in the release formerly numbered 3.1; now 0.3.1 after the pre-1.0 scheme reset):**
+**Hybrid Viewer Attributes:**
 - `force_native` - "true", "false", or null (auto-detect)
   - Forces native or image mode regardless of device
 - `show_controls` - true/false (default: true)
-  - Display navigation controls (prev/next, page counter)
-- `enable_search` - true/false (default: false)
-  - Enable search UI (future feature)
+  - Display the navigation toolbar (prev/next, page-jump field, page counter)
+- `show_fullscreen` - true/false (default: true)
+  - Show the fullscreen button in the toolbar
+- `show_print` - true/false (default: true)
+  - Show the print button in the toolbar
+
+Note: in-viewer search (`enable_search`) is not implemented and is not a recognized
+shortcode attribute. Portal integration is an admin setting, not a shortcode attribute.
 
 **Example:**
 ```
-[bws_pdf view_mode="singlepage" force_native="true" show_controls="true"]
+[bws_pdf view_mode="document" force_native="true" show_controls="true"]
 https://example.com/document.pdf
 [/bws_pdf]
 ```
 
 ### Adding New Shortcode Parameters
 
-1. Add to `$default_options` in `bws-pdf-viewer.php:39`
+1. Add to `$default_options` in `BWS_PDF_Viewer`
 2. Add to `shortcode_atts()` in `BWS_PDF_Viewer::shortcode_handler()`
 3. Add to `$config` array in shortcode handler
 4. Handle in `initViewer()` in `includes/bws-pdf-viewer.js`

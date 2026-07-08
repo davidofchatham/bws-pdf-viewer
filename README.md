@@ -1,16 +1,21 @@
 # BWS PDF Viewer
 
-Amazing flip book component with animated pages - now available as a WordPress plugin!
+> ## ⚠️ PRE-RELEASE — NOT SAFE TO USE
+>
+> **This plugin is pre-1.0 and has never shipped a publicly usable release.**
+> It is under active development, may break without notice, and is **not
+> intended for production sites**. No support, no stability guarantee, no
+> backward-compatibility promise between versions. Use at your own risk.
+
+A WordPress plugin that embeds PDFs as an animated flipbook or a scrollable
+single-page viewer. Built on a small flipbook library plus Mozilla PDF.js.
 
 ![demo](./test/demo.gif)
 
-This is a tiny library that can show flip books from any source (including PDF's, images, etc).
+## WordPress Plugin
 
-## 🎉 WordPress Plugin
+Embed a PDF with the `[bws_pdf]` shortcode:
 
-This library is now available as a full-featured WordPress plugin! Simply use the shortcode to embed beautiful, accessible PDF flipbooks in your posts and pages.
-
-**Quick Start:**
 ```
 [bws_pdf]https://example.com/document.pdf[/bws_pdf]
 ```
@@ -19,10 +24,10 @@ See [WordPress Plugin Usage](#wordpress-plugin) below for full documentation.
 
 ## Advantages
 
-1. Tiny (18 ***Kb***). For comparison, the amazing [page-flip](./https://www.npmjs.com/package/page-flip) is 10 **Mb** (x1000 times bigger!).
-2. Can use any input as a book simply by plugging in a “book provider”. An example PDF book using the amazing [pdfjs](./https://www.npmjs.com/package/pdfjs-dist) from Mozilla can be found in the test folder—[book-pdf.js](./test/book-pdf.js) (referenced usage: [test-pdf.js](./test/test-pdf.js))
-3. Supports **Panning**, **Zooming**, **Liking**, **Sharing**, along with page turning effects.
-4. Raises events to track which pages are being viewed by user.
+1. Small (18 KB core library vs ~10 MB for [page-flip](https://www.npmjs.com/package/page-flip)).
+2. Any input works as a book via a "book provider". Example PDF book using [pdfjs](https://www.npmjs.com/package/pdfjs-dist) from Mozilla is in the test folder—[book-pdf.js](./test/book-pdf.js) (usage: [test-pdf.js](./test/test-pdf.js)).
+3. Supports panning, zooming, liking, sharing, and page-turn effects.
+4. Raises events to track which pages the user views.
 
 ## Usage
 
@@ -109,12 +114,12 @@ Finally, sometimes it makes sense to just show the book as a simple, scrollable 
 flipbook(book, 'div-id', {singlepage:true}, (err, viewer) => ...
 ```
 
-This will generate a series of canvases with `class="flipbook__page"` and `id="flipbook__pgnum_<n>"` that you can style using CSS. The single page view will raise the same `seen` event that the flipbook viewer does for tracking which pages the user actually flips through.
+This generates canvases with `class="flipbook__page"` and `id="flipbook__pgnum_<n>"`
+for CSS styling, and raises the same `seen` event as the flipbook viewer.
 
-The single page viewer is currently experimental and very simple. It should work for many PDF's but is not optimized for handling PDF's with a large number of pages.
-
-
-Enjoy!
+> This library-level single-page path is the simple, image-based viewer. The
+> WordPress plugin's `document` mode adds the native PDF.js path (text/links,
+> lazy loading, memory management) on top — see below.
 
 ---
 
@@ -122,17 +127,17 @@ Enjoy!
 
 ### Overview
 
-The Flipbook Viewer WordPress plugin transforms this library into a powerful, accessible PDF viewer for WordPress sites with the following features:
+Features:
 
-- 🔄 **Hybrid Rendering** - Intelligent switching between native PDF.js (desktop) and image-based (mobile) rendering
-- 🔗 **Interactive PDFs** - Text selection, clickable links, and search support in native mode
-- 📱 **Container-Based Responsive Design** - Adapts to actual container width (not just viewport), perfect for sidebars and narrow columns
-- ♿ **Accessibility First** - Respects `prefers-reduced-motion`, full keyboard navigation, WCAG 2.1 AA compliant
-- 🎨 **Highly Customizable** - Admin panel for defaults, per-instance shortcode overrides
-- 📖 **Traditional Book Layout** - Page 1 as cover, then two-page spreads (2-3, 4-5, etc.)
-- 👀 **Multiple View Modes** - Animated flipbook or scrollable single-page with navigation controls
-- 🔄 **Multi-Instance Support** - Multiple flipbooks per page
-- 🌐 **Cross-Domain Compatible** - Works with multi-domain WordPress setups
+- **Hybrid rendering** - Switches between native PDF.js (desktop) and image-based (mobile) rendering
+- **Interactive PDFs** - Text selection and clickable links in native mode
+- **Container-based responsive design** - Adapts to container width, not just viewport
+- **Accessibility** - Respects `prefers-reduced-motion`, keyboard navigation, targets WCAG 2.1 AA
+- **Customizable** - Admin panel defaults, per-instance shortcode overrides
+- **Traditional book layout** - Page 1 as cover, then two-page spreads (2-3, 4-5, etc.)
+- **View modes** - Animated flipbook or scrollable single-page with navigation controls
+- **Multi-instance** - Multiple viewers per page
+- **Multi-domain** - Works with multi-domain WordPress setups
 
 ### Installation
 
@@ -152,156 +157,81 @@ Embed a PDF with default settings:
 
 ### Shortcode Parameters
 
-The PDF URL is placed between the shortcode tags. All parameters are optional and can be set as attributes in the opening tag. You can set defaults in the admin panel.
+The PDF URL goes between the tags; all attributes are optional and can be defaulted
+in the admin panel. **The authoritative attribute list — names, defaults, and their
+sanitizers — is `$default_options` / `shortcode_atts()` in `bws-pdf-viewer.php`**, with
+a user-facing summary in `readme.txt`. This section only covers the behavior an
+attribute name alone won't tell you:
 
-| Parameter | Description | Default | Options |
-|-----------|-------------|---------|---------|
-| `width` | Viewer width | `100%` | Any CSS value (100%, 800px, etc.) |
-| `height` | Viewer height | `auto` | Any CSS value or `auto` |
-| `background_color` | Background color | `#353535` | Hex color code |
-| `box_color` | Box color | `#353535` | Hex color code |
-| `box_border` | Border width | `0` | Number (pixels) |
-| `margin` | Margin percentage | `1` | Number |
-| `margin_top` | Top margin | `null` | Number or leave empty |
-| `margin_left` | Left margin | `null` | Number or leave empty |
-| `layout` | Page layout | `auto` | `auto`, `single`, `double` |
-| `book_layout` | Book layout style | `traditional` | `traditional`, `spread` |
-| `view_mode` | Viewer mode | `singlepage` | `flipbook`, `singlepage` |
-| `breakpoint` | Container breakpoint | `768` | Number (pixels) |
-| `enable_animations` | Enable animations | `true` | `true`, `false` |
-| `force_native` | Force native/image mode | auto-detect | `true`, `false`, or leave empty |
-| `show_controls` | Show navigation controls | `true` | `true`, `false` |
-| `enable_search` | Enable search UI | `false` | `true`, `false` (future feature) |
+- **`view_mode`** — `document` (default) or `flipbook`. `document` renders scrollable
+  pages and picks native PDF.js (desktop: text selection + links) vs image rendering
+  (mobile) automatically. `singlepage` is a legacy alias for `document`.
+- **`force_native`** — overrides that automatic pick: `true` forces native, `false`
+  forces image, empty = auto (recommended).
+- **`layout`** — `auto` switches single/double by container width; `single`/`double`
+  pin it. `breakpoint` (px) is the `auto` switch point and is ignored otherwise.
+- **`book_layout`** — `traditional` shows page 1 alone as a cover (then 2-3, 4-5, …);
+  `spread` starts at 1-2.
+- **`show_controls`** gates the whole toolbar; **`show_fullscreen`** / **`show_print`**
+  gate individual buttons and are ignored when `show_controls="false"`.
 
-### Layout Options Explained
+### Examples
 
-**`layout`** - How pages are displayed:
-- `auto` - Automatically switches between single/double based on container width
-- `single` - Always show one page at a time
-- `double` - Always show two-page spread
-
-**`book_layout`** - How pages are arranged:
-- `traditional` - Page 1 alone (cover), then 2-3, 4-5, etc.
-- `spread` - Start with pages 1-2, then 3-4, 5-6, etc.
-
-**`view_mode`** - Display style:
-- `flipbook` - Animated page turning with 3D flip effect
-- `singlepage` - Simple scrollable pages with hybrid rendering (default):
-  - **Desktop/Wide Screens**: Native PDF.js rendering with text selection, clickable links, and search support
-  - **Mobile/Touch Devices**: Lightweight image-based rendering for better performance
-  - Automatically switches based on device capabilities
-
-**`force_native`** - Override automatic hybrid detection:
-- `true` - Force native PDF.js rendering (text selection, links) regardless of device
-- `false` - Force image-based rendering regardless of device
-- Leave empty or omit - Automatic detection (recommended)
-
-**`show_controls`** - Show navigation controls:
-- `true` - Display previous/next buttons and page counter (default)
-- `false` - Hide navigation controls
-
-**`breakpoint`** - Container width (in pixels) below which `auto` layout switches to single page. Only used when `layout="auto"`.
-
-### Advanced Examples
-
-#### Narrow Column with Single Page View
 ```
+# Narrow column, always single page
 [bws_pdf width="400px" layout="single"]https://example.com/doc.pdf[/bws_pdf]
-```
 
-#### Custom Styled Flipbook
-```
-[bws_pdf width="900px" height="700px" background_color="#f5f5f5" box_color="#ffffff" box_border="1"]https://example.com/doc.pdf[/bws_pdf]
-```
+# Animated flipbook, custom styling
+[bws_pdf view_mode="flipbook" width="900px" height="700px" box_color="#ffffff" box_border="1"]https://example.com/doc.pdf[/bws_pdf]
 
-#### Traditional Book Starting with Cover
-```
+# Traditional book starting with a cover
 [bws_pdf book_layout="traditional" layout="double"]https://example.com/book.pdf[/bws_pdf]
-```
 
-#### Accessible Flipbook (No Animations)
-```
-[bws_pdf enable_animations="false" view_mode="singlepage"]https://example.com/doc.pdf[/bws_pdf]
-```
+# Force native desktop rendering (text selection + links)
+[bws_pdf force_native="true"]https://example.com/doc.pdf[/bws_pdf]
 
-#### Responsive with Custom Breakpoint
-```
-[bws_pdf layout="auto" breakpoint="1024"]https://example.com/doc.pdf[/bws_pdf]
-```
-
-#### Native Mode with Text Selection and Links (Desktop Experience)
-```
-[bws_pdf view_mode="singlepage" force_native="true"]https://example.com/doc.pdf[/bws_pdf]
-```
-
-#### Lightweight Mobile-Optimized View
-```
-[bws_pdf view_mode="singlepage" force_native="false"]https://example.com/doc.pdf[/bws_pdf]
-```
-
-#### Simple Viewer Without Controls
-```
+# No toolbar
 [bws_pdf show_controls="false"]https://example.com/doc.pdf[/bws_pdf]
 ```
 
 ### Keyboard Navigation
 
-When a flipbook is focused (click on it or tab to it):
+When the viewer is focused (click on it or tab to it):
 
 - **Arrow Right / Page Down / Space** - Next page(s)
 - **Arrow Left / Page Up** - Previous page(s)
-- **Home** - First page (planned)
-- **End** - Last page (planned)
+- **Home** - First page
+- **End** - Last page
 
-Navigation respects the current layout - if viewing a two-page spread, arrow keys advance by two pages.
+Navigation respects the current layout - in a two-page spread, arrow keys advance by two pages.
 
-### Accessibility Features
+Within the toolbar, arrow keys move focus between buttons (roving tabindex), and Home/End jump to the first/last button.
 
-1. **Reduced Motion Support** - Automatically detects `prefers-reduced-motion` system setting and disables animations
-2. **Keyboard Navigation** - Full keyboard support for all interactions
-3. **Focus Indicators** - Clear focus outlines for keyboard users
-4. **Semantic HTML** - Proper structure for screen readers
+The viewer also respects `prefers-reduced-motion` (disables animations), uses the
+WAI-ARIA toolbar pattern with a single Tab stop, and announces "Page N of M" to
+screen readers on navigation.
 
 ### Container-Based Responsiveness
 
-Unlike typical responsive designs that only check viewport width, this plugin uses **ResizeObserver** to detect the actual container width. This means:
+This plugin uses **ResizeObserver** to detect actual container width, not viewport width:
 
-- ✅ Flipbook in a 300px sidebar will show single pages
-- ✅ Flipbook in a 1000px main content area will show double pages
-- ✅ Both can be on the same page, each with appropriate layout
-- ✅ Works with any WordPress theme or page builder
+- Flipbook in a 300px sidebar shows single pages
+- Flipbook in a 1000px main content area shows double pages
+- Both can be on the same page, each with its own layout
+- Works with any WordPress theme or page builder
 
 ### Admin Settings
 
-Configure default values in **Settings > Flipbook Viewer**:
+Set default values in **Settings > BWS PDF Viewer**; shortcode attributes override
+them per instance. Asset URLs are generated per current domain (multi-domain safe).
 
-1. **Display Settings** - Colors, dimensions, borders
-2. **Layout Settings** - Default layout modes, breakpoints, animations
+### Performance Notes
 
-All settings can be overridden per-instance via shortcode parameters.
-
-### Multi-Domain Support
-
-The plugin is fully compatible with WordPress sites accessible via multiple domains. All asset URLs are dynamically generated based on the current domain being accessed.
-
-### Browser Support
-
-- ✅ Modern browsers (Chrome, Firefox, Safari, Edge)
-- ✅ Mobile browsers (iOS Safari, Chrome Mobile)
-- ⚠️ Requires JavaScript enabled
-- ⚠️ ResizeObserver for container queries (graceful degradation)
-
-### Performance
-
-- **Hybrid Rendering** - Automatic switching between native and image modes based on device
-  - **Desktop**: Native PDF.js with lazy loading (IntersectionObserver)
-  - **Mobile**: Lightweight image-based rendering
-  - **Memory Management**: Automatically cleans up off-screen pages (keeps only 5-7 pages in memory)
-- **Lazy Loading** - PDF pages are rendered on-demand with 200px buffer
-- **Caching** - Rendered pages are cached for smooth navigation
-- **HiDPI Optimized** - Looks sharp on Retina displays (devicePixelRatio support)
-- **Zero-Config PDF.js** - Uses webpack.mjs for automatic worker setup (no "fake worker" warnings)
-- **No External Dependencies** - All assets bundled (no CDN)
+- Document mode lazy-loads pages (IntersectionObserver) and keeps only a small window
+  of pages in memory, tearing down distant ones.
+- All assets are bundled — no CDN. PDF.js uses the zero-config `webpack.mjs` worker
+  setup (no "fake worker" warnings).
+- Canvas renders at `devicePixelRatio` for HiDPI/Retina.
 
 ### Troubleshooting
 
@@ -334,62 +264,11 @@ Files are built to `/dist` directory.
 
 ---
 
-## Accessibility Compliance
-
-### WCAG 2.1 AA Compliance
-
-BWS PDF Viewer is designed to meet WCAG 2.1 Level AA accessibility standards:
-
-- **Keyboard Navigation**: Full keyboard support without requiring a mouse
-- **Screen Reader Support**: Compatible with NVDA, JAWS, and VoiceOver
-- **ARIA Labels**: Proper semantic HTML and ARIA attributes for assistive technologies
-- **Reduced Motion**: Respects `prefers-reduced-motion` system setting
-- **High Contrast**: Supports high contrast mode for better visibility
-- **Focus Indicators**: Clear, visible focus indicators for keyboard navigation
-
-### Keyboard Navigation
-
-When a PDF viewer is focused (click on it or tab to it):
-
-- **Arrow Right / Page Down / Space** - Next page(s)
-- **Arrow Left / Page Up** - Previous page(s)
-- **Home** - First page
-- **End** - Last page
-
-Navigation respects the current layout - in two-page spread mode, arrow keys advance by two pages.
-
-### View Modes for Accessibility
-
-**Single Page Mode (Default):**
-- Most accessible option
-- Better screen reader support
-- Simpler navigation
-- Recommended for users with assistive technologies
-
-**Flipbook Mode:**
-- Animated page flip effects
-- Automatically disabled when user has `prefers-reduced-motion` enabled
-- Best for visual presentations
-
-### Screen Reader Compatibility
-
-The plugin announces page changes to screen readers, providing context about:
-- Current page number
-- Total number of pages
-- Navigation state
-
-Tested with:
-- NVDA (Windows)
-- JAWS (Windows)
-- VoiceOver (Mac/iOS)
-
----
-
 ## Portal System Integration
 
 ### Overview
 
-BWS PDF Viewer integrates seamlessly with [BWS Portal System](https://github.com/davidofchatham/bws-portal-system) for multi-domain WordPress setups. When enabled, PDF URLs are automatically rewritten to match the current portal domain.
+BWS PDF Viewer integrates with [BWS Portal System](https://github.com/davidofchatham/bws-portal-system) for multi-domain WordPress setups. When enabled, PDF URLs are automatically rewritten to match the current portal domain.
 
 ### Requirements
 
@@ -425,13 +304,9 @@ Portal 2: https://client2-portal.com
 - On client1-portal.com: `https://client1-portal.com/wp-content/uploads/file.pdf`
 - On client2-portal.com: `https://client2-portal.com/wp-content/uploads/file.pdf`
 
-### Per-Instance Override
+### Enabling / Disabling
 
-You can disable portal integration for specific instances:
-
-```
-[bws_pdf enable_portal_integration="false"]https://example.com/document.pdf[/bws_pdf]
-```
+Portal integration is a site-wide admin setting (**Settings > BWS PDF Viewer > Portal System Integration**), not a shortcode attribute. It applies to all instances when the BWS Portal System plugin is active.
 
 ### Troubleshooting
 
@@ -446,57 +321,11 @@ External PDF URLs (from different domains) are not rewritten. Only internal PDFs
 
 ---
 
-## Migration from 2.x to 3.0
-
-### Breaking Changes
-
-**Default View Mode Changed:**
-- **Before (2.x)**: Default was `flipbook`
-- **After (3.0)**: Default is `singlepage`
-
-**Impact**: New shortcodes without `view_mode` attribute will use single-page view.
-
-**Migration**: Your existing settings are automatically preserved during upgrade.
-
-### New Features in 3.0
-
-1. **Accessibility First**: WCAG 2.1 AA compliance with enhanced screen reader support
-2. **Portal Integration**: Automatic PDF URL rewriting for multi-domain sites
-3. **Better Keyboard Nav**: Home/End keys for first/last page navigation
-4. **Screen Reader Announcements**: Page change announcements for assistive technologies
-5. **Enhanced Focus Indicators**: Better visibility for keyboard users
-6. **High Contrast Support**: Improved appearance in high contrast mode
-
-### New Features in 3.1 (Hybrid Viewer)
-
-1. **Hybrid Rendering**: Intelligent switching between native PDF.js and image-based rendering
-2. **Interactive PDFs**: Text selection, clickable links, and search support in native mode
-3. **Navigation Controls**: Previous/next buttons and page counter for single-page mode
-4. **Device Detection**: Automatic mode selection based on touch capability and screen size
-5. **Manual Override**: `force_native` attribute to override automatic detection
-6. **Memory Management**: Lazy loading with automatic cleanup of off-screen pages
-7. **Zero-Config PDF.js**: Webpack.mjs integration eliminates worker setup warnings
-
-### Upgrade Process
-
-**Automatic Upgrade:**
-1. Backup your site (recommended)
-2. Update plugin via WordPress admin
-3. Existing settings are automatically preserved
-4. No action needed - everything continues working
-
-**Keep Flipbook as Default:**
-If you want to keep flipbook as the default for new shortcodes:
-1. Go to **Settings > BWS PDF Viewer**
-2. Under **Layout Settings**, set **View Mode** to "Flipbook"
-3. Save settings
-
-### Compatibility
+## Requirements
 
 - **WordPress**: 6.0 or higher
 - **PHP**: 7.4 or higher
-- **Browsers**: Modern browsers (Chrome, Firefox, Safari, Edge)
-- **Backward Compatible**: All 2.x shortcodes continue working without changes
+- **Browsers**: Chrome 125+, Safari 18+ / iOS 18+, current Firefox (floor set by bundled PDF.js 6)
 
----
-
+> Pre-1.0: shortcode attributes and defaults may change between versions without a
+> migration path. Pin a version and re-test before updating.

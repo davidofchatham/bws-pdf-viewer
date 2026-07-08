@@ -8,26 +8,34 @@ Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
-Accessibility-compliant PDF viewer with animated page flip effects. WCAG 2.1 AA compliant with full keyboard navigation and screen reader support.
+PRE-RELEASE (pre-1.0) — NOT for production use. May break; no support or stability guarantee. PDF viewer with animated flipbook and single-page modes.
 
 == Description ==
 
-BWS PDF Viewer is a WCAG 2.1 AA compliant, accessibility-first WordPress plugin that allows you to embed PDFs as beautiful, animated flipbooks or accessible single-page viewers directly into your posts and pages.
+**⚠️ PRE-RELEASE — NOT SAFE TO USE.** This plugin is pre-1.0 and has never
+shipped a publicly usable release. It is under active development, may break
+without notice, and is not intended for production sites. No support, no
+stability guarantee, and no backward-compatibility promise between versions.
+Shortcode attributes and defaults may change without a migration path. Use at
+your own risk.
 
-**Key Features:**
+BWS PDF Viewer embeds PDFs as animated flipbooks or scrollable single-page
+viewers in WordPress posts and pages.
 
-* ♿ **WCAG 2.1 AA Compliant** - Full accessibility support with screen reader announcements, ARIA labels, and semantic HTML.
-* 🎯 **Accessibility First** - Default single-page view mode for maximum accessibility. Flipbook mode available as optional enhancement.
-* ⌨️ **Complete Keyboard Navigation** - Arrow keys, Page Up/Down, Space, Home/End all work. Perfect for keyboard-only users.
-* 🔊 **Screen Reader Support** - Tested with NVDA, JAWS, and VoiceOver. Page change announcements for assistive technologies.
-* 🎨 **Reduced Motion Support** - Automatically respects user's `prefers-reduced-motion` system setting.
-* 🌐 **Multi-Domain Support** - Integrates with BWS Portal System for automatic PDF URL rewriting on custom domains.
-* 📱 **Truly Responsive** - Adapts to container width, not just device size. Perfect for narrow columns and sidebars.
-* ⚡ **Lightweight** - Only 18 KB core library (vs 10 MB for similar solutions).
-* 📖 **Traditional Book Layout** - Page 1 as cover, then two-page spreads (2-3, 4-5, etc.).
-* 👀 **Multiple View Modes** - Single-page (accessible default) or animated flipbook.
-* 🔄 **Multiple Instances** - Embed multiple viewers on the same page.
-* 🎯 **Container Queries** - Layout switches based on actual container width, not viewport.
+**Features:**
+
+* **Accessibility** - Screen reader announcements, ARIA labels, semantic HTML; targets WCAG 2.1 AA.
+* **Single-page default** - Accessible single-page view is the default; flipbook mode is opt-in.
+* **Keyboard navigation** - Arrow keys, Page Up/Down, Space, Home/End.
+* **Screen readers** - Tested with NVDA, JAWS, and VoiceOver.
+* **Reduced motion** - Respects `prefers-reduced-motion`.
+* **Multi-domain** - Integrates with BWS Portal System for PDF URL rewriting on custom domains.
+* **Container-based responsive** - Adapts to container width, not just device size.
+* **Lightweight** - 18 KB core library (vs ~10 MB for comparable solutions).
+* **Traditional book layout** - Page 1 as cover, then two-page spreads (2-3, 4-5, etc.).
+* **View modes** - Single-page (default) or animated flipbook.
+* **Multiple instances** - Multiple viewers per page.
+* **Container queries** - Layout switches on actual container width, not viewport.
 
 **Usage:**
 
@@ -47,10 +55,15 @@ Simply use the shortcode with your PDF URL:
 * `box_color` - Box color hex code
 * `layout` - auto, single, or double page layout
 * `book_layout` - traditional (page 1 alone) or spread (pages 1-2)
-* `view_mode` - singlepage (accessible default) or flipbook (animated)
+* `view_mode` - document (default) or flipbook (animated); singlepage is a legacy alias for document
 * `breakpoint` - Container width in pixels for responsive switching
 * `enable_animations` - true or false
-* `enable_portal_integration` - true or false (for multi-domain setups)
+* `force_native` - true, false, or empty (auto-detect native PDF.js vs image rendering)
+* `show_controls` - true or false (navigation toolbar)
+* `show_fullscreen` - true or false (fullscreen button)
+* `show_print` - true or false (print button)
+
+Portal integration for multi-domain setups is a site-wide admin setting, not a shortcode attribute.
 
 The PDF URL is placed between the opening and closing shortcode tags. Parameters are added as attributes in the opening tag.
 
@@ -75,12 +88,12 @@ Yes! Each flipbook instance is independent. Just use multiple shortcodes with di
 
 = Does it work on mobile devices? =
 
-Absolutely. The responsive layout automatically adapts to container width. On narrow containers, it switches to single-page view for better readability.
+Yes. The responsive layout adapts to container width; on narrow containers it switches to single-page view.
 
 = What about accessibility? =
 
-The plugin is WCAG 2.1 AA compliant with comprehensive accessibility features:
-- Default single-page view mode (most accessible)
+The plugin targets WCAG 2.1 AA (not independently audited) and includes:
+- Default single-page (document) view mode (most accessible)
 - Screen reader announcements for page changes (NVDA, JAWS, VoiceOver)
 - Complete keyboard navigation (Arrow keys, Page Up/Down, Home/End, Space)
 - Proper ARIA labels and semantic HTML
@@ -182,6 +195,9 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 * Original standalone library release
 
 == Upgrade Notice ==
+
+= 0.4.2 =
+Pre-release (pre-1.0). Not for production. Shortcode attributes and defaults may change between versions without a migration path — re-test before updating.
 
 = 3.0.0 =
 Major accessibility update! Default view mode is now 'singlepage' for better WCAG compliance. Existing settings are preserved. New Portal System integration for multi-domain sites. Enhanced screen reader support and keyboard navigation.
