@@ -18,6 +18,25 @@
     box-shadow: 0 0 0 5px rgba(0, 115, 170, 0.2);
 }
 
+/* V22: fullscreen container fills the whole screen; the canvas is centered in the
+   remaining space above the docked toolbar. Without this the fixed-px canvas sits
+   flex-start (top-left) with black gaps to its right and below — the toolbar (full
+   width) then runs through that black. The background matches the canvas bg so the
+   letterbox around a portrait page reads as one surface, not black voids. */
+.bws-pdf-viewer-container:fullscreen,
+.bws-pdf-viewer-container:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+    background-color: #353535;
+}
+
+.bws-pdf-viewer-container:fullscreen canvas,
+.bws-pdf-viewer-container:-webkit-full-screen canvas {
+    /* Center the canvas in the flex column's cross axis and let it fill the
+       vertical space above the toolbar. */
+    margin: auto;
+}
+
 /* High contrast mode support */
 @media (prefers-contrast: high) {
     .bws-pdf-viewer-container:focus-visible {

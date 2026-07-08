@@ -101,8 +101,13 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   canvas height = `container.offsetHeight - toolbarHeight` (not the width-derived auto height, which
   leaves a black void below — B12); reserve the docked toolbar's height (captured before reinit
   removes it) so the bar never clips. On exit, revert to normal auto/config height. Document/native
-  mode is exempt (V18): reflows via CSS `max-width:100%`, MUST NOT reinit. Cites I.wp,I.controls
-  (see B10,B12).
+  mode is exempt (V18): reflows via CSS `max-width:100%`, MUST NOT reinit. A `:fullscreen` CSS rule
+  (I.css) forces the container to `100vw/100vh` and centers the canvas (`margin:auto`) so a portrait
+  page letterboxes in the bg color, not black; dimensions are measured after a DOUBLE rAF so the
+  fullscreen relayout has committed on high-DPI displays (B13). Because the relayout REBUILDS the
+  toolbar mid-fullscreen (no fresh `fullscreenchange` for the new button), the fullscreen button's
+  label MUST be initialised from the current fs state, not a fixed default (B14). Cites
+  I.wp,I.controls,I.css (see B10,B12,B13,B14).
 - **V20. [deferred] Site-wide mode disable not built.** `disabled_modes` default exists in
   `bws-pdf-viewer.php` but no admin UI renders/sanitizes it; `view_mode` is single-select (pick
   one — neither document nor flipbook is individually disableable). If per-mode enable/disable
@@ -148,3 +153,5 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | B10 | 2026-07-08 | fullscreen expands container but canvas keeps pre-fullscreen px size, stuck top-left — layout computed once at init, `fullscreenchange` never relayouts | V22 |
 | B11 | 2026-07-08 | B9 fix incomplete — centered on `!pg` but traditional wrapper fills empty half with a blank page object (`num:0`), not null; cover still left-pinned. Fixed via `isRealPage` (`num!==0`) | V21 |
 | B12 | 2026-07-08 | B10 fix incomplete — fullscreen relayout used only width; `calculateDimensions` kept auto height (600) so canvas filled width but not height, black void below. Fixed: fullscreen height = offsetHeight − toolbarHeight | V22 |
+| B13 | 2026-07-08 | fullscreen canvas undersized on 4K — single rAF read offsetWidth before the fullscreen relayout committed (pre-fs width); no `:fullscreen` CSS so container didn't fill screen → black right of canvas + below toolbar. Fixed: `:fullscreen` CSS (100vw/vh, canvas margin:auto) + double-rAF measure | V22 |
+| B14 | 2026-07-08 | fullscreen button label stuck on "Fullscreen" in fullscreen — relayout rebuilds the toolbar mid-fs and no fresh `fullscreenchange` fires for the new button; hardcoded default persisted. Fixed: init label from current fs state | V22 |

@@ -496,9 +496,15 @@
             if (fsEnabled) {
                 const fsBtn = document.createElement('button');
                 fsBtn.className = 'bws-pdf-fullscreen';
-                fsBtn.textContent = t.fullscreen;
-                fsBtn.setAttribute('aria-label', t.fullscreenLabel);
                 fsBtn.setAttribute('type', 'button');
+                // Initialise the label from the CURRENT fullscreen state, not a fixed
+                // default: the fullscreen relayout rebuilds this toolbar while already
+                // in fullscreen, and no fresh fullscreenchange fires for the new button,
+                // so a hardcoded "Fullscreen" would wrongly persist mid-fullscreen.
+                const startFs = (document.fullscreenElement === container ||
+                                 document.webkitFullscreenElement === container);
+                fsBtn.textContent = startFs ? t.exitFullscreen : t.fullscreen;
+                fsBtn.setAttribute('aria-label', startFs ? t.exitFullscreenLabel : t.fullscreenLabel);
 
                 fsBtn.addEventListener('click', function() {
                     if (document.fullscreenElement || document.webkitFullscreenElement) {
@@ -602,15 +608,20 @@
             // exit while it was the fs element). Other containers' events are ignored.
             if (!isFs && wasFs) return;
 
-            // Defer one frame so the browser has applied the fullscreen box size
-            // before we read container dimensions.
+            // Defer two frames so the browser has fully applied the fullscreen box
+            // size before we read container dimensions. A single rAF can fire before
+            // layout settles on high-DPI/4K displays, yielding pre-fullscreen width
+            // and a small canvas with black gaps around it (B13). Double-rAF reads
+            // after the fullscreen relayout has committed.
             requestAnimationFrame(function() {
-                if (viewerData.reiniting) return;
-                const width = container.offsetWidth;
-                const targetLayout = (config.layout === 'auto')
-                    ? (width >= config.breakpoint ? 'double' : 'single')
-                    : viewerData.layout;
-                reinitViewer(containerId, viewerData, targetLayout, initialOpts);
+                requestAnimationFrame(function() {
+                    if (viewerData.reiniting) return;
+                    const width = container.offsetWidth;
+                    const targetLayout = (config.layout === 'auto')
+                        ? (width >= config.breakpoint ? 'double' : 'single')
+                        : viewerData.layout;
+                    reinitViewer(containerId, viewerData, targetLayout, initialOpts);
+                });
             });
         };
         document.addEventListener('fullscreenchange', onFullscreenRelayout);
