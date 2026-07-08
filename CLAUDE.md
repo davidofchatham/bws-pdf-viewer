@@ -28,15 +28,14 @@ npm run clean
 - `flipbookviewer.js` - Animated flipbook viewer with page-flip animation
 - `singlepageviewer.js` - Image-based single-page viewer (mobile/fallback)
 - `nativepageviewer.js` - Native PDF.js viewer with text/annotation layers (desktop)
-- `controls.js` - Shared navigation controls component
 - Uses `@tpp/htm-x` for DOM manipulation
 - Builds to `dist/flipbook-viewer.js` as UMD module
 
 **WordPress Integration** (`bws-pdf-viewer.php` and `includes/`)
 - Main plugin file registers shortcode `[bws_pdf]` and handles WordPress hooks
 - `includes/admin.php` - Settings page under Settings > BWS PDF Viewer
-- `includes/bws-pdf-viewer.js` - WordPress-specific initialization layer that bridges shortcode to library
-- `includes/bws-pdf-viewer.css` - Styling for WordPress integration
+- `includes/bws-pdf-viewer.js` - WordPress-specific initialization layer that bridges shortcode to library; also hosts the shared navigation toolbar (`addNavigationControls`), used by both flipbook and native modes
+- `includes/bws-pdf-viewer.css` - Styling for WordPress integration (incl. toolbar overlay + text/annotation layers)
 
 **PDF.js Dependencies** (`dist/`)
 - `pdf.js` - Main PDF.js library bundled from `pdfjs-dist/webpack.mjs`
@@ -214,34 +213,6 @@ Merged in `BWS_PDF_Viewer::shortcode_handler()`.
 Both the core library and WordPress integration detect `window.devicePixelRatio` and render canvas at higher resolution for Retina displays.
 
 See `outputScale` in `src/flipbookviewer.js` and `includes/bws-pdf-viewer.js`.
-
-## File Structure
-
-```
-bws-pdf-viewer/
-├── src/                      # Source library files
-│   ├── index.js             # Main entry & router
-│   ├── flipbookviewer.js    # Animated flipbook mode
-│   ├── singlepageviewer.js  # Image-based viewer (mobile)
-│   ├── nativepageviewer.js  # Native PDF.js viewer (desktop)
-│   └── controls.js          # Shared navigation controls
-├── includes/                # WordPress integration
-│   ├── admin.php           # Settings page
-│   ├── bws-pdf-viewer.js   # WP init & device detection
-│   └── bws-pdf-viewer.css  # Styles (incl. text/annotation layers)
-├── dist/                    # Built files (webpack output)
-│   ├── flipbook-viewer.js  # Bundled library (UMD)
-│   ├── pdf.js             # PDF.js main library
-│   ├── pdf.worker.js      # PDF.js worker
-│   └── book.pdf.js        # Test book provider
-├── test/                    # Development test files
-│   ├── book-pdf.js         # PDF book provider
-│   ├── test-pdf.js         # Flipbook test page
-│   └── test-pdf-sp.js      # Single-page test page
-├── bws-pdf-viewer.php      # Main plugin file
-├── webpack.config.js       # Webpack build config
-└── package.json
-```
 
 ## Development Workflow
 

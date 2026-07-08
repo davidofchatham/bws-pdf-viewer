@@ -33,7 +33,7 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 - **I.flip** = `src/flipbookviewer.js` — animated flipbook; spread layout; `goToPage`; HiDPI outputScale.
 - **I.native** = `src/nativepageviewer.js` — PDF.js 3-layer render; IntersectionObserver lazy; memory cleanup ~5-7 pages.
 - **I.single** = `src/singlepageviewer.js` — image-based mobile/fallback viewer.
-- **I.controls** = `src/controls.js` — shared nav controls / integrated toolbar (single impl).
+- **I.controls** = `includes/bws-pdf-viewer.js` (`addNavigationControls`/`setupToolbarRovingFocus`/`getStrings`) + `includes/bws-pdf-viewer.css` — shared toolbar, single impl, both modes. (Planned `src/controls.js` never built; toolbar shipped in WP layer.)
 - **I.wp** = `includes/bws-pdf-viewer.js` — device detect, mode select, `createBookWrapper`, responsive, keyboard nav.
 - **I.php** = `bws-pdf-viewer.php` — shortcode `[bws_pdf]`, `register_assets()`, config merge/precedence.
 - **I.admin** = `includes/admin.php` — Settings > BWS PDF Viewer; defaults + mode restrictions + sanitize.
@@ -42,8 +42,8 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 ## §V — invariants
 - **V1. Three modes, one router.** `src/index.js` selects nativePageViewer (opts.singlepage &&
   opts.nativeMode) / singlePageViewer (opts.singlepage) / flipbookViewer (else). Cites I.index.
-- **V2. Hybrid device detection is not tautological.** native ⇐ desktop (screen ≥1024 OR !touch);
-  image ⇐ touch+small OR <1024. `isMobile` MUST combine touch AND width — not restate itself
+- **V2. Hybrid device detection is not tautological.** image ⇐ (touch AND width ≤1024) OR
+  width ≤767; native otherwise. `isMobile` MUST combine touch AND width — not restate itself
   (see B1). `force_native` att overrides. Cites I.wp.
 - **V3. Container-width layout, not viewport.** ResizeObserver drives single-vs-double; ≥breakpoint
   (768) → spread, < → single. Each instance independent. Cites I.wp.
@@ -51,16 +51,17 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   fade/instant only. Cites I.wp, I.flip.
 - **V5. Config precedence honored 3-tier.** defaults→admin option→shortcode; att wins per-key;
   admin default applies only when att absent. `show_controls` MUST follow this (see B6). Cites I.php.
-- **V6. Page nav always visible; only optional controls togglable.** prev/next + counter never
-  disableable; fullscreen/print gated by `show_fullscreen`/`show_print`/`show_controls`. Cites I.controls,I.php.
+- **V6. Page nav always present; only optional controls togglable.** prev/next + counter always
+  rendered (never removed by config); prev/next MAY disable at first/last page (edge state). Optional
+  fullscreen/print gated by `show_fullscreen`/`show_print`/`show_controls`. Cites I.controls,I.php.
 - **V7. Native mode uses maintained PDF.js layer builders.** canvas + TextLayerBuilder (selection +
   browser find) + AnnotationLayerBuilder (links) + shared link service; internal links navigate,
   external new-tab. No hand-rolled layer positioning. Cites I.native.
 - **V8. Shortcode atts frozen.** `view_mode`,`layout`,`book_layout`,`force_native`,`show_controls`,
   `show_fullscreen`,`show_print`,`width`,`height` keep names/values/defaults/meaning. `singlepage`
   legacy alias for `document`. Cites I.php.
-- **V9. One control-set impl, all modes.** Exactly one toolbar component serves flipbook + native;
-  no duplicate control code. Cites I.controls, C1.
+- **V9. One control-set impl, all modes.** Exactly one toolbar component (I.controls, in WP layer)
+  serves flipbook + native; no duplicate control code. Cites I.controls, C1.
 - **V10. Toolbar integrated + accessible.** Rendered inside viewer container (overlay bar, not
   detached row); role=toolbar, labelled; every control keyboard-operable; visible focus; ≥24×24px
   targets; AA contrast all states. Cites I.controls,I.css.
@@ -82,8 +83,10 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   single↔double rebuild path (that's flipbook-only) (see B3). Cites I.wp.
 - **V19. URL-load failure shows inline error + link.** network/404/timeout → inline message +
   direct new-tab link; container MUST NOT collapse. Cites I.wp.
-- **V20. Admin cannot disable last enabled mode.** settings UI keeps ≥1 of document/flipbook
-  enabled. Cites I.admin.
+- **V20. [deferred] Site-wide mode disable not built.** `disabled_modes` default exists in
+  `bws-pdf-viewer.php` but no admin UI renders/sanitizes it; `view_mode` is single-select (pick
+  one — neither document nor flipbook is individually disableable). If per-mode enable/disable
+  ships (T-future), admin MUST keep ≥1 of document/flipbook enabled. Cites I.admin.
 
 ## §T — tasks
 | id  | st | task | cites |
