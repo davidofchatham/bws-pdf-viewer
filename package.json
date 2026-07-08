@@ -7,7 +7,8 @@
     "start": "npm run clean && webpack build --env production",
     "test": "webpack serve --env development --open",
     "clean": "npx -y del-cli dist && npx -y make-dir-cli dist",
-    "lint": "eslint src includes test webpack.config.js eslint.config.js"
+    "lint": "eslint src includes test webpack.config.js eslint.config.js",
+    "package": "npm run start && node scripts/package.mjs"
   },
   "repository": {
     "type": "git",

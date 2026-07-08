@@ -1,5 +1,6 @@
 .*
 _tmp/
+build/
 node_modules/
 dist/*
 !dist/flipbook-viewer.js
