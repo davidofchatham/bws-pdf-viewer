@@ -123,8 +123,9 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
   drawing in its left half with blank dead space beside it (traditional cover and
   trailing odd page). Restores the original single-page centering rule. (#5)
 * FIX: Entering/exiting fullscreen now relayouts the flipbook so the canvas rescales
-  to fill the fullscreen area, instead of keeping its pre-fullscreen size stuck at
-  the top-left. Document mode is unaffected (reflows via CSS). (#6)
+  to fill the fullscreen area in BOTH width and height (previously it kept its
+  pre-fullscreen size, then only its width, leaving a black void below). The canvas
+  reserves room for the docked toolbar. Document mode is unaffected (CSS reflow). (#6)
 * CHANGE: The page-nav controls (prev/next + page-jump field + counter) are now hidden
   in Continuous/document mode and for single-page files, where paging is meaningless —
   all pages are already visible. Fullscreen and print stay. Flipbook multi-page still

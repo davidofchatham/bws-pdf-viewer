@@ -97,8 +97,12 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   covers the multi-page spread edges (001 FR-002). Cites I.flip.
 - **V22. Fullscreen relayouts flipbook, not document.** `fullscreenchange` MUST recompute flipbook
   canvas dimensions against the (enter/exit) container size and relayout so the page scales to fill —
-  reuse the responsive reinit path, preserve current page (V17). Document/native mode is exempt
-  (V18): reflows via CSS `max-width:100%`, MUST NOT reinit. Cites I.wp,I.controls (see B10).
+  reuse the responsive reinit path, preserve current page (V17). Fullscreen sizing uses BOTH axes:
+  canvas height = `container.offsetHeight - toolbarHeight` (not the width-derived auto height, which
+  leaves a black void below — B12); reserve the docked toolbar's height (captured before reinit
+  removes it) so the bar never clips. On exit, revert to normal auto/config height. Document/native
+  mode is exempt (V18): reflows via CSS `max-width:100%`, MUST NOT reinit. Cites I.wp,I.controls
+  (see B10,B12).
 - **V20. [deferred] Site-wide mode disable not built.** `disabled_modes` default exists in
   `bws-pdf-viewer.php` but no admin UI renders/sanitizes it; `view_mode` is single-select (pick
   one — neither document nor flipbook is individually disableable). If per-mode enable/disable
@@ -143,3 +147,4 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | B9 | 2026-07-08 | flipbook lone page (cover/last-odd) drawn in its half-slot, off-center dead space — `show_pgs_1` always pins present page to page_l/page_r; regression vs 001 FR-002 | V21 |
 | B10 | 2026-07-08 | fullscreen expands container but canvas keeps pre-fullscreen px size, stuck top-left — layout computed once at init, `fullscreenchange` never relayouts | V22 |
 | B11 | 2026-07-08 | B9 fix incomplete — centered on `!pg` but traditional wrapper fills empty half with a blank page object (`num:0`), not null; cover still left-pinned. Fixed via `isRealPage` (`num!==0`) | V21 |
+| B12 | 2026-07-08 | B10 fix incomplete — fullscreen relayout used only width; `calculateDimensions` kept auto height (600) so canvas filled width but not height, black void below. Fixed: fullscreen height = offsetHeight − toolbarHeight | V22 |

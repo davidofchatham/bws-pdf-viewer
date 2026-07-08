@@ -673,9 +673,13 @@
         const oldCanvas = container.querySelector('canvas');
         if (oldCanvas) oldCanvas.remove();
 
-        // Remove existing controls bar — new one will be added after reinit
+        // Remove existing controls bar — new one will be added after reinit.
+        // V22: capture its height first so the fullscreen relayout can reserve
+        // room for the toolbar (it's a flex-column sibling of the canvas; the new
+        // bar isn't in the DOM yet when dimensions are computed below).
         const oldControls = container.querySelector('.bws-pdf-viewer-controls');
         if (oldControls) {
+            viewerData.toolbarHeight = oldControls.offsetHeight || viewerData.toolbarHeight || 0;
             if (typeof oldControls._teardown === 'function') oldControls._teardown();
             oldControls.remove();
         }
@@ -689,8 +693,9 @@
             container.appendChild(loader);
         }
 
-        // Recalculate dimensions for the new layout
-        const newDimensions = calculateDimensions(container, config, viewerData.bookWrapper, newLayout);
+        // Recalculate dimensions for the new layout (V22: reserve the captured
+        // toolbar height so the fullscreen canvas leaves room for the docked bar).
+        const newDimensions = calculateDimensions(container, config, viewerData.bookWrapper, newLayout, viewerData.toolbarHeight);
 
         const newOpts = Object.assign({}, baseOpts, {
             width:  newDimensions.width,
@@ -988,7 +993,7 @@
      * @param {string}      layout   'single' or 'double'
      * @returns {{ width: number, height: number }}
      */
-    function calculateDimensions(container, config, bookObj, layout) {
+    function calculateDimensions(container, config, bookObj, layout, reserveHeight) {
         let width;
         if (config.width === '100%' || config.width === 'auto') {
             width = container.offsetWidth;
@@ -996,8 +1001,22 @@
             width = parseInt(config.width, 10);
         }
 
+        // V22: in fullscreen, size the canvas to the real fullscreen box height so
+        // the page scales up to fill the screen instead of keeping the small
+        // width-derived height (leaving a black void below). Reserve room for the
+        // toolbar so it stays docked and visible. Outside fullscreen, auto height
+        // stays a temporary default — the page fits to width there as before.
+        const isFullscreen = (document.fullscreenElement === container ||
+                              document.webkitFullscreenElement === container);
+
         let height;
-        if (config.height === 'auto') {
+        if (isFullscreen) {
+            // Prefer a live toolbar; fall back to the height captured before reinit
+            // removed it (reserveHeight), then a sane default so the bar never clips.
+            const toolbar = container.querySelector('.bws-pdf-viewer-controls');
+            const toolbarH = (toolbar && toolbar.offsetHeight) || reserveHeight || 48;
+            height = Math.max(0, container.offsetHeight - toolbarH);
+        } else if (config.height === 'auto') {
             height = 600; // temporary default; viewer adjusts after first page renders
         } else {
             height = parseInt(config.height, 10);
