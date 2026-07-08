@@ -196,8 +196,12 @@ function setupIntersectionObserver(ctx, viewer) {
         const container = entry.target;
         const pageNum = parseInt(container.dataset.pageNumber);
         const loaded = container.dataset.loaded === 'true';
+        const loading = container.dataset.loading === 'true';
 
-        if (!loaded) {
+        // Guard against the observer re-firing during fast scroll (200px rootMargin)
+        // before the async render completes — a second concurrent renderPage would
+        // duplicate the canvas/text/annotation layers and orphan builder references.
+        if (!loaded && !loading) {
           renderPage(ctx, container, pageNum, viewer);
         }
       }
@@ -244,6 +248,9 @@ function setupPageTracking(ctx, viewer) {
 function renderPage(ctx, container, pageNum, viewer) {
   const pdf = ctx.book.pdf;
 
+  // In-flight marker: cleared on completion (loaded='true') or on error below.
+  container.dataset.loading = 'true';
+
   pdf.getPage(pageNum).then(page => {
     const viewport = page.getViewport({ scale: ctx.scale });
 
@@ -269,10 +276,12 @@ function renderPage(ctx, container, pageNum, viewer) {
       });
 
       container.dataset.loaded = 'true';
+      delete container.dataset.loading;
       viewer.loadedPages.add(pageNum);
       viewer.emit('page-loaded', pageNum);
     });
   }).catch(err => {
+    delete container.dataset.loading;
     console.error('Error loading page:', err);
     container.innerHTML = `<p class="pdf-page-error">Error loading page ${pageNum}</p>`;
   });

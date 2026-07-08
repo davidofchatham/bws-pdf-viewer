@@ -162,6 +162,15 @@ class BWS_PDF_Viewer_Admin {
             'bws_pdf_viewer_layout_section'
         );
 
+        // Show Navigation Controls (default for the show_controls shortcode attribute)
+        add_settings_field(
+            'default_show_controls',
+            __('Show Navigation Controls', 'bws-pdf-viewer'),
+            array($this, 'render_show_controls_field'),
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_layout_section'
+        );
+
         // Margin
         add_settings_field(
             'margin',
@@ -246,6 +255,10 @@ class BWS_PDF_Viewer_Admin {
         if (isset($input['enable_animations'])) {
             $sanitized['enable_animations'] = (bool) $input['enable_animations'];
         }
+
+        // Checkbox: an unchecked box submits no value, so persist false on absence
+        // rather than falling back to the default (which would make it un-uncheckable).
+        $sanitized['default_show_controls'] = ! empty($input['default_show_controls']);
 
         if (isset($input['enable_portal_integration'])) {
             $sanitized['enable_portal_integration'] = (bool) $input['enable_portal_integration'];
@@ -426,6 +439,18 @@ class BWS_PDF_Viewer_Admin {
             <?php _e('Enable flip animations (respects user prefers-reduced-motion setting)', 'bws-pdf-viewer'); ?>
         </label>
         <p class="description"><?php _e('When enabled, page flip animations will be shown unless the user has requested reduced motion in their system settings.', 'bws-pdf-viewer'); ?></p>
+        <?php
+    }
+
+    public function render_show_controls_field() {
+        $options = get_option('bws_pdf_viewer_options', array());
+        $value = isset($options['default_show_controls']) ? $options['default_show_controls'] : true;
+        ?>
+        <label>
+            <input type="checkbox" name="bws_pdf_viewer_options[default_show_controls]" value="1" <?php checked($value, true); ?>>
+            <?php _e('Show the navigation controls toolbar (prev/next, page jump, fullscreen, print) by default', 'bws-pdf-viewer'); ?>
+        </label>
+        <p class="description"><?php _e('Site-wide default for the show_controls shortcode attribute. Individual shortcodes can override this with show_controls="true" or show_controls="false".', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 

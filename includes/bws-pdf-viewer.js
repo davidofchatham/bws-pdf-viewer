@@ -188,7 +188,7 @@
         const capabilities = {
             hasTouch:    navigator.maxTouchPoints > 0,
             screenWidth: window.innerWidth,
-            isMobile:    (navigator.maxTouchPoints > 0 && window.innerWidth <= 767) || window.innerWidth <= 767,
+            isMobile:    (navigator.maxTouchPoints > 0 && window.innerWidth <= 1024) || window.innerWidth <= 767,
         };
 
         // Determine native (PDF.js layers) vs image rendering sub-mode (document mode only)
@@ -344,7 +344,10 @@
         prevBtn.addEventListener('click', function() {
             const viewer = viewerData.viewer;
             if (viewer && viewer.flip_back) viewer.flip_back();
-            else if (viewer && viewer.goToPage && viewer.currentPage > 1) viewer.goToPage(viewer.currentPage - 1);
+            else if (viewer && viewer.goToPage) {
+                const cur = Number(viewer.currentPage) || 1;
+                if (cur > 1) viewer.goToPage(cur - 1);
+            }
         });
 
         // --- Page-nav group: editable page-jump input + display-only counter ---
@@ -378,7 +381,10 @@
         nextBtn.addEventListener('click', function() {
             const viewer = viewerData.viewer;
             if (viewer && viewer.flip_forward) viewer.flip_forward();
-            else if (viewer && viewer.goToPage && viewer.currentPage < viewer.page_count) viewer.goToPage(viewer.currentPage + 1);
+            else if (viewer && viewer.goToPage) {
+                const cur = Number(viewer.currentPage) || 1;
+                if (cur < viewer.page_count) viewer.goToPage(cur + 1);
+            }
         });
 
         // --- Page-jump commit state machine (data-model.md) ---
@@ -509,6 +515,13 @@
                 document.addEventListener('fullscreenchange', onFsChange);
                 document.addEventListener('webkitfullscreenchange', onFsChange);
 
+                // Detach on teardown (reinit removes this controlsDiv) so document-level
+                // listeners don't accumulate across responsive reinit cycles.
+                controlsDiv._teardown = function() {
+                    document.removeEventListener('fullscreenchange', onFsChange);
+                    document.removeEventListener('webkitfullscreenchange', onFsChange);
+                };
+
                 controlsDiv.appendChild(fsBtn);
             }
         }
@@ -548,8 +561,9 @@
      * Watch the container with ResizeObserver and reinitialise the viewer canvas
      * if the layout (single ↔ double page spread) needs to change.
      *
-     * Only relevant for flipbook mode with layout='auto'. In document (native) mode
-     * the page canvases are block elements that reflow via CSS max-width: 100%.
+     * Flipbook mode with layout='auto' only. Document mode (native + image) is
+     * skipped: its canvases reflow via CSS max-width:100%, and reinitViewer's
+     * single-canvas teardown cannot clean up its many page containers/observers.
      *
      * @param {string} containerId
      * @param {Object} viewerData
@@ -557,6 +571,13 @@
      */
     function setupResponsiveBehavior(containerId, viewerData, initialOpts) {
         const { container, config } = viewerData;
+
+        // Reinit is a flipbook-only concern: it swaps the single <canvas>'s dimensions
+        // when the single↔double spread layout changes. Document mode (native and image
+        // sub-modes) reflows via CSS (max-width: 100%) and its scroll-based viewers render
+        // many page containers plus IntersectionObservers that reinitViewer's single-canvas
+        // teardown does not clean up — so never reinit those modes.
+        if (config.singlepage) return;
 
         if (config.layout !== 'auto') return; // fixed layout — nothing to do
 
@@ -613,7 +634,10 @@
 
         // Remove existing controls bar — new one will be added after reinit
         const oldControls = container.querySelector('.bws-pdf-viewer-controls');
-        if (oldControls) oldControls.remove();
+        if (oldControls) {
+            if (typeof oldControls._teardown === 'function') oldControls._teardown();
+            oldControls.remove();
+        }
 
         // Temporarily re-show loading indicator
         let loader = container.querySelector('.bws-pdf-viewer-loading');

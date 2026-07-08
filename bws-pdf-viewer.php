@@ -3,7 +3,7 @@
  * Plugin Name: BWS PDF Viewer
  * Plugin URI: https://github.com/davidofchatham/bws-pdf-viewer
  * Description: Accessibility-compliant PDF viewer with animated page flip effects. Embed PDFs using shortcode with support for responsive layouts, keyboard navigation, and screen reader compatibility.
- * Version: 0.4.0
+ * Version: 0.4.1
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: charles.lobo@gmail.com
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('BWS_PDF_VIEWER_VERSION', '0.4.0');
+define('BWS_PDF_VIEWER_VERSION', '0.4.1');
 define('BWS_PDF_VIEWER_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('BWS_PDF_VIEWER_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('BWS_PDF_VIEWER_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -53,8 +53,10 @@ class BWS_PDF_Viewer {
         'view_mode'               => 'document',    // document | flipbook
         'breakpoint'              => 768,           // px for container-based layout switching
         'enable_animations'       => true,          // respect prefers-reduced-motion
+        'show_controls'           => true,          // show navigation controls toolbar
         'show_fullscreen'         => true,          // show fullscreen toggle button
         'show_print'              => true,          // show print button
+        'default_show_controls'   => true,          // admin default for show_controls
         'default_show_fullscreen' => true,          // admin default for show_fullscreen
         'default_show_print'      => true,          // admin default for show_print
         'disabled_modes'          => array(),       // P3: site-wide disabled view modes
@@ -200,7 +202,7 @@ class BWS_PDF_Viewer {
             'view_mode'        => $defaults['view_mode'],
             'breakpoint'       => $defaults['breakpoint'],
             'enable_animations'=> $defaults['enable_animations'],
-            'show_controls'    => true,
+            'show_controls'    => isset($defaults['default_show_controls']) ? $defaults['default_show_controls'] : true,
             'show_fullscreen'  => isset($defaults['default_show_fullscreen']) ? $defaults['default_show_fullscreen'] : true,
             'show_print'       => isset($defaults['default_show_print']) ? $defaults['default_show_print'] : true,
             'force_native'     => null, // 'true', 'false', or null for auto-detect

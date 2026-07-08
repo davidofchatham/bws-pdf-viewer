@@ -3,7 +3,7 @@ Contributors: charles.lobo@gmail.com
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
 Tested up to: 6.4
-Stable tag: 0.4.0
+Stable tag: 0.4.1
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -104,6 +104,22 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 4. Responsive layout adapting to narrow containers
 
 == Changelog ==
+
+= 0.4.1 =
+* FIX: Document (native + image) mode no longer re-initialises on container resize.
+  Reinit was a flipbook-only path; running it in document mode duplicated rendered
+  pages and leaked IntersectionObservers. Document mode reflows via CSS instead.
+* FIX: Fullscreen state listeners are now detached when the toolbar is rebuilt,
+  preventing listener accumulation across responsive re-inits.
+* FIX: Mobile/desktop auto-detection now correctly factors touch capability again
+  (previously collapsed to a screen-width-only check).
+* FIX: Prev/next buttons coerce the current page to a number, avoiding a stray
+  string-concatenation jump when the page value arrives as a string.
+* FIX: Native-mode pages guard against double-rendering when the lazy-load observer
+  re-fires mid-render during fast scrolling.
+* FIX: The show_controls default now flows through plugin defaults and a new admin
+  setting (Settings > BWS PDF Viewer > Show Navigation Controls), restoring the
+  documented default -> admin -> shortcode precedence.
 
 = 0.4.0 =
 * NEW: Integrated viewer toolbar — a single docked overlay bar shared by both
