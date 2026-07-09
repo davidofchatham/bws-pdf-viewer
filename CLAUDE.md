@@ -29,7 +29,9 @@ npm run clean
 - `singlepageviewer.js` - Image-based single-page viewer (mobile/fallback)
 - `nativepageviewer.js` - Native PDF.js viewer with text/annotation layers (desktop)
 - Uses `@tpp/htm-x` for DOM manipulation
-- Builds to `dist/flipbook-viewer.js` as UMD module
+- Builds to `dist/bws-viewer-engines.js` as UMD module (bundles all three
+  viewer engines — flip, native, image — routed by `src/index.js`; the name is
+  `-engines` precisely because it is NOT flip-only. UMD global is still `flipbook`.)
 
 **WordPress Integration** (`bws-pdf-viewer.php` and `includes/`)
 - Main plugin file registers shortcode `[bws_pdf]` and handles WordPress hooks
@@ -165,7 +167,7 @@ Implementation: `setupKeyboardNavigation()` in `includes/bws-pdf-viewer.js`.
 
 WordPress scripts are loaded in this order:
 1. `bws-pdfjs-lib` (pdf.js - main library with automatic worker)
-2. `bws-pdf-viewer-lib` (flipbook-viewer.js)
+2. `bws-pdf-viewer-lib` (bws-viewer-engines.js)
 3. `bws-pdf-viewer-wp` (WordPress integration)
 
 **Note:** The worker (`pdf.worker.js`) is automatically loaded by `pdf.js` via webpack's dynamic import. No separate script registration needed.
@@ -221,7 +223,7 @@ See `outputScale` in `src/flipbookviewer.js` and `includes/bws-pdf-viewer.js`.
 3. Test using test HTML pages in `/test` directory
 4. Build production with `npm run start`
 5. Upload built files to WordPress plugin directory:
-   - `dist/flipbook-viewer.js`
+   - `dist/bws-viewer-engines.js`
    - `dist/pdf.js`
    - `dist/pdf.worker.js` (if changed)
    - `includes/bws-pdf-viewer.js` (if changed)

@@ -3,7 +3,7 @@ Contributors: charles.lobo@gmail.com
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
 Tested up to: 6.4
-Stable tag: 0.4.5
+Stable tag: 0.4.6
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -117,6 +117,12 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 4. Responsive layout adapting to narrow containers
 
 == Changelog ==
+
+= 0.4.6 =
+* INTERNAL: Renamed the delivered viewer bundle from `flipbook-viewer.js` to
+  `bws-viewer-engines.js` so the filename reflects that it bundles all three
+  render engines (flipbook, native PDF.js, image), not just the flipbook. No
+  change to viewer behavior, shortcodes, or settings.
 
 = 0.4.5 =
 * FIX: Flipbook no longer leaves large empty bands above and below the pages at

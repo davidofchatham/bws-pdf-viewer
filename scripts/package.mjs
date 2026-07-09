@@ -35,7 +35,7 @@ const include = [
   'includes/admin.php',
   'includes/bws-pdf-viewer.js',
   'includes/bws-pdf-viewer.css',
-  'dist/flipbook-viewer.js',
+  'dist/bws-viewer-engines.js',
   'dist/pdf.js',
   'dist/pdf.worker.js',
 ];

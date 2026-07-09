@@ -268,7 +268,7 @@ Files are built to `/dist` directory.
 
 The viewer exposes two WordPress filter hooks for rewriting URLs at runtime. They exist for multi-domain setups (one WordPress install serving several domains), CDNs, or any case where the assets and PDF must resolve to a different origin than `plugin_dir_url()` returns. Both are no-ops unless something registers them, so single-domain installs are unaffected.
 
-- **`bws_pdf_viewer_plugin_url`** — the asset base URL (`plugin_dir_url()`), used for `pdf.js`, `flipbook-viewer.js`, `bws-pdf-viewer.js`, the CSS, **and `pdf.worker.js`**. The returned value must end with a trailing slash; it also feeds the `bwsPdfViewerData.pluginUrl` value passed to JS.
+- **`bws_pdf_viewer_plugin_url`** — the asset base URL (`plugin_dir_url()`), used for `pdf.js`, `bws-viewer-engines.js`, `bws-pdf-viewer.js`, the CSS, **and `pdf.worker.js`**. The returned value must end with a trailing slash; it also feeds the `bwsPdfViewerData.pluginUrl` value passed to JS.
 - **`bws_pdf_viewer_pdf_url`** — the PDF source URL from the shortcode content, filtered before sanitisation.
 
 ### Example: serve assets from the current host

@@ -1,4 +1,4 @@
-# SPEC — BWS PDF Viewer (0.4.5, pre-release / in-flight)
+# SPEC — BWS PDF Viewer (0.4.6, pre-release / in-flight)
 
 Living ledger. 001-pdf-viewer (viewer core) coded; 002-integrated-viewer-toolbar (shared toolbar +
 PDF.js component adoption) coded on branch `002-integrated-viewer-toolbar` — NOT yet tested/PR'd/merged.
@@ -31,7 +31,7 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   att when it earns its keep; on any change, sweep the portal's own shortcodes first, fix usages,
   note it in the changelog. Additionally: EVERY existing att is up for revision — the current set is
   NOT cemented; review the whole surface before a 1.0 freeze (V8). Cites I.php,I.admin.
-- **C8.** PDF.js internals bundled twice (pdf.js + flipbook-viewer.js, +182KB) — known debt,
+- **C8.** PDF.js internals bundled twice (pdf.js + bws-viewer-engines.js, +182KB) — known debt,
   dedup deferred (T13, issue #4, [[pdfjs-bundle-dedup]]).
 
 ## §I — surfaces
@@ -157,6 +157,16 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   `null` on empty. Enumerated selects + booleans (`layout`,`book_layout`,`view_mode`,
   `enable_animations`,`default_show_controls`) are exempt. Generalizes V23's color-specific rule to
   all free-value fields. Cites I.admin,I.php.
+- **V26. Delivered asset names reflect concern, not one entry point.** The viewer bundle =
+  ALL 3 render engines (flip + native + image, routed by `src/index.js`), NOT flip-only →
+  built artifact named `dist/bws-viewer-engines.js` (was `flipbook-viewer.js`, misleading: name
+  said flip, held 3 engines → reader greps "why native in flipbook file?", B18). ⊥ name a
+  multi-engine bundle after one engine. Distinct from WP-layer `includes/bws-pdf-viewer.js`
+  (integration glue) & Mozilla `dist/pdf.js` (PDF.js lib) — 3 delivered JS, 3 concerns, no
+  name overlap. UMD global still `flipbook` (legacy; rename = separate churn, IDEAS #6). On any
+  future asset rename: sweep PHP enqueue + test harnesses + `scripts/package.mjs` + docs, rebuild
+  (webpack `clean:true` drops old file), changelog. Cites I.index,I.php,C8.
+
 - **V20. [deferred] Site-wide mode disable not built.** `disabled_modes` default exists in
   `bws-pdf-viewer.php` but no admin UI renders/sanitizes it; `view_mode` is single-select (pick
   one — neither document nor flipbook is individually disableable). If per-mode enable/disable
@@ -187,6 +197,7 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | T20 | .  | center lone flipbook page (cover/trailing-odd) — fix show_pgs_1 (#5) | V21,I.flip |
 | T21 | .  | relayout flipbook on fullscreenchange, document exempt (#6) | V22,I.wp,I.controls |
 | T22 | x  | empty-width viewer collapse fix + aspect-derived height + admin unset-preserving/placeholder all free-value fields (B16,B17) | V24,V25,I.wp,I.php,I.css,I.admin |
+| T24 | x  | rename delivered bundle `flipbook-viewer.js`→`bws-viewer-engines.js` (name reflects all-3-engines, not flip-only) (B18) | V26,I.php,C8 |
 | T23 | -  | [deferred, #1] true single-page flipbook on narrow: route to image/single viewer below breakpoint instead of the always-spread flipbook renderer; makes `layout=single`/auto-narrow actually page one-up. User wants to build; exploring first | V8,V24,I.wp,I.index,I.single |
 
 ## §B — bugs
@@ -208,4 +219,4 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | B14 | 2026-07-08 | fullscreen button label stuck on "Fullscreen" in fullscreen — relayout rebuilds the toolbar mid-fs and no fresh `fullscreenchange` fires for the new button; hardcoded default persisted. Fixed: init label from current fs state | V22 |
 | B15 | 2026-07-09 | cleared admin color field stored as "" (old `sanitize_hex_color`), overrode the transparent default via merge, then read as a falsy grey fallback in index.js — page grey despite blank fields + transparent default. Fixed: sanitize omits empty (unset); `normalizeColor`; `color.bx` set; transparent-aware fills | V23 |
 | B16 | 2026-07-09 | empty admin width (field cleared → stored "" → overrode PHP `100%` default via merge) collapsed the viewer: PHP emitted broken `style="width: ;"` (flex container shrank to content) AND `calculateDimensions` did `parseInt("")===NaN` → library 800px fallback → narrow, left-pinned; auto height stuck at 600 further capped the spread below full width. Fixed 4-file: JS empty/auto/100%→container width + page-aspect-derived height (edge-to-edge) + fullscreen clamp; PHP omits inline style when width empty; CSS container `width:100%`+`align-items:center`; admin sanitize omits empty width/height/border/margin/breakpoint + renders blank+placeholder (no materialized default) | V24,V25 |
-| B17 | 2026-07-09 | flipbook spread letterboxed with large vertical dead space when the container fell just under the breakpoint — `calculateDimensions` keyed `pagesAcross` off the `layout` string (auto→'single' below breakpoint → tall one-page canvas), but the flipbook library ALWAYS renders a 2-page spread (no single-page mode; layout string never reaches the renderer). Wide spread drawn into tall canvas → dead space. Diagnosed from live HTML: `canvas 1440×1851 style 720×925` at 720px container (< 768). Fixed: `pagesAcross` keys off `bookObj.numPages()===1`, so a multi-page book always gets a spread-aspect canvas. Surfaced that `layout` (auto/single/double) is vestigial in flipbook + dead in document mode → C7/V8 revised, T23 (#1) filed | V24,V8 |
+| B18 | 2026-07-09 | delivered viewer bundle named `flipbook-viewer.js` but bundles all 3 engines (flip+native+image via `src/index.js`) — misleading: reader greps "why is native in the flipbook file?", wastes time; native/image invisible in DevTools (no standalone file, all inside the one bundle). Hygiene rename, not runtime bug. Fixed: `dist/bws-viewer-engines.js` (webpack entry key + PHP enqueue + index.html + 3 test harnesses + 3 test JS imports + `scripts/package.mjs` + CLAUDE/README/MEMORY docs); UMD global left `flipbook` (IDEAS #6) | V26 | — `calculateDimensions` keyed `pagesAcross` off the `layout` string (auto→'single' below breakpoint → tall one-page canvas), but the flipbook library ALWAYS renders a 2-page spread (no single-page mode; layout string never reaches the renderer). Wide spread drawn into tall canvas → dead space. Diagnosed from live HTML: `canvas 1440×1851 style 720×925` at 720px container (< 768). Fixed: `pagesAcross` keys off `bookObj.numPages()===1`, so a multi-page book always gets a spread-aspect canvas. Surfaced that `layout` (auto/single/double) is vestigial in flipbook + dead in document mode → C7/V8 revised, T23 (#1) filed | V24,V8 |

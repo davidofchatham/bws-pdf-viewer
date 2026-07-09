@@ -3,7 +3,10 @@ const path = require('path')
 
 const base = {
   entry: {
-    'flipbook-viewer': {
+    // Bundle of all three viewer engines (flip + native + image), routed by
+    // src/index.js. Named -engines to signal it is NOT flip-only; the UMD global
+    // is still `flipbook` (legacy; renaming it is separate churn — see IDEAS #6).
+    'bws-viewer-engines': {
       import: './src/index.js',
       library: {
         name: 'flipbook',

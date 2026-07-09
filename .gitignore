@@ -3,7 +3,7 @@ _tmp/
 build/
 node_modules/
 dist/*
-!dist/flipbook-viewer.js
+!dist/bws-viewer-engines.js
 !dist/pdf.js
 !dist/pdf.js.map
 !dist/pdf.worker.js

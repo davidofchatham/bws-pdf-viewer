@@ -48,7 +48,7 @@ Files changed: `bws-pdf-viewer.php` (v3.1.0), `includes/bws-pdf-viewer.js` (full
 - Main plugin: `bws-pdf-viewer.php`
 - Source JS: `src/` — index.js, flipbookviewer.js, singlepageviewer.js, nativepageviewer.js, controls.js
 - WordPress integration: `includes/bws-pdf-viewer.js`, `includes/bws-pdf-viewer.css`, `includes/admin.php`
-- Built output: `dist/flipbook-viewer.js`, `dist/pdf.js`, `dist/pdf.worker.js`
+- Built output: `dist/bws-viewer-engines.js`, `dist/pdf.js`, `dist/pdf.worker.js`
 - Spec/plan tooling: `.specify/`
 
 ## Build Commands
