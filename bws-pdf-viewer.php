@@ -23,6 +23,15 @@ define('BWS_PDF_VIEWER_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('BWS_PDF_VIEWER_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('BWS_PDF_VIEWER_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
+// Asset cache-busting. When true, asset versions use filemtime() so every file
+// save produces a fresh ?ver= (kills mobile/CDN staleness during testing where
+// DevTools "disable cache" isn't available). Defaults to WP_DEBUG; overridable
+// via the 'bws_pdf_viewer_dev_assets' filter. Leave false in production so the
+// version constant drives cache-busting normally.
+if (!defined('BWS_PDF_VIEWER_DEV_ASSETS')) {
+    define('BWS_PDF_VIEWER_DEV_ASSETS', defined('WP_DEBUG') && WP_DEBUG);
+}
+
 /**
  * Main BWS PDF Viewer Class
  */
@@ -107,6 +116,28 @@ class BWS_PDF_Viewer {
     }
 
     /**
+     * Asset version string for cache-busting.
+     *
+     * In dev mode (BWS_PDF_VIEWER_DEV_ASSETS, filterable via
+     * 'bws_pdf_viewer_dev_assets') returns the file's filemtime so every save
+     * busts the cache. Otherwise returns the plugin version constant.
+     *
+     * @param string $relative_path Path relative to the plugin dir, e.g. 'dist/pdf.js'.
+     * @return string|int Version usable as the $ver arg to wp_register_script/style.
+     */
+    private function asset_version($relative_path) {
+        $dev = apply_filters('bws_pdf_viewer_dev_assets', BWS_PDF_VIEWER_DEV_ASSETS);
+        if ($dev) {
+            $file = BWS_PDF_VIEWER_PLUGIN_DIR . $relative_path;
+            $mtime = @filemtime($file);
+            if ($mtime) {
+                return $mtime;
+            }
+        }
+        return BWS_PDF_VIEWER_VERSION;
+    }
+
+    /**
      * Register scripts and styles
      *
      * Plugin base URL is filterable via 'bws_pdf_viewer_plugin_url' to support
@@ -122,7 +153,7 @@ class BWS_PDF_Viewer {
             'bws-pdfjs-lib',
             $plugin_url . 'dist/pdf.js',
             array(),
-            BWS_PDF_VIEWER_VERSION,
+            $this->asset_version('dist/pdf.js'),
             true
         );
 
@@ -131,7 +162,7 @@ class BWS_PDF_Viewer {
             'bws-pdf-viewer-lib',
             $plugin_url . 'dist/flipbook-viewer.js',
             array(),
-            BWS_PDF_VIEWER_VERSION,
+            $this->asset_version('dist/flipbook-viewer.js'),
             true
         );
 
@@ -140,7 +171,7 @@ class BWS_PDF_Viewer {
             'bws-pdf-viewer-wp',
             $plugin_url . 'includes/bws-pdf-viewer.js',
             array('bws-pdf-viewer-lib', 'bws-pdfjs-lib'),
-            BWS_PDF_VIEWER_VERSION,
+            $this->asset_version('includes/bws-pdf-viewer.js'),
             true
         );
 
@@ -149,7 +180,7 @@ class BWS_PDF_Viewer {
             'bws-pdf-viewer',
             $plugin_url . 'includes/bws-pdf-viewer.css',
             array(),
-            BWS_PDF_VIEWER_VERSION
+            $this->asset_version('includes/bws-pdf-viewer.css')
         );
 
         // Pass plugin URL and config to JavaScript.
