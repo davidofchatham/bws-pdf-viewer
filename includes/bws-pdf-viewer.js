@@ -658,13 +658,21 @@
         // fixed layouts don't reflow on width via the ResizeObserver below, but the
         // canvas still must rescale to the fullscreen size. Document mode is exempt
         // (returned above): it reflows via CSS max-width:100%.
+        // Track whether THIS container is the fullscreen element across events.
+        // document.fullscreenElement is page-global, so on an exit event it is null
+        // regardless of which viewer just exited; without a local flag we cannot
+        // tell our own exit from an unrelated viewer's exit and would reinit every
+        // flipbook on the page whenever any one of them left fullscreen (B-fs-scope).
+        let wasThisFs = false;
         const onFullscreenRelayout = function() {
             const isFs = (document.fullscreenElement === container ||
                           document.webkitFullscreenElement === container);
-            const wasFs = (document.fullscreenElement || document.webkitFullscreenElement);
-            // Only act on transitions involving THIS container (enter its own fs, or
-            // exit while it was the fs element). Other containers' events are ignored.
-            if (!isFs && wasFs) return;
+            // Act only on transitions of THIS container: entering its own fullscreen,
+            // or exiting while it was the fullscreen element. An unrelated viewer's
+            // fullscreenchange leaves both isFs and wasThisFs false → ignored.
+            const relevant = isFs || wasThisFs;
+            wasThisFs = isFs;
+            if (!relevant) return;
 
             // Defer two frames so the browser has fully applied the fullscreen box
             // size before we read container dimensions. A single rAF can fire before
