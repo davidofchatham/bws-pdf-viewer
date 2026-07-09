@@ -5,7 +5,10 @@ PDF.js component adoption) coded on branch `002-integrated-viewer-toolbar` — N
 Distilled from SpecKit tree now archived at `docs/history/speckit/`. `check` diffs code vs §V;
 `backprop` appends §B+§V on new bugs. Full rationale/user-stories live in archived SpecKit
 artifacts; this file holds durable goals, invariants, debt, bug ledger.
-TODO before merge: manual test pass (T17), PR to master (T18).
+TODO before merge: manual test pass (T17), PR to master (T18). §T is scoped to THIS spec's
+shipped/in-flight work; future & deferred items (zoom, in-viewer search, Gutenberg block,
+PDF.js double-bundle dedup, true single-page flipbook) live in `docs/IDEAS.md`, resumed
+individually as their own efforts.
 
 ## §G — goal
 WordPress plugin embed PDF inline. 3 render modes (flipbook animate / native PDF.js / image
@@ -32,7 +35,7 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   note it in the changelog. Additionally: EVERY existing att is up for revision — the current set is
   NOT cemented; review the whole surface before a 1.0 freeze (V8). Cites I.php,I.admin.
 - **C8.** PDF.js internals bundled twice (pdf.js + bws-viewer-engines.js, +182KB) — known debt,
-  dedup deferred (T13, issue #4, [[pdfjs-bundle-dedup]]).
+  dedup deferred (issue #4, IDEAS #6a, [[pdfjs-bundle-dedup]]).
 
 ## §I — surfaces
 - **I.index** = `src/index.js` — router: nativeMode→nativePageViewer, singlepage→singlePageViewer, else flipbookViewer.
@@ -75,7 +78,7 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   changelog it (C7). Before a 1.0 freeze, review the WHOLE att surface for vestigial/misleading
   controls. Known vestigial: `layout` (auto/single/double) does nothing in the flipbook renderer
   (which only draws spreads — V24/B17) and is dead in document mode; KEPT for now as the anchor for
-  the planned true single-page-flipbook feature (T23/#1), NOT because it currently works. Cites
+  the planned true single-page-flipbook feature (issue #1, IDEAS #5), NOT because it currently works. Cites
   I.php,I.admin,C7.
 - **V9. One control-set impl, all modes.** Exactly one toolbar component (I.controls, in WP layer)
   serves flipbook + native; no duplicate control code. Cites I.controls, C1.
@@ -204,16 +207,11 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | T12 | x  | ESLint flat config + lint script | . |
 | T17 | .  | manual test pass 002 branch (real WP + browser): both modes, a11y/SR, back-compat atts | V9,V10,V11,V13 |
 | T18 | .  | PR 002-integrated-viewer-toolbar → master | . |
-| T13 | -  | dedup PDF.js double-bundle (+182KB) | C8,issue #4 |
-| T14 | -  | zoom controls (deferred unless trivial from component adoption) | . |
-| T15 | -  | in-viewer search (future; enabled-by not part-of 002) | V7 |
-| T16 | -  | Gutenberg block authoring interface (deferred, shortcode-only this release) | V8 |
 | T19 | x  | context-aware page-nav hide (continuous mode / 1-page file) + toolbar restyle (#7,#8) — coded 75590fc, headless-verified; final sign-off rides T17 | V6,V10,I.controls,I.css |
 | T20 | x  | center lone flipbook page (cover/trailing-odd) — fix show_pgs_1 (#5) — coded 7ca2a31, verified centered; final sign-off rides T17 | V21,I.flip |
 | T21 | x  | relayout flipbook on fullscreenchange, document exempt (#6) — coded 760c384/cc54c8c, verified 4K; final sign-off rides T17 | V22,I.wp,I.controls |
 | T22 | x  | empty-width viewer collapse fix + aspect-derived height + admin unset-preserving/placeholder all free-value fields (B16,B17) | V24,V25,I.wp,I.php,I.css,I.admin |
 | T24 | x  | rename delivered bundle `flipbook-viewer.js`→`bws-viewer-engines.js` (name reflects all-3-engines, not flip-only) (B18) | V26,I.php,C8 |
-| T23 | -  | [deferred, #1] true single-page flipbook on narrow: route to image/single viewer below breakpoint instead of the always-spread flipbook renderer; makes `layout=single`/auto-narrow actually page one-up. User wants to build; exploring first | V8,V24,I.wp,I.index,I.single |
 
 ## §B — bugs
 | id | date       | cause | fix |
