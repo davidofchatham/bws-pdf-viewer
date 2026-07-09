@@ -72,6 +72,25 @@ function setupControls(ctx, viewer) {
     }
   }
 
+  /*    way/
+   * jump directly to a 1-based page with no flip animation.
+   * Respects the in-flight-flip guard exactly as flip_forward does.
+   * showPages renders spread `showNdx` as book.getPage(showNdx*2) and (showNdx*2+1).
+   * Both layouts place page P in spread floor(P/2):
+   *   traditional (wrapped): display 0→p1, 2→p2, 3→p3 …  → p1 in spread 0, p2/p3 spread 1
+   *   spread (raw, 1-based):  getPage(0)=∅, 1=p1, 2=p2 … → p1 in spread 0, p2/p3 spread 1
+   * so the single expression is correct for both — no layout branch needed.
+   * showPages emits the 0-based 'seen' index itself, so we do not emit here
+   * (preserves the payload convention — contracts/viewer-api.md).
+   */
+  viewer.goToPage = pageNum => {
+    if(ctx.flipNdx || ctx.flipNdx === 0) return;
+    const total = ctx.book.numPages();
+    if(pageNum < 1 || pageNum > total) return;
+    ctx.showNdx = Math.floor(pageNum / 2);
+    showPages(ctx, viewer);
+  }
+
   viewer.flip_forward = () => {
     if(ctx.flipNdx || ctx.flipNdx === 0) return;
     if(ctx.book.numPages() <= 1) return;
@@ -328,15 +347,31 @@ function showPages(ctx, viewer) {
   function show_pgs_1(left, right, cb) {
     const layout = calcLayout(ctx);
 
-    if(ctx.zoom == 0) show_bx_1(layout);
-
-    const page_l = Object.assign({}, layout);
-    const page_r = Object.assign({}, layout);
-    page_l.width /= 2;
-    page_r.width /= 2;
-    page_r.left = layout.mid;
-    if(left) show_pg_1(left, page_l);
-    if(right) show_pg_1(right, page_r);
+    // V21: when exactly one side is a real page (traditional cover, or a trailing
+    // odd page), center that lone page instead of pinning it to its half with a
+    // blank adjacent slot. The traditional book wrapper fills the empty half with a
+    // BLANK page object (num===0), not null — so absence is `!pg || pg.num===0`,
+    // not just `!pg`. A full spread (both real) draws normally.
+    const leftReal  = isRealPage(left);
+    const rightReal = isRealPage(right);
+    if(leftReal && !rightReal) {
+      const loc = centeredHalf(layout);
+      if(ctx.zoom == 0) show_bx_1(loc);
+      show_pg_1(left, loc);
+    } else if(rightReal && !leftReal) {
+      const loc = centeredHalf(layout);
+      if(ctx.zoom == 0) show_bx_1(loc);
+      show_pg_1(right, loc);
+    } else {
+      if(ctx.zoom == 0) show_bx_1(layout);
+      const page_l = Object.assign({}, layout);
+      const page_r = Object.assign({}, layout);
+      page_l.width /= 2;
+      page_r.width /= 2;
+      page_r.left = layout.mid;
+      if(left) show_pg_1(left, page_l);
+      if(right) show_pg_1(right, page_r);
+    }
     cb();
   }
 
@@ -344,16 +379,44 @@ function showPages(ctx, viewer) {
     canvas.ctx.drawImage(pg.img, loc.left, loc.top, loc.width, loc.height);
   }
 
+  /*    way/
+   * V21: a page is "real" (occupies its slot) unless it's the traditional
+   * wrapper's blank filler, which carries num===0. Sources that don't tag pages
+   * with a numeric `num` are always treated as real.
+   */
+  function isRealPage(pg) {
+    return !!pg && pg.num !== 0;
+  }
+
+  /*    way/
+   * V21: a single page occupies one half-width, centered in the full spread box.
+   */
+  function centeredHalf(layout) {
+    const loc = Object.assign({}, layout);
+    loc.width = layout.width / 2;
+    loc.left = layout.left + layout.width / 4;
+    return loc;
+  }
+
   function show_bx_1(loc) {
+    // Transparent box → draw nothing (the page itself still paints over it).
+    if(!ctx.color.bx || ctx.color.bx === 'transparent') return;
     canvas.ctx.fillStyle = ctx.color.bx;
     const border = ctx.sz.bx_border;
     canvas.ctx.fillRect(loc.left - border, loc.top-border, loc.width+border*2, loc.height+2*border);
   }
 
   function show_bg_1() {
-
-    canvas.ctx.fillStyle = ctx.color.bg;
-    canvas.ctx.fillRect(0, 0, ctx.sz.boxw*outputScale, ctx.sz.boxh*outputScale);
+    const w = ctx.sz.boxw * outputScale;
+    const h = ctx.sz.boxh * outputScale;
+    // Always clear first so the previous flip frame doesn't smear.
+    canvas.ctx.clearRect(0, 0, w, h);
+    // A transparent bg lets the host page show through around/beside the pages;
+    // any other color paints an opaque fill as before.
+    if(ctx.color.bg && ctx.color.bg !== 'transparent') {
+      canvas.ctx.fillStyle = ctx.color.bg;
+      canvas.ctx.fillRect(0, 0, w, h);
+    }
   }
 }
 
@@ -542,6 +605,8 @@ function showFlip(ctx, viewer) {
   }
 
   function show_empty_1(fillStyle, loc) {
+    // Transparent → leave the slot empty (host page shows through during a flip).
+    if(!fillStyle || fillStyle === 'transparent') return;
     canvas.ctx.fillStyle = fillStyle;
     const border = ctx.sz.bx_border;
     canvas.ctx.fillRect(loc.left - border, loc.top-border-5, loc.width+border*2, loc.height+2*border+10);

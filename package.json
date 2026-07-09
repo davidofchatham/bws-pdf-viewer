@@ -1,33 +1,29 @@
 {
-  "name": "flipbook-viewer",
-  "version": "1.6.1",
-  "description": "Amazing Page Flip Animation for a (PDF/Image Collection) Flipbook viewer",
-  "main": "dist/flipbook-viewer.js",
+  "name": "bws-pdf-viewer",
+  "version": "0.4.7",
+  "description": "WordPress PDF viewer plugin with optional page flip animation, using HTML5 canvas and PDF.js",
+  "main": "bws-pdf-viewer.php",
   "scripts": {
     "start": "npm run clean && webpack build --env production",
     "test": "webpack serve --env development --open",
-    "clean": "npx -y del-cli dist && npx -y make-dir-cli dist"
+    "clean": "npx -y del-cli dist && npx -y make-dir-cli dist",
+    "lint": "eslint src includes test webpack.config.js eslint.config.js",
+    "package": "npm run start && node scripts/package.mjs"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/theproductiveprogrammer/flipbook-viewer.git"
+    "url": "git+https://github.com/davidofchatham/bws-pdf-viewer.git"
   },
-  "keywords": [
-    "page-flip", "flipbook", "pdfjs", "pdf-viewer", "viewer", "canvas", "animation",
-    "page-turning", "page-turn"
-  ],
-  "author": "charles.lobo@gmail.com",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/theproductiveprogrammer/flipbook-viewer/issues"
-  },
-  "homepage": "https://github.com/theproductiveprogrammer/flipbook-viewer#readme",
+  "homepage": "https://github.com/davidofchatham/bws-pdf-viewer",
   "devDependencies": {
-    "pdfjs-dist": "^2.10.377",
+    "eslint": "^9.39.4",
+    "pdfjs-dist": "6.1.200",
+    "playwright-core": "^1.61.1",
     "svg-inline-loader": "^0.8.2",
-    "webpack": "^5.61.0",
-    "webpack-cli": "^4.9.1",
-    "webpack-dev-server": "^4.4.0"
+    "webpack": "^5.104.1",
+    "webpack-cli": "^4.10.0",
+    "webpack-dev-server": "^5.2.2"
   },
   "dependencies": {
     "@tpp/htm-x": "^5.8.0"

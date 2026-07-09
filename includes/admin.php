@@ -162,6 +162,31 @@ class BWS_PDF_Viewer_Admin {
             'bws_pdf_viewer_layout_section'
         );
 
+        // Show Navigation Controls (default for the show_controls shortcode attribute)
+        add_settings_field(
+            'default_show_controls',
+            __('Show Navigation Controls', 'bws-pdf-viewer'),
+            array($this, 'render_show_controls_field'),
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_layout_section'
+        );
+
+        add_settings_field(
+            'default_show_fullscreen',
+            __('Show Fullscreen Button', 'bws-pdf-viewer'),
+            array($this, 'render_show_fullscreen_field'),
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_layout_section'
+        );
+
+        add_settings_field(
+            'default_show_print',
+            __('Show Print Button', 'bws-pdf-viewer'),
+            array($this, 'render_show_print_field'),
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_layout_section'
+        );
+
         // Margin
         add_settings_field(
             'margin',
@@ -178,27 +203,38 @@ class BWS_PDF_Viewer_Admin {
     public function sanitize_options($input) {
         $sanitized = array();
 
+        // Width / height: an EMPTY field leaves the key UNSET so the plugin default
+        // (100% / auto) applies via array_merge — same unset-preserving model as the
+        // colors below. Storing "" instead would override the default with a falsy
+        // value: empty width then emits a broken inline style and the canvas collapses
+        // to a narrow left-pinned box (B16). Non-empty values are stored verbatim.
         if (isset($input['width'])) {
-            $sanitized['width'] = sanitize_text_field($input['width']);
+            $w = sanitize_text_field($input['width']);
+            if ($w !== '') $sanitized['width'] = $w;
         }
 
         if (isset($input['height'])) {
-            $sanitized['height'] = sanitize_text_field($input['height']);
+            $h = sanitize_text_field($input['height']);
+            if ($h !== '') $sanitized['height'] = $h;
         }
 
-        if (isset($input['background_color'])) {
-            $sanitized['background_color'] = sanitize_hex_color($input['background_color']);
-        }
+        // Colors: store a valid hex or the literal "transparent"; an EMPTY field
+        // stores NOTHING (the key is left unset) so the plugin default applies via
+        // array_merge. Storing an explicit value for empty would freeze today's
+        // meaning into the DB and stop a future default change from reaching these
+        // rows. Old behavior sanitized "" to "" — a falsy value that overrode the
+        // default and then read as a grey fallback (see backprop).
+        $this->sanitize_color_into($sanitized, $input, 'background_color');
+        $this->sanitize_color_into($sanitized, $input, 'box_color');
 
-        if (isset($input['box_color'])) {
-            $sanitized['box_color'] = sanitize_hex_color($input['box_color']);
-        }
-
-        if (isset($input['box_border'])) {
+        // Border: an EMPTY field leaves the key unset so the plugin default (0) applies
+        // via merge — same unset-preserving model as width/height/colors. intval('')
+        // would store an explicit 0, materializing today's default into the DB.
+        if (isset($input['box_border']) && trim($input['box_border']) !== '') {
             $sanitized['box_border'] = intval($input['box_border']);
         }
 
-        if (isset($input['margin'])) {
+        if (isset($input['margin']) && trim($input['margin']) !== '') {
             $sanitized['margin'] = floatval($input['margin']);
         }
 
@@ -219,18 +255,54 @@ class BWS_PDF_Viewer_Admin {
         }
 
         if (isset($input['view_mode'])) {
-            $sanitized['view_mode'] = in_array($input['view_mode'], array('flipbook', 'singlepage')) ? $input['view_mode'] : 'flipbook';
+            $sanitized['view_mode'] = in_array($input['view_mode'], array('flipbook', 'document', 'singlepage')) ? $input['view_mode'] : 'document';
         }
 
-        if (isset($input['breakpoint'])) {
+        if (isset($input['breakpoint']) && trim($input['breakpoint']) !== '') {
             $sanitized['breakpoint'] = intval($input['breakpoint']);
         }
 
-        if (isset($input['enable_animations'])) {
-            $sanitized['enable_animations'] = (bool) $input['enable_animations'];
-        }
+        // Checkbox: an unchecked box submits no value, so persist false on absence
+        // rather than falling back to the default (which would make it un-uncheckable).
+        $sanitized['enable_animations']       = ! empty($input['enable_animations']);
+        $sanitized['default_show_controls']   = ! empty($input['default_show_controls']);
+        $sanitized['default_show_fullscreen'] = ! empty($input['default_show_fullscreen']);
+        $sanitized['default_show_print']      = ! empty($input['default_show_print']);
 
         return $sanitized;
+    }
+
+    /**
+     * Sanitize one color field into $sanitized, or leave it UNSET when empty.
+     *
+     * - empty / whitespace  -> key omitted (plugin default applies via merge; keeps
+     *                          "unset" distinct from an explicit color so a future
+     *                          default change still reaches these rows)
+     * - "transparent"       -> stored as 'transparent'
+     * - valid hex           -> stored as sanitized hex
+     * - invalid non-empty   -> key omitted (don't persist garbage)
+     *
+     * @param array  $sanitized Sanitized output array (by reference).
+     * @param array  $input     Raw submitted options.
+     * @param string $key       Option key to process.
+     */
+    private function sanitize_color_into(&$sanitized, $input, $key) {
+        if (!isset($input[$key])) {
+            return;
+        }
+        $value = is_string($input[$key]) ? trim($input[$key]) : '';
+        if ($value === '') {
+            return; // leave unset -> default applies
+        }
+        if (strtolower($value) === 'transparent') {
+            $sanitized[$key] = 'transparent';
+            return;
+        }
+        $hex = sanitize_hex_color($value);
+        if ($hex !== '' && $hex !== null) {
+            $sanitized[$key] = $hex;
+        }
+        // invalid, non-empty -> intentionally omitted
     }
 
     /**
@@ -245,7 +317,7 @@ class BWS_PDF_Viewer_Admin {
         if (isset($_GET['settings-updated'])) {
             add_settings_error(
                 'bws_pdf_viewer_messages',
-                'flipbook_viewer_message',
+                'bws_pdf_viewer_message',
                 __('Settings Saved', 'bws-pdf-viewer'),
                 'updated'
             );
@@ -268,11 +340,11 @@ class BWS_PDF_Viewer_Admin {
                     <ul style="list-style: disc; margin-left: 20px;">
                         <li><code>width</code> - Width (default: 100%)</li>
                         <li><code>height</code> - Height (default: auto)</li>
-                        <li><code>background_color</code> - Background color (hex)</li>
-                        <li><code>box_color</code> - Box color (hex)</li>
+                        <li><code>background_color</code> - Background around pages (hex or "transparent"; default transparent)</li>
+                        <li><code>box_color</code> - Fill behind each page (hex or "transparent"; default transparent)</li>
                         <li><code>layout</code> - auto, single, or double</li>
                         <li><code>book_layout</code> - traditional or spread</li>
-                        <li><code>view_mode</code> - flipbook or singlepage</li>
+                        <li><code>view_mode</code> - document (continuous) or flipbook</li>
                         <li><code>breakpoint</code> - Container width breakpoint (px)</li>
                         <li><code>enable_animations</code> - true or false</li>
                     </ul>
@@ -295,7 +367,7 @@ class BWS_PDF_Viewer_Admin {
      * Section renderers
      */
     public function render_display_section() {
-        echo '<p>' . __('Configure default display settings for the flipbook viewer. These can be overridden per shortcode.', 'bws-pdf-viewer') . '</p>';
+        echo '<p>' . __('Configure default display settings for the PDF viewer. These can be overridden per shortcode.', 'bws-pdf-viewer') . '</p>';
     }
 
     public function render_layout_section() {
@@ -306,47 +378,53 @@ class BWS_PDF_Viewer_Admin {
      * Field renderers
      */
     public function render_width_field() {
+        // Show empty when unset (do NOT pre-fill '100%'): a materialized default would
+        // be saved into the DB and freeze today's default, blocking a future change —
+        // same unset-preserving model as the color fields (B16). The placeholder shows
+        // what blank resolves to without storing it.
         $options = get_option('bws_pdf_viewer_options', array());
-        $value = isset($options['width']) ? $options['width'] : '100%';
+        $value = isset($options['width']) ? $options['width'] : '';
         ?>
-        <input type="text" name="bws_pdf_viewer_options[width]" value="<?php echo esc_attr($value); ?>" class="regular-text">
-        <p class="description"><?php _e('Width of the viewer (e.g., 100%, 800px). Default: 100%', 'bws-pdf-viewer'); ?></p>
+        <input type="text" name="bws_pdf_viewer_options[width]" value="<?php echo esc_attr($value); ?>" placeholder="100%" class="regular-text">
+        <p class="description"><?php _e('Width of the viewer (e.g., 100%, 800px). Leave blank for the default (100% — fills the container).', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_height_field() {
         $options = get_option('bws_pdf_viewer_options', array());
-        $value = isset($options['height']) ? $options['height'] : 'auto';
+        $value = isset($options['height']) ? $options['height'] : '';
         ?>
-        <input type="text" name="bws_pdf_viewer_options[height]" value="<?php echo esc_attr($value); ?>" class="regular-text">
-        <p class="description"><?php _e('Height of the viewer (e.g., auto, 600px). Default: auto (fits aspect ratio)', 'bws-pdf-viewer'); ?></p>
+        <input type="text" name="bws_pdf_viewer_options[height]" value="<?php echo esc_attr($value); ?>" placeholder="auto" class="regular-text">
+        <p class="description"><?php _e('Height of the viewer (e.g., auto, 600px). Leave blank for the default (auto — derived from the page aspect ratio so the spread fits edge-to-edge).', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_background_color_field() {
         $options = get_option('bws_pdf_viewer_options', array());
-        $value = isset($options['background_color']) ? $options['background_color'] : '#353535';
+        $value = isset($options['background_color']) ? $options['background_color'] : '';
         ?>
-        <input type="text" name="bws_pdf_viewer_options[background_color]" value="<?php echo esc_attr($value); ?>" class="color-field">
-        <p class="description"><?php _e('Background color (hex code). Default: #353535', 'bws-pdf-viewer'); ?></p>
+        <input type="text" name="bws_pdf_viewer_options[background_color]" value="<?php echo esc_attr($value); ?>" placeholder="transparent" class="color-field">
+        <p class="description"><?php _e('Background around the pages. Enter a hex code (e.g. #353535) or the word <code>transparent</code>. Leave blank to use the default (transparent — the host page shows through).', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_box_color_field() {
         $options = get_option('bws_pdf_viewer_options', array());
-        $value = isset($options['box_color']) ? $options['box_color'] : '#353535';
+        $value = isset($options['box_color']) ? $options['box_color'] : '';
         ?>
-        <input type="text" name="bws_pdf_viewer_options[box_color]" value="<?php echo esc_attr($value); ?>" class="color-field">
-        <p class="description"><?php _e('Box color (hex code). Default: #353535', 'bws-pdf-viewer'); ?></p>
+        <input type="text" name="bws_pdf_viewer_options[box_color]" value="<?php echo esc_attr($value); ?>" placeholder="transparent" class="color-field">
+        <p class="description"><?php _e('Fill behind each page. Enter a hex code (e.g. #353535) or the word <code>transparent</code>. Leave blank to use the default (transparent).', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_box_border_field() {
+        // Empty when unset (do NOT pre-fill 0): a stored 0 would freeze the default.
+        // Placeholder shows what blank resolves to.
         $options = get_option('bws_pdf_viewer_options', array());
-        $value = isset($options['box_border']) ? $options['box_border'] : 0;
+        $value = isset($options['box_border']) ? $options['box_border'] : '';
         ?>
-        <input type="number" name="bws_pdf_viewer_options[box_border]" value="<?php echo esc_attr($value); ?>" min="0" step="1">
-        <p class="description"><?php _e('Border width in pixels. Default: 0', 'bws-pdf-viewer'); ?></p>
+        <input type="number" name="bws_pdf_viewer_options[box_border]" value="<?php echo esc_attr($value); ?>" placeholder="0" min="0" step="1">
+        <p class="description"><?php _e('Border width in pixels. Leave blank for the default (0 — no border).', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
@@ -377,22 +455,26 @@ class BWS_PDF_Viewer_Admin {
 
     public function render_view_mode_field() {
         $options = get_option('bws_pdf_viewer_options', array());
-        $value = isset($options['view_mode']) ? $options['view_mode'] : 'flipbook';
+        $value = isset($options['view_mode']) ? $options['view_mode'] : 'document';
+        // 'singlepage' is a legacy stored value normalised to 'document' at render time.
+        if ($value === 'singlepage') {
+            $value = 'document';
+        }
         ?>
         <select name="bws_pdf_viewer_options[view_mode]">
-            <option value="flipbook" <?php selected($value, 'flipbook'); ?>><?php _e('Flipbook (animated pages)', 'bws-pdf-viewer'); ?></option>
-            <option value="singlepage" <?php selected($value, 'singlepage'); ?>><?php _e('Single Page (scrollable)', 'bws-pdf-viewer'); ?></option>
+            <option value="document" <?php selected($value, 'document'); ?>><?php _e('Continuous (recommended for accessibility)', 'bws-pdf-viewer'); ?></option>
+            <option value="flipbook" <?php selected($value, 'flipbook'); ?>><?php _e('Flipbook (animated page flips)', 'bws-pdf-viewer'); ?></option>
         </select>
-        <p class="description"><?php _e('Viewer mode. Flipbook shows animated page turns, Single Page shows scrollable pages.', 'bws-pdf-viewer'); ?></p>
+        <p class="description"><?php _e('Viewer mode. Continuous scrolls through pages and is more accessible with better screen reader support. Flipbook shows animated page turns.', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_breakpoint_field() {
         $options = get_option('bws_pdf_viewer_options', array());
-        $value = isset($options['breakpoint']) ? $options['breakpoint'] : 768;
+        $value = isset($options['breakpoint']) ? $options['breakpoint'] : '';
         ?>
-        <input type="number" name="bws_pdf_viewer_options[breakpoint]" value="<?php echo esc_attr($value); ?>" min="0" step="1">
-        <p class="description"><?php _e('Container width (in pixels) below which to switch to single page layout when layout is "auto". Default: 768px', 'bws-pdf-viewer'); ?></p>
+        <input type="number" name="bws_pdf_viewer_options[breakpoint]" value="<?php echo esc_attr($value); ?>" placeholder="768" min="0" step="1">
+        <p class="description"><?php _e('Container width (in pixels) below which to switch to single page layout when layout is "auto". Leave blank for the default (768px).', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
@@ -408,12 +490,48 @@ class BWS_PDF_Viewer_Admin {
         <?php
     }
 
+    public function render_show_controls_field() {
+        $options = get_option('bws_pdf_viewer_options', array());
+        $value = isset($options['default_show_controls']) ? $options['default_show_controls'] : true;
+        ?>
+        <label>
+            <input type="checkbox" name="bws_pdf_viewer_options[default_show_controls]" value="1" <?php checked($value, true); ?>>
+            <?php _e('Show the navigation controls toolbar (prev/next, page jump, fullscreen, print) by default', 'bws-pdf-viewer'); ?>
+        </label>
+        <p class="description"><?php _e('Site-wide default for the show_controls shortcode attribute. Individual shortcodes can override this with show_controls="true" or show_controls="false".', 'bws-pdf-viewer'); ?></p>
+        <?php
+    }
+
+    public function render_show_fullscreen_field() {
+        $options = get_option('bws_pdf_viewer_options', array());
+        $value = isset($options['default_show_fullscreen']) ? $options['default_show_fullscreen'] : true;
+        ?>
+        <label>
+            <input type="checkbox" name="bws_pdf_viewer_options[default_show_fullscreen]" value="1" <?php checked($value, true); ?>>
+            <?php _e('Show the fullscreen button in the toolbar by default', 'bws-pdf-viewer'); ?>
+        </label>
+        <p class="description"><?php _e('Site-wide default for the show_fullscreen shortcode attribute. Individual shortcodes can override this with show_fullscreen="true" or show_fullscreen="false".', 'bws-pdf-viewer'); ?></p>
+        <?php
+    }
+
+    public function render_show_print_field() {
+        $options = get_option('bws_pdf_viewer_options', array());
+        $value = isset($options['default_show_print']) ? $options['default_show_print'] : true;
+        ?>
+        <label>
+            <input type="checkbox" name="bws_pdf_viewer_options[default_show_print]" value="1" <?php checked($value, true); ?>>
+            <?php _e('Show the print button in the toolbar by default', 'bws-pdf-viewer'); ?>
+        </label>
+        <p class="description"><?php _e('Site-wide default for the show_print shortcode attribute. Individual shortcodes can override this with show_print="true" or show_print="false".', 'bws-pdf-viewer'); ?></p>
+        <?php
+    }
+
     public function render_margin_field() {
         $options = get_option('bws_pdf_viewer_options', array());
-        $value = isset($options['margin']) ? $options['margin'] : 1;
+        $value = isset($options['margin']) ? $options['margin'] : '';
         ?>
-        <input type="number" name="bws_pdf_viewer_options[margin]" value="<?php echo esc_attr($value); ?>" min="0" step="0.1">
-        <p class="description"><?php _e('Margin percentage around the viewer. Default: 1', 'bws-pdf-viewer'); ?></p>
+        <input type="number" name="bws_pdf_viewer_options[margin]" value="<?php echo esc_attr($value); ?>" placeholder="1" min="0" step="0.1">
+        <p class="description"><?php _e('Margin percentage around the viewer. Leave blank for the default (1).', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 }

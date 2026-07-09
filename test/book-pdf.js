@@ -8,7 +8,7 @@ export function init(pdflink, cb) {
 
   const cache = []
 
-  pdfjs.getDocument(pdflink).promise
+  pdfjs.getDocument({ url: pdflink }).promise
     .then(pdf => {
       warm_cache_1(pdf, 1)
       cb(null, {

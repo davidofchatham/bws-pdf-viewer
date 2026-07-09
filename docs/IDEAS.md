@@ -1,0 +1,113 @@
+# Enhancement Ideas
+
+Parking lot for enhancement ideas. Repo GitHub Issues are reserved for
+bugs and actionable follow-ups; ideas live here until promoted to an issue.
+
+**Status vocabulary:** `parked` (noted, not started) · `exploring` (spec/design
+in progress) · `promoted` (moved to a GitHub Issue — link it) · `dropped`.
+
+| # | Idea | Notes | Status |
+|---|------|-------|--------|
+| 1 | Contained Continuous viewer | Same **Continuous** page stack, but bounded in a fixed-height box that scrolls *internally* instead of growing into page flow (current behavior grows unbounded, whole page scrolls). Toolbar pinned to the box edge — like PDF.js's own default viewer. Not a new render mode; a layout wrapper on existing Continuous. Impl sketch: wrap page container in a fixed/`height`-attr element with `overflow:auto`; pin toolbar via sticky/absolute. | parked |
+| 2 | Rename "document" → "Continuous"? (open question) | Admin dropdown label is already "Continuous", but the stored `view_mode` value and shortcode attr are still `document`. Open question: should the value/attr itself be renamed to `continuous`? If yes, the deeper internal rename below likely rides along. Decide the naming before touching code. | parked |
+| 3 | Deeper internal rename (`singlepage` → continuous) | Rename internal JS `singlepage` config key, `singlePageViewer` fn, and `singlepageviewer.js` file across src/build/tests. Large churn (rebuild + retest), no end-user benefit beyond consistency. Depends on #2's outcome. | parked |
+| 4 | First / last page jump buttons | Add "⇤ First" / "Last ⇥" buttons to the toolbar page-nav group (flanking prev/next) that jump straight to page 1 / last page. Only where page-nav shows (flipbook multi-page — V6); use `viewer.goToPage(1)` / `goToPage(page_count)`. Fits roving-focus order + disabled-at-edge logic. Optional shortcode/admin gate like the other buttons. | parked |
+| 5 | Two-axis viewer-mode taxonomy | **Proposed, not locked.** Reframe the current flat mode list (`document` / `flipbook`) as two orthogonal axes: **presentation** (flow / contain / flip) × **arrangement** (single / spread). Subsumes ideas #1–#3. See [§ Two-axis mode taxonomy](#two-axis-mode-taxonomy-proposed) below. | exploring |
+| 6 | Split engine bundle + rename UMD global | The delivered bundle was renamed `flipbook-viewer.js` → `bws-viewer-engines.js` (SPEC V26 / T24) so the filename stops implying flip-only — done. Two follow-ons remain **parked**: (a) **split** the single bundle into per-engine chunks (flip / native / image) lazy-loaded by mode, so mobile never ships the flipbook + native code it won't use — real payload win, rides the engine-convergence question and the double-bundle debt (issue #4); (b) **rename the UMD global** `flipbook` (still a lie — it's the multi-engine entry) to match, which means updating `library.name` in webpack + every `import * as flipbook` test usage. Both deferred; neither blocks the rename already shipped. | parked |
+| 7 | Zoom controls | Pinch/± zoom for the viewer. Was SPEC T14 — deferred out of the 002 toolbar spec. May fall out cheaply from the adopted PDF.js components (native mode already has scale), but flipbook/image zoom is separate work. Resume as its own effort when picked up. | parked |
+| 8 | In-viewer search | Full-text find across the PDF (highlight + prev/next hits). Was SPEC T15. Enabled-by, not part-of, the PDF.js component adoption (native mode has the text layer). NOT a shortcode attr (`enable_search` was never wired — CLAUDE.md, and the dead search CSS was removed, B-review). Its own feature spec when built. | parked |
+| 9 | Gutenberg block authoring | Block-editor UI to insert/configure the viewer instead of hand-writing the `[bws_pdf]` shortcode. Was SPEC T16. Shortcode-only this release. Rides the shortcode-attr surface review (V8) — freeze the attrs before wrapping a block UI around them. | parked |
+
+---
+
+## Two-axis mode taxonomy (proposed)
+
+**Status: proposed, not locked.** A direction to work toward, not a decision to
+implement now. Written down so the naming is settled before any rename churn
+(ideas #2 / #3) or new-mode work (idea #1) starts.
+
+### The idea
+
+Today's modes are a flat list — `document` (a.k.a. `singlepage`, continuous
+scroll) and `flipbook`. That list conflates independent choices. Split them into
+axes. Two are user-facing:
+
+- **Presentation** — how pages are framed and moved through:
+  - **flow** — unbounded; page stack grows into page flow, whole window scrolls
+    (current `document` behavior)
+  - **contain** — same page stack, bounded in a fixed-height box that scrolls
+    *internally*, toolbar pinned to the box edge (idea #1; PDF.js-style)
+  - **flip** — page-turn animation (current `flipbook`)
+- **Arrangement** — how many pages sit side-by-side:
+  - **single** — one page wide
+  - **spread** — two pages side-by-side
+
+A third axis (**engine**) is mostly internal — see below — but leaks into
+presentation in ways the taxonomy has to name.
+
+### The matrix
+
+Crossing the axes gives six cells. All six are meaningful:
+
+|            | single                          | spread                                            |
+|------------|---------------------------------|---------------------------------------------------|
+| **flow**   | current `document` (mobile)     | valid, niche — unbounded 2-up scroll              |
+| **contain**| idea #1 (bounded continuous)    | PDF.js-style static 2-up in a box                 |
+| **flip**   | mobile flipbook — *wanted, blocked* | current `flipbook`                            |
+
+### Engine is a third axis
+
+Presentation does **not** map cleanly onto a single renderer. There are already
+**three** engines, and today's `document` mode alone uses two of them:
+
+- **native** — `nativepageviewer.js`; a real PDF.js viewer with canvas + text +
+  annotation layers. Text-select, browser find, clickable links. Desktop-default.
+- **image** — `singlepageviewer.js`; PDF pages rasterized to images. Lightweight,
+  mobile-default; no text layer.
+- **flip** — the flipbook lib; animated page-turn. Always renders 2-up spreads.
+
+So "continuous renderer" (as an earlier draft called it) was a fiction — `flow`
+is already served by *either* native or image depending on device. **Engine is
+orthogonal to containment:** both native and image can, in principle, drive
+either `flow` or `contain` (today they only do `flow` — `contain` is unbuilt).
+Containment is a layout wrapper (bounded box + pinned toolbar), engine-independent.
+
+Two constraints keep it from being a clean 3-way free cross:
+
+- **flip fuses engine and presentation.** The flipbook lib *is* the flip
+  presentation — you cannot render `flip` without it, and it cannot render
+  anything but flip. So `flip` collapses one engine and one presentation into a
+  single inseparable choice.
+- **`contain` will likely default to native.** The wrinkle driving this section:
+  the bounded PDF.js-style contained mode wants the native engine specifically
+  (text layer, links, the real-PDF.js-viewer feel). That's a *default*, not a
+  hard fusion — image-engine contain is still conceivable (mobile bounded box) —
+  but `contain` leans native where `flow` leans image on mobile.
+
+Net: the two user-facing axes (presentation × arrangement) sit on top of an
+engine pick that's *usually* implied by the presentation + device, and only
+occasionally something to expose. `contain-spread` (native, static) and
+`flip-spread` (lib, animated) *look* alike but are different engines — so
+"spread" alone is ambiguous; always qualify it with the presentation.
+
+### Known blockers & open questions
+
+- **flip + single is currently impossible.** The flipbook lib always renders a
+  2-up spread; the `single`/`double` layout string never reaches the renderer.
+  Mobile flipbook (page-turn UI, one page at a time)
+  is *wanted as a responsive behavior* but needs either a lib patch or an engine
+  swap. Not just unwired — blocked.
+- **Responsive arrangement (auto single/spread by container width)** works for
+  `flow` / `contain` (native and image engines can honor layout), but is
+  **blocked for `flip`** by the same lib limit. `setupResponsiveBehavior()`
+  already measures container width via ResizeObserver — wire the arrangement axis
+  to it for the native/image engines now; flip waits on the lib.
+- **Engine-convergence question (open):** long-term, keep the flipbook lib as a
+  separate engine, or migrate `spread` onto the native/image engine with a
+  home-grown flip animation and retire the lib? Convergence would unblock
+  flip+single *and* kill the double-bundled PDF.js debt (PDF.js internals are
+  currently bundled twice, ~+182KB; tracked as issue #4). Big work; decide
+  deliberately.
+- **Naming precedence:** settle this taxonomy before the `document` → `continuous`
+  value/attr rename (#2) and the internal `singlepage` → continuous rename (#3),
+  since those renames should land in the new vocabulary, not the old.

@@ -1,25 +1,57 @@
 /**
- * Flipbook Viewer WordPress Plugin Styles
+ * BWS PDF Viewer WordPress Plugin Styles
  */
 
 /* Container styles */
 .bws-pdf-viewer-container {
     position: relative;
+    /* Fill the parent by default so the container width is meaningful even when no
+       inline width is set (empty admin width — B16). An inline style="width:..."
+       from the shortcode still overrides this. */
+    width: 100%;
     margin: 0 auto;
     box-sizing: border-box;
+    /* Flex column so the toolbar docks at the bottom edge inside the container.
+       Center the canvas on the cross (horizontal) axis so a canvas narrower than
+       the container is centered, not left-pinned. */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-.bws-pdf-viewer-container:focus {
-    outline: 2px solid #0073aa;
-    outline-offset: 2px;
+.bws-pdf-viewer-container:focus-visible {
+    outline: 3px solid #0073aa;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 5px rgba(0, 115, 170, 0.2);
 }
 
-/* Remove outline for mouse users, keep for keyboard users */
-.bws-pdf-viewer-container:focus:not(:focus-visible) {
-    outline: none;
+/* V22: fullscreen container fills the whole screen; the canvas is centered in the
+   remaining space above the docked toolbar. Without this the fixed-px canvas sits
+   flex-start (top-left) with black gaps to its right and below — the toolbar (full
+   width) then runs through that black. The background matches the canvas bg so the
+   letterbox around a portrait page reads as one surface, not black voids. */
+.bws-pdf-viewer-container:fullscreen,
+.bws-pdf-viewer-container:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+    background-color: #353535;
 }
 
-/* Error messages */
+.bws-pdf-viewer-container:fullscreen canvas,
+.bws-pdf-viewer-container:-webkit-full-screen canvas {
+    /* Center the canvas in the flex column's cross axis and let it fill the
+       vertical space above the toolbar. */
+    margin: auto;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .bws-pdf-viewer-container:focus-visible {
+        outline-width: 4px;
+    }
+}
+
+/* Error messages (FR-014) — structured div with role="alert" */
 .bws-pdf-viewer-error {
     padding: 15px;
     background-color: #f8d7da;
@@ -27,6 +59,20 @@
     border-radius: 4px;
     color: #721c24;
     margin: 10px 0;
+}
+
+.bws-pdf-viewer-error p {
+    margin: 0 0 8px;
+}
+
+.bws-pdf-viewer-error p:last-child {
+    margin-bottom: 0;
+}
+
+.bws-pdf-viewer-error a {
+    color: #721c24;
+    font-weight: 600;
+    text-decoration: underline;
 }
 
 /* Single page viewer styles */
@@ -79,51 +125,123 @@
     }
 }
 
-/* Canvas element */
+/* Canvas element. The flipbook library sets inline style.width + style.height in
+   px; `height: auto` lets the browser rescale height proportionally if `max-width`
+   ever clamps the display width, keeping the page aspect (no squash). */
 .bws-pdf-viewer-container canvas {
     display: block;
     max-width: 100%;
     height: auto;
 }
 
-/* Controls styling (if we add UI controls later) */
+/* Integrated toolbar — docked at the bottom edge, inside the viewer container.
+   T015/T016: last child of the container so it inherits :fullscreen; PDF.js-idiom
+   dark compact overlay bar. flex-wrap so narrow containers wrap rather than clip. */
 .bws-pdf-viewer-controls {
+    /* Theme surface — override any --bws-* var from a host theme or admin. */
+    --bws-toolbar-bg:        #38383d;
+    --bws-btn-fg:            #f0f0f0;
+    --bws-btn-bg:            transparent;
+    --bws-btn-border:        rgba(255, 255, 255, 0.18);
+    --bws-btn-hover-bg:      rgba(255, 255, 255, 0.08);
+    --bws-btn-active-bg:     rgba(255, 255, 255, 0.14);
+    --bws-btn-disabled-fg:   rgba(255, 255, 255, 0.35);
+    --bws-focus-ring:        #4ea3e0;
+    --bws-input-bg:          #ffffff;
+    --bws-input-fg:          #222222;
+    --bws-input-border:      rgba(255, 255, 255, 0.28);
+
+    order: 99; /* keep the bar last visually even if DOM order shifts */
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 10px;
-    margin-top: 10px;
+    gap: 6px;
+    padding: 6px 10px;
+    background-color: var(--bws-toolbar-bg);
+    box-sizing: border-box;
+    width: 100%;
 }
 
+/* Page-jump group: input + "of N" counter sit together */
+.bws-pdf-viewer-page-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--bws-btn-fg);
+    font-size: 14px;
+}
+
+.bws-pdf-page-input {
+    /* T022: min 24×24 target; narrow, centred, numeric */
+    width: 3.5em;
+    min-height: 24px;
+    padding: 4px 6px;
+    text-align: center;
+    border: 1px solid var(--bws-input-border);
+    border-radius: 4px;
+    background-color: var(--bws-input-bg);
+    color: var(--bws-input-fg);
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.bws-pdf-page-input:focus-visible {
+    outline: 2px solid var(--bws-focus-ring);
+    outline-offset: 1px;
+    border-color: var(--bws-focus-ring);
+}
+
+/* Flat monochrome buttons — PDF.js-idiom neutral bar. All hues come from
+   --bws-* vars so a host theme/admin can override without touching selectors. */
 .bws-pdf-viewer-controls button {
-    padding: 8px 16px;
-    background-color: #0073aa;
-    color: white;
-    border: none;
+    /* Minimum 24×24px target (WCAG 2.2 §2.5.8) — comfortably exceeded */
+    min-width: 44px;
+    min-height: 36px;
+    padding: 6px 14px;
+    background-color: var(--bws-btn-bg);
+    color: var(--bws-btn-fg);
+    border: 1px solid var(--bws-btn-border);
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
-    transition: background-color 0.2s;
+    line-height: 1.4;
+    transition: background-color 0.15s, border-color 0.15s;
 }
 
 .bws-pdf-viewer-controls button:hover {
-    background-color: #005a87;
+    background-color: var(--bws-btn-hover-bg);
+}
+
+.bws-pdf-viewer-controls button:active {
+    background-color: var(--bws-btn-active-bg);
 }
 
 .bws-pdf-viewer-controls button:disabled {
-    background-color: #ccc;
+    color: var(--bws-btn-disabled-fg);
+    border-color: transparent;
+    background-color: transparent;
     cursor: not-allowed;
 }
 
-.bws-pdf-viewer-controls button:focus {
-    outline: 2px solid #0073aa;
+/* Focus indicator — min 3:1 contrast ratio, min 2px (WCAG 2.2 §2.4.11) */
+.bws-pdf-viewer-controls button:focus-visible {
+    outline: 3px solid var(--bws-focus-ring);
     outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(78, 163, 224, 0.25);
 }
 
-/* Page counter */
+/* High contrast mode — ensure buttons remain visible */
+@media (forced-colors: active) {
+    .bws-pdf-viewer-controls button {
+        border: 2px solid ButtonText;
+    }
+}
+
+/* Page counter (display-only "of N" text on the dark bar) */
 .bws-pdf-viewer-page-counter {
     font-size: 14px;
-    color: #666;
+    color: var(--bws-btn-fg);
 }
 
 /* Accessibility: Skip to content link */
@@ -141,3 +259,157 @@
 .bws-pdf-viewer-skip-link:focus {
     top: 0;
 }
+
+/* Screen reader only announcements */
+.bws-pdf-viewer-sr-announcer {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* ========================================
+   Native PDF Viewer Styles
+   ======================================== */
+
+/* Page container for native viewer.
+   T007/T027: the JS sets --scale-factor per container; the official layer CSS below
+   sizes text spans relative to --total-scale-factor, which we derive here (user-unit
+   defaults to 1). Without this the text layer mis-positions (v6 bug, research D4/D9). */
+.page-container {
+    position: relative;
+    margin: 0 auto 20px;
+    max-width: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --scale-factor: 1;
+    --user-unit: 1;
+    --total-scale-factor: calc(var(--scale-factor) * var(--user-unit));
+}
+
+/* Canvas layer (visual rendering) */
+.pdf-canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* ----------------------------------------------------------------------------
+   Official pdfjs-dist layer styles (adapted from web/pdf_viewer.css, v6.1.200).
+   Only the .textLayer and .annotationLayer rules needed for the built-in
+   TextLayerBuilder / AnnotationLayerBuilder are included — the full viewer CSS
+   is deliberately NOT enqueued (research D4). Text layer stays selectable
+   (no pointer-events:none / user-select:none on it).
+   ---------------------------------------------------------------------------- */
+
+/* Text layer — selection + browser find */
+.textLayer {
+    position: absolute;
+    text-align: initial;
+    inset: 0;
+    overflow: clip;
+    opacity: 1;
+    line-height: 1;
+    -webkit-text-size-adjust: none;
+    -moz-text-size-adjust: none;
+    text-size-adjust: none;
+    forced-color-adjust: none;
+    transform-origin: 0 0;
+    z-index: 0;
+    --min-font-size: 1;
+    --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+    --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+
+.textLayer :is(span, br) {
+    color: transparent;
+    position: absolute;
+    white-space: pre;
+    cursor: text;
+    transform-origin: 0% 0%;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    user-select: text;
+}
+
+.textLayer > :not(.markedContent),
+.textLayer .markedContent span:not(.markedContent) {
+    z-index: 1;
+    --font-height: 0;
+    font-size: calc(var(--text-scale-factor) * var(--font-height));
+    --scale-x: 1;
+    --rotate: 0deg;
+    transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+
+.textLayer .markedContent {
+    display: contents;
+}
+
+.textLayer ::selection {
+    background: rgba(0, 100, 255, 0.25);
+    color: transparent;
+}
+
+.textLayer ::-moz-selection {
+    background: rgba(0, 100, 255, 0.25);
+    color: transparent;
+}
+
+/* Annotation layer — clickable links */
+.annotationLayer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    transform-origin: 0 0;
+}
+
+.annotationLayer section {
+    position: absolute;
+    text-align: initial;
+    pointer-events: auto;
+    box-sizing: border-box;
+    transform-origin: 0 0;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+.annotationLayer :is(.linkAnnotation, .buttonWidgetAnnotation.pushButton) > a {
+    position: absolute;
+    font-size: 1em;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.annotationLayer :is(.linkAnnotation, .buttonWidgetAnnotation.pushButton):not(.hasBorder) > a:hover {
+    opacity: 0.2;
+    background-color: rgb(255, 255, 0);
+}
+
+.annotationLayer .linkAnnotation.hasBorder:hover {
+    background-color: rgba(255, 255, 0, 0.2);
+}
+
+.annotationLayer .hasBorder {
+    background-size: 100% 100%;
+}
+
+.annotationLayer .linkAnnotation > a:focus {
+    outline: 2px solid #0073aa;
+    outline-offset: 2px;
+}
+
+/* Page loading error */
+.pdf-page-error {
+    padding: 20px;
+    text-align: center;
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+}
+

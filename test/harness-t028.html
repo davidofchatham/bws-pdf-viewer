@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>T028 harness — two viewers, independent layout</title>
+<link rel="stylesheet" href="/includes/bws-pdf-viewer.css">
+<style>
+  body { width: 1000px; margin: 0 auto; }
+  .col-narrow { width: 400px; }
+</style>
+</head>
+<body>
+  <h1>T028: two viewers, different container widths</h1>
+
+  <div class="col-wide">
+    <div id="bws-pdf-a" class="bws-pdf-viewer-container" style="width: 100%;"
+      data-config='{"pdf":"/test/fp.pdf","viewMode":"flipbook","singlepage":false,"layout":"auto","bookLayout":"traditional","width":"100%","height":"auto","backgroundColor":"#353535","boxColor":"#353535","boxBorder":0,"margin":0.5,"marginTop":null,"marginLeft":null,"breakpoint":768,"enableAnimations":true,"showControls":true,"showFullscreen":true,"showPrint":true,"forceNative":null}'>
+      <div class="bws-pdf-viewer-loading"><span>Loading PDF…</span></div>
+    </div>
+  </div>
+
+  <div class="col-narrow">
+    <div id="bws-pdf-b" class="bws-pdf-viewer-container" style="width: 100%;"
+      data-config='{"pdf":"/test/fp.pdf","viewMode":"flipbook","singlepage":false,"layout":"auto","bookLayout":"traditional","width":"100%","height":"auto","backgroundColor":"#353535","boxColor":"#353535","boxBorder":0,"margin":0.5,"marginTop":null,"marginLeft":null,"breakpoint":768,"enableAnimations":true,"showControls":true,"showFullscreen":true,"showPrint":true,"forceNative":null}'>
+      <div class="bws-pdf-viewer-loading"><span>Loading PDF…</span></div>
+    </div>
+  </div>
+
+  <script src="/dist/pdf.js"></script>
+  <script src="/dist/bws-viewer-engines.js"></script>
+  <script src="/includes/bws-pdf-viewer.js"></script>
+</body>
+</html>

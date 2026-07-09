@@ -26,6 +26,16 @@ export function singlePageViewer(ctx, cb) {
 }
 
 function setupSeenEvents(ctx, viewer) {
+  // Jump directly to a 1-based page: scroll its canvas into view and emit 'seen'
+  // with the string page number to match the existing pg_seen_1 payload.
+  viewer.goToPage = n => {
+    if(n < 1 || n > viewer.page_count) return;
+    const pageEl = ctx.pages[n - 1];
+    if(!pageEl) return;
+    pageEl.scrollIntoView({ block: 'start' });
+    viewer.emit('seen', String(n));
+  };
+
   const seen = {};
   const observer = new IntersectionObserver(pg_seen_1, {
     root: null,

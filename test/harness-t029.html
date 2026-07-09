@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>T029 harness — error state for invalid PDF URL</title>
+<link rel="stylesheet" href="/includes/bws-pdf-viewer.css">
+</head>
+<body>
+  <h1>T029: invalid PDF URL error state</h1>
+
+  <div id="bws-pdf-err" class="bws-pdf-viewer-container" style="width: 100%;"
+    data-config='{"pdf":"/test/does-not-exist.pdf","viewMode":"document","singlepage":true,"layout":"auto","bookLayout":"traditional","width":"100%","height":"auto","backgroundColor":"#353535","boxColor":"#353535","boxBorder":0,"margin":0.5,"marginTop":null,"marginLeft":null,"breakpoint":768,"enableAnimations":true,"showControls":true,"showFullscreen":true,"showPrint":true,"forceNative":null}'>
+    <div class="bws-pdf-viewer-loading"><span>Loading PDF…</span></div>
+  </div>
+
+  <script src="/dist/pdf.js"></script>
+  <script src="/dist/bws-viewer-engines.js"></script>
+  <script src="/includes/bws-pdf-viewer.js"></script>
+</body>
+</html>
