@@ -39,13 +39,12 @@ Embed a PDF with default settings:
 [bws_pdf]https://example.com/document.pdf[/bws_pdf]
 ```
 
-## Shortcode Parameters
+## Shortcode Parameters *(Warning: Subject to change at any time!)*
 
 The PDF URL goes between the tags; all attributes are optional and can be defaulted
 in the admin panel. **The authoritative attribute list — names, defaults, and their
-sanitizers — is `$default_options` / `shortcode_atts()` in `bws-pdf-viewer.php`**, with
-a user-facing summary in `readme.txt`. This section only covers the behavior an
-attribute name alone won't tell you:
+sanitizers — is `$default_options` / `shortcode_atts()` in `bws-pdf-viewer.php`**.
+This section only covers the behavior an attribute name alone won't tell you:
 
 - **`view_mode`** — `document` (default) or `flipbook`. `document` renders scrollable
   pages and picks native PDF.js (desktop: text selection + links) vs image rendering
