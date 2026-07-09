@@ -119,6 +119,12 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 == Changelog ==
 
 = 0.4.4 =
+* CHANGE: Flipbook background and box colors now default to transparent, so the host
+  page/theme shows through around and behind the pages. Set a hex code (or the word
+  "transparent") in Settings or via the background_color/box_color shortcode
+  attributes to override; leave the admin field blank to use the default. Fullscreen
+  keeps a solid dark backdrop. (Fixes cleared color fields that previously fell back
+  to grey.)
 * FIX: Flipbook cover/lone page now centers and fills the spread width instead of
   drawing in its left half with blank dead space beside it (traditional cover and
   trailing odd page). Restores the original single-page centering rule. (#5)

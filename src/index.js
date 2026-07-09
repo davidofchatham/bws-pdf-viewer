@@ -7,6 +7,21 @@ import { nativePageViewer } from "./nativepageviewer.js";
 import pkg from '../package.json';
 
 /*    way/
+ * Resolve a color option to a paintable value.
+ *  - undefined / null / "" -> fallback (no color set: bare-library use, or a
+ *    legacy empty-string still in the DB; re-saving admin omits the key so the
+ *    plugin's own default flows through instead)
+ *  - any other value (hex / 'transparent') -> used as-is
+ * The library does NOT materialize "" into 'transparent': that would freeze
+ * today's meaning and stop a future default change from reaching those inputs.
+ */
+function normalizeColor(value, fallback) {
+  if(fallback === undefined) fallback = "#353535";
+  if(value === undefined || value === null || value === '') return fallback;
+  return value;
+}
+
+/*    way/
  * set up the options and return the requested viewer
  */
 export function init(book, id, opts, cb) {
@@ -39,7 +54,10 @@ export function init(book, id, opts, cb) {
 
     const ctx = {
       color: {
-        bg: opts.backgroundColor || "#353535",
+        // An empty string means "no color set" — treat it as transparent, not the
+        // grey fallback. Only a truly-absent option (undefined) uses the default.
+        bg: normalizeColor(opts.backgroundColor),
+        bx: normalizeColor(opts.boxColor, normalizeColor(opts.backgroundColor)),
       },
       sz: {
         bx_border: opts.boxBorder || 0,

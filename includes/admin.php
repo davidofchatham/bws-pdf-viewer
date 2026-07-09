@@ -195,13 +195,14 @@ class BWS_PDF_Viewer_Admin {
             $sanitized['height'] = sanitize_text_field($input['height']);
         }
 
-        if (isset($input['background_color'])) {
-            $sanitized['background_color'] = sanitize_hex_color($input['background_color']);
-        }
-
-        if (isset($input['box_color'])) {
-            $sanitized['box_color'] = sanitize_hex_color($input['box_color']);
-        }
+        // Colors: store a valid hex or the literal "transparent"; an EMPTY field
+        // stores NOTHING (the key is left unset) so the plugin default applies via
+        // array_merge. Storing an explicit value for empty would freeze today's
+        // meaning into the DB and stop a future default change from reaching these
+        // rows. Old behavior sanitized "" to "" — a falsy value that overrode the
+        // default and then read as a grey fallback (see backprop).
+        $this->sanitize_color_into($sanitized, $input, 'background_color');
+        $this->sanitize_color_into($sanitized, $input, 'box_color');
 
         if (isset($input['box_border'])) {
             $sanitized['box_border'] = intval($input['box_border']);
@@ -247,6 +248,39 @@ class BWS_PDF_Viewer_Admin {
     }
 
     /**
+     * Sanitize one color field into $sanitized, or leave it UNSET when empty.
+     *
+     * - empty / whitespace  -> key omitted (plugin default applies via merge; keeps
+     *                          "unset" distinct from an explicit color so a future
+     *                          default change still reaches these rows)
+     * - "transparent"       -> stored as 'transparent'
+     * - valid hex           -> stored as sanitized hex
+     * - invalid non-empty   -> key omitted (don't persist garbage)
+     *
+     * @param array  $sanitized Sanitized output array (by reference).
+     * @param array  $input     Raw submitted options.
+     * @param string $key       Option key to process.
+     */
+    private function sanitize_color_into(&$sanitized, $input, $key) {
+        if (!isset($input[$key])) {
+            return;
+        }
+        $value = is_string($input[$key]) ? trim($input[$key]) : '';
+        if ($value === '') {
+            return; // leave unset -> default applies
+        }
+        if (strtolower($value) === 'transparent') {
+            $sanitized[$key] = 'transparent';
+            return;
+        }
+        $hex = sanitize_hex_color($value);
+        if ($hex !== '' && $hex !== null) {
+            $sanitized[$key] = $hex;
+        }
+        // invalid, non-empty -> intentionally omitted
+    }
+
+    /**
      * Render settings page
      */
     public function render_settings_page() {
@@ -281,8 +315,8 @@ class BWS_PDF_Viewer_Admin {
                     <ul style="list-style: disc; margin-left: 20px;">
                         <li><code>width</code> - Width (default: 100%)</li>
                         <li><code>height</code> - Height (default: auto)</li>
-                        <li><code>background_color</code> - Background color (hex)</li>
-                        <li><code>box_color</code> - Box color (hex)</li>
+                        <li><code>background_color</code> - Background around pages (hex or "transparent"; default transparent)</li>
+                        <li><code>box_color</code> - Fill behind each page (hex or "transparent"; default transparent)</li>
                         <li><code>layout</code> - auto, single, or double</li>
                         <li><code>book_layout</code> - traditional or spread</li>
                         <li><code>view_mode</code> - document (continuous) or flipbook</li>
@@ -338,19 +372,19 @@ class BWS_PDF_Viewer_Admin {
 
     public function render_background_color_field() {
         $options = get_option('bws_pdf_viewer_options', array());
-        $value = isset($options['background_color']) ? $options['background_color'] : '#353535';
+        $value = isset($options['background_color']) ? $options['background_color'] : '';
         ?>
         <input type="text" name="bws_pdf_viewer_options[background_color]" value="<?php echo esc_attr($value); ?>" class="color-field">
-        <p class="description"><?php _e('Background color (hex code). Default: #353535', 'bws-pdf-viewer'); ?></p>
+        <p class="description"><?php _e('Background around the pages. Enter a hex code (e.g. #353535) or the word <code>transparent</code>. Leave blank to use the default (transparent — the host page shows through).', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
     public function render_box_color_field() {
         $options = get_option('bws_pdf_viewer_options', array());
-        $value = isset($options['box_color']) ? $options['box_color'] : '#353535';
+        $value = isset($options['box_color']) ? $options['box_color'] : '';
         ?>
         <input type="text" name="bws_pdf_viewer_options[box_color]" value="<?php echo esc_attr($value); ?>" class="color-field">
-        <p class="description"><?php _e('Box color (hex code). Default: #353535', 'bws-pdf-viewer'); ?></p>
+        <p class="description"><?php _e('Fill behind each page. Enter a hex code (e.g. #353535) or the word <code>transparent</code>. Leave blank to use the default (transparent).', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 

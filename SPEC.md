@@ -108,6 +108,15 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   toolbar mid-fullscreen (no fresh `fullscreenchange` for the new button), the fullscreen button's
   label MUST be initialised from the current fs state, not a fixed default (B14). Cites
   I.wp,I.controls,I.css (see B10,B12,B13,B14).
+- **V23. Color options: transparent-capable, unset-preserving.** flipbook `background_color` (fill
+  around pages) + `box_color` (fill behind each page) accept a hex OR the literal `transparent`;
+  default is `transparent` (host page shows through). Admin sanitize MUST leave an empty field UNSET
+  (omit the key) so the plugin default applies via `array_merge` and a future default change still
+  reaches those rows — MUST NOT materialize empty→a concrete color. The library MUST NOT paint a
+  transparent fill: `show_bg_1` clears the canvas (no smear), `show_bx_1`/`show_empty_1` skip when the
+  color is `''`/`transparent`. `normalizeColor` maps undefined/null/`''` → fallback `#353535` (bare-lib
+  / legacy empty-string rows read grey until re-saved), any other value used as-is (see B15). Fullscreen
+  bg is exempt — the `:fullscreen` CSS forces `#353535` regardless (V22). Cites I.php,I.admin,I.index,I.flip.
 - **V20. [deferred] Site-wide mode disable not built.** `disabled_modes` default exists in
   `bws-pdf-viewer.php` but no admin UI renders/sanitizes it; `view_mode` is single-select (pick
   one — neither document nor flipbook is individually disableable). If per-mode enable/disable
@@ -155,3 +164,4 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | B12 | 2026-07-08 | B10 fix incomplete — fullscreen relayout used only width; `calculateDimensions` kept auto height (600) so canvas filled width but not height, black void below. Fixed: fullscreen height = offsetHeight − toolbarHeight | V22 |
 | B13 | 2026-07-08 | fullscreen canvas undersized on 4K — single rAF read offsetWidth before the fullscreen relayout committed (pre-fs width); no `:fullscreen` CSS so container didn't fill screen → black right of canvas + below toolbar. Fixed: `:fullscreen` CSS (100vw/vh, canvas margin:auto) + double-rAF measure | V22 |
 | B14 | 2026-07-08 | fullscreen button label stuck on "Fullscreen" in fullscreen — relayout rebuilds the toolbar mid-fs and no fresh `fullscreenchange` fires for the new button; hardcoded default persisted. Fixed: init label from current fs state | V22 |
+| B15 | 2026-07-09 | cleared admin color field stored as "" (old `sanitize_hex_color`), overrode the transparent default via merge, then read as a falsy grey fallback in index.js — page grey despite blank fields + transparent default. Fixed: sanitize omits empty (unset); `normalizeColor`; `color.bx` set; transparent-aware fills | V23 |

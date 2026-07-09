@@ -399,15 +399,24 @@ function showPages(ctx, viewer) {
   }
 
   function show_bx_1(loc) {
+    // Transparent box → draw nothing (the page itself still paints over it).
+    if(!ctx.color.bx || ctx.color.bx === 'transparent') return;
     canvas.ctx.fillStyle = ctx.color.bx;
     const border = ctx.sz.bx_border;
     canvas.ctx.fillRect(loc.left - border, loc.top-border, loc.width+border*2, loc.height+2*border);
   }
 
   function show_bg_1() {
-
-    canvas.ctx.fillStyle = ctx.color.bg;
-    canvas.ctx.fillRect(0, 0, ctx.sz.boxw*outputScale, ctx.sz.boxh*outputScale);
+    const w = ctx.sz.boxw * outputScale;
+    const h = ctx.sz.boxh * outputScale;
+    // Always clear first so the previous flip frame doesn't smear.
+    canvas.ctx.clearRect(0, 0, w, h);
+    // A transparent bg lets the host page show through around/beside the pages;
+    // any other color paints an opaque fill as before.
+    if(ctx.color.bg && ctx.color.bg !== 'transparent') {
+      canvas.ctx.fillStyle = ctx.color.bg;
+      canvas.ctx.fillRect(0, 0, w, h);
+    }
   }
 }
 
@@ -596,6 +605,8 @@ function showFlip(ctx, viewer) {
   }
 
   function show_empty_1(fillStyle, loc) {
+    // Transparent → leave the slot empty (host page shows through during a flip).
+    if(!fillStyle || fillStyle === 'transparent') return;
     canvas.ctx.fillStyle = fillStyle;
     const border = ctx.sz.bx_border;
     canvas.ctx.fillRect(loc.left - border, loc.top-border-5, loc.width+border*2, loc.height+2*border+10);

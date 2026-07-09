@@ -42,8 +42,8 @@ class BWS_PDF_Viewer {
     private $default_options = array(
         'width'                   => '100%',
         'height'                  => 'auto',
-        'background_color'        => '#353535',
-        'box_color'               => '#353535',
+        'background_color'        => 'transparent',
+        'box_color'               => 'transparent',
         'box_border'              => 0,
         'margin'                  => 1,
         'margin_top'              => null,
