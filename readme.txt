@@ -3,7 +3,7 @@ Contributors: charles.lobo@gmail.com
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
 Tested up to: 6.4
-Stable tag: 0.4.6
+Stable tag: 0.4.7
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -117,6 +117,28 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 4. Responsive layout adapting to narrow containers
 
 == Changelog ==
+
+= 0.4.7 =
+* FIX: The toolbar is now reachable by keyboard on load. Previously, when the
+  Previous button started disabled (on page 1), pressing Tab skipped the whole
+  toolbar until you first navigated with the arrow keys.
+* FIX: Clicking the page-number field now keeps focus so you can click and type
+  a page directly. (It previously lost focus the instant you clicked it.)
+* FIX: The page-number field no longer traps the arrow keys — arrowing to the
+  edge of the text now moves focus back to the Previous/Next buttons, while
+  arrows still edit the number mid-text.
+* FIX: On the last spread of a book, the Next button now correctly disables and
+  the counter reads the true last page (it previously under-counted and left
+  Next enabled). Typing an odd page number in the jump field now sticks.
+* FIX: Arrow, Space, and Page Up/Down keys now page the viewer in mobile
+  (image) document mode, which previously ignored them.
+* FIX: With multiple viewers on one page, leaving fullscreen on one no longer
+  reloads the others.
+* CHANGE: Toolbar labels (Previous, Next, Fullscreen, Print, page number) are
+  now translatable and the site-wide Fullscreen/Print button defaults are
+  editable under Settings > BWS PDF Viewer. The "Enable flip animations" setting
+  can now be turned off and saved.
+* INTERNAL: Removed unused search-UI styles.
 
 = 0.4.6 =
 * INTERNAL: Renamed the delivered viewer bundle from `flipbook-viewer.js` to
