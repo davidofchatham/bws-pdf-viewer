@@ -193,9 +193,9 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | T14 | -  | zoom controls (deferred unless trivial from component adoption) | . |
 | T15 | -  | in-viewer search (future; enabled-by not part-of 002) | V7 |
 | T16 | -  | Gutenberg block authoring interface (deferred, shortcode-only this release) | V8 |
-| T19 | .  | context-aware page-nav hide (continuous mode / 1-page file) + toolbar restyle (#7,#8) | V6,V10,I.controls,I.css |
-| T20 | .  | center lone flipbook page (cover/trailing-odd) — fix show_pgs_1 (#5) | V21,I.flip |
-| T21 | .  | relayout flipbook on fullscreenchange, document exempt (#6) | V22,I.wp,I.controls |
+| T19 | x  | context-aware page-nav hide (continuous mode / 1-page file) + toolbar restyle (#7,#8) — coded 75590fc, headless-verified; final sign-off rides T17 | V6,V10,I.controls,I.css |
+| T20 | x  | center lone flipbook page (cover/trailing-odd) — fix show_pgs_1 (#5) — coded 7ca2a31, verified centered; final sign-off rides T17 | V21,I.flip |
+| T21 | x  | relayout flipbook on fullscreenchange, document exempt (#6) — coded 760c384/cc54c8c, verified 4K; final sign-off rides T17 | V22,I.wp,I.controls |
 | T22 | x  | empty-width viewer collapse fix + aspect-derived height + admin unset-preserving/placeholder all free-value fields (B16,B17) | V24,V25,I.wp,I.php,I.css,I.admin |
 | T24 | x  | rename delivered bundle `flipbook-viewer.js`→`bws-viewer-engines.js` (name reflects all-3-engines, not flip-only) (B18) | V26,I.php,C8 |
 | T23 | -  | [deferred, #1] true single-page flipbook on narrow: route to image/single viewer below breakpoint instead of the always-spread flipbook renderer; makes `layout=single`/auto-narrow actually page one-up. User wants to build; exploring first | V8,V24,I.wp,I.index,I.single |
