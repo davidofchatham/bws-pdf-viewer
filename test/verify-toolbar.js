@@ -113,6 +113,42 @@ async function main() {
   if (clickFocus === 'bws-pdf-page-input') pass('inv4c: clicked page-input retains focus');
   else fail(`inv4c: click stole focus off page-input (activeElement=${clickFocus})`);
 
+  // inv4d: the page-input must not TRAP arrow keys. With the caret at the right
+  // boundary (empty field), ArrowRight releases to the toolbar and moves focus to
+  // Next; at the left boundary ArrowLeft moves to Prev. Mid-text arrows still edit.
+  await page.evaluate(() => {
+    const el = document.querySelector('#bws-pdf-flip .bws-pdf-page-input');
+    el.focus(); el.value = ''; el.setSelectionRange(0, 0);
+  });
+  await page.waitForTimeout(50);
+  await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(100);
+  const outRight = await page.evaluate(() => document.activeElement?.className.split(' ')[0]);
+  if (outRight === 'bws-pdf-next') pass('inv4d: ArrowRight at input boundary moves to Next');
+  else fail(`inv4d: input trapped ArrowRight (activeElement=${outRight})`);
+
+  // Mid-text: caret with text on the right must still edit (not escape).
+  await page.evaluate(() => {
+    const el = document.querySelector('#bws-pdf-flip .bws-pdf-page-input');
+    el.focus(); el.value = '12'; el.setSelectionRange(0, 0);
+  });
+  await page.waitForTimeout(50);
+  await page.keyboard.press('ArrowRight');
+  await page.waitForTimeout(100);
+  const stillInput = await page.evaluate(() => ({
+    active: document.activeElement?.className.split(' ')[0],
+    caret: document.querySelector('#bws-pdf-flip .bws-pdf-page-input').selectionStart,
+  }));
+  if (stillInput.active === 'bws-pdf-page-input' && stillInput.caret === 1)
+    pass('inv4d: mid-text ArrowRight edits (caret moved, focus kept)');
+  else fail(`inv4d: mid-text arrow mishandled (${JSON.stringify(stillInput)})`);
+  // Restore state for the page-jump state machine below.
+  await page.evaluate(() => {
+    const el = document.querySelector('#bws-pdf-flip .bws-pdf-page-input');
+    el.blur();
+  });
+  await page.waitForTimeout(200);
+
   // ---------- Invariant 5 + page-jump state machine ----------
   const jump = async (id, value, key) => {
     const sel = '#' + id + ' .bws-pdf-page-input';

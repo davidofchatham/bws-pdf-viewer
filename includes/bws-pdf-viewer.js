@@ -90,13 +90,27 @@
             target.focus();
         }
 
+        // Does the page-input still have text to traverse in `dir` (-1 left / +1
+        // right)? While it does, Left/Right/Home/End edit the field; once the caret
+        // sits at the boundary the arrow is released to move toolbar focus, so the
+        // input never traps the user (APG textbox-in-toolbar behaviour).
+        function inputConsumesArrow(el, key) {
+            if (!el.classList.contains('bws-pdf-page-input')) return false;
+            const len = el.value.length;
+            // Selection spanning text — let the field handle collapse/extend first.
+            if (el.selectionStart !== el.selectionEnd) return true;
+            const caret = el.selectionStart;
+            if (key === 'Home') return caret > 0;
+            if (key === 'End') return caret < len;
+            if (key === 'ArrowLeft') return caret > 0;
+            if (key === 'ArrowRight') return caret < len;
+            return false;
+        }
+
         controlsDiv.addEventListener('keydown', function(e) {
-            // Let the page input own Left/Right (and Home/End) for text editing.
-            if (e.target.classList.contains('bws-pdf-page-input') &&
-                (e.key === 'ArrowLeft' || e.key === 'ArrowRight' ||
-                 e.key === 'Home' || e.key === 'End')) {
-                return;
-            }
+            // Let the page input own Left/Right/Home/End only while the caret can
+            // still move that way; at the text boundary fall through to toolbar nav.
+            if (inputConsumesArrow(e.target, e.key)) return;
 
             const list = items();
             const current = list.indexOf(e.target);
