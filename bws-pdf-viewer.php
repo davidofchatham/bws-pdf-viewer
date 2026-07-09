@@ -3,7 +3,7 @@
  * Plugin Name: BWS PDF Viewer
  * Plugin URI: https://github.com/davidofchatham/bws-pdf-viewer
  * Description: Accessibility-compliant PDF viewer with animated page flip effects. Embed PDFs using shortcode with support for responsive layouts, keyboard navigation, and screen reader compatibility.
- * Version: 0.4.4
+ * Version: 0.4.5
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: charles.lobo@gmail.com
@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('BWS_PDF_VIEWER_VERSION', '0.4.4');
+define('BWS_PDF_VIEWER_VERSION', '0.4.5');
 define('BWS_PDF_VIEWER_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('BWS_PDF_VIEWER_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('BWS_PDF_VIEWER_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -252,13 +252,21 @@ class BWS_PDF_Viewer {
 
         // Output container with loading indicator and data-config attribute.
         // The loading indicator is removed by JS after successful viewer initialisation.
+        // Only emit an inline width when one is actually set: an empty width (admin
+        // field cleared) must NOT produce style="width: ;" — that broken declaration
+        // collapses the flex container to its content width, left-pinning a narrow
+        // canvas (B16). With no inline width the CSS default (width:100%) fills the
+        // parent and the JS derives the canvas from the container width.
+        $width_attr = ($atts['width'] === '' || $atts['width'] === null)
+            ? ''
+            : sprintf(' style="width: %s;"', esc_attr($atts['width']));
         $output = sprintf(
-            '<div id="%1$s" class="bws-pdf-viewer-container" data-config="%2$s" style="width: %3$s;">'
+            '<div id="%1$s" class="bws-pdf-viewer-container" data-config="%2$s"%3$s>'
                 . '<div class="bws-pdf-viewer-loading"><span>%4$s</span></div>'
             . '</div>',
             esc_attr($instance_id),
             esc_attr(wp_json_encode($config)),
-            esc_attr($atts['width']),
+            $width_attr,
             esc_html__('Loading PDF\xe2\x80\xa6', 'bws-pdf-viewer')
         );
 

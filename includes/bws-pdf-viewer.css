@@ -5,11 +5,18 @@
 /* Container styles */
 .bws-pdf-viewer-container {
     position: relative;
+    /* Fill the parent by default so the container width is meaningful even when no
+       inline width is set (empty admin width — B16). An inline style="width:..."
+       from the shortcode still overrides this. */
+    width: 100%;
     margin: 0 auto;
     box-sizing: border-box;
-    /* Flex column so the toolbar docks at the bottom edge inside the container */
+    /* Flex column so the toolbar docks at the bottom edge inside the container.
+       Center the canvas on the cross (horizontal) axis so a canvas narrower than
+       the container is centered, not left-pinned. */
     display: flex;
     flex-direction: column;
+    align-items: center;
 }
 
 .bws-pdf-viewer-container:focus-visible {
@@ -118,7 +125,9 @@
     }
 }
 
-/* Canvas element */
+/* Canvas element. The flipbook library sets inline style.width + style.height in
+   px; `height: auto` lets the browser rescale height proportionally if `max-width`
+   ever clamps the display width, keeping the page aspect (no squash). */
 .bws-pdf-viewer-container canvas {
     display: block;
     max-width: 100%;

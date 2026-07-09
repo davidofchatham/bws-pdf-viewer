@@ -229,8 +229,22 @@
             // Wrap book for traditional layout (page 1 alone as cover)
             const bookWrapper = createBookWrapper(bookObj, useTraditionalLayout);
 
+            // Fetch page 1 once to learn the page aspect ratio, then compute canvas
+            // dimensions from it. Needed so an 'auto'/unset height derives an exact
+            // spread box (edge-to-edge, no letterbox) instead of a fixed 600 that
+            // caps the spread width on wide containers (B16). getPage caches, so this
+            // fetch is reused by the viewer's own first render.
+            bookObj.getPage(1, function(pgErr, firstPage) {
+                const pageAspect = (firstPage && firstPage.width && firstPage.height)
+                    ? { w: firstPage.width, h: firstPage.height }
+                    : null;
+                continueInit(pageAspect);
+            });
+
+            function continueInit(pageAspect) {
+
             // Calculate canvas dimensions
-            const dimensions = calculateDimensions(container, config, bookObj, effectiveLayout);
+            const dimensions = calculateDimensions(container, config, bookObj, effectiveLayout, undefined, pageAspect);
 
             // Options forwarded to the flipbook-viewer library
             const viewerOpts = {
@@ -263,6 +277,7 @@
                 bookWrapper:       bookWrapper,
                 shouldAnimate:     shouldAnimate,
                 useTraditionalLayout: useTraditionalLayout,
+                pageAspect:        pageAspect, // page-1 aspect; reused on reinit for exact sizing
                 reiniting:         false,
             };
 
@@ -298,6 +313,8 @@
 
                 console.log('PDF Viewer initialised:', containerId, useNativeMode ? '(native mode)' : '(image/flipbook mode)');
             });
+
+            } // end continueInit
         });
     }
 
@@ -706,7 +723,7 @@
 
         // Recalculate dimensions for the new layout (V22: reserve the captured
         // toolbar height so the fullscreen canvas leaves room for the docked bar).
-        const newDimensions = calculateDimensions(container, config, viewerData.bookWrapper, newLayout, viewerData.toolbarHeight);
+        const newDimensions = calculateDimensions(container, config, viewerData.bookWrapper, newLayout, viewerData.toolbarHeight, viewerData.pageAspect);
 
         const newOpts = Object.assign({}, baseOpts, {
             width:  newDimensions.width,
@@ -1004,33 +1021,63 @@
      * @param {string}      layout   'single' or 'double'
      * @returns {{ width: number, height: number }}
      */
-    function calculateDimensions(container, config, bookObj, layout, reserveHeight) {
+    function calculateDimensions(container, config, bookObj, layout, reserveHeight, pageAspect) {
+        // Width: 'auto', '100%', empty, or any non-numeric value → fill the container.
+        // A truly-empty width (admin field cleared, overriding the PHP '100%' default
+        // via the option merge — B16) must NOT become parseInt('')===NaN → library's
+        // 800px fallback; it means "fill container", same as '100%'/'auto'.
         let width;
-        if (config.width === '100%' || config.width === 'auto') {
+        const explicitW = parseInt(config.width, 10);
+        if (config.width === '100%' || config.width === 'auto' ||
+            config.width === '' || config.width == null || isNaN(explicitW)) {
             width = container.offsetWidth;
         } else {
-            width = parseInt(config.width, 10);
+            width = explicitW;
         }
-
         // V22: in fullscreen, size the canvas to the real fullscreen box height so
         // the page scales up to fill the screen instead of keeping the small
         // width-derived height (leaving a black void below). Reserve room for the
-        // toolbar so it stays docked and visible. Outside fullscreen, auto height
-        // stays a temporary default — the page fits to width there as before.
+        // toolbar so it stays docked and visible.
         const isFullscreen = (document.fullscreenElement === container ||
                               document.webkitFullscreenElement === container);
 
+        // Aspect of the on-canvas content. CRITICAL (B17): the flipbook LIBRARY always
+        // renders a TWO-page spread — the 'single'/'double' layout value is used only by
+        // this dimension calc and the responsive ResizeObserver, NOT by the renderer,
+        // which has no one-page-at-a-time mode. So the canvas is always a spread box
+        // (pg.width*2, matching flipbookviewer.js calcLayoutParameters) EXCEPT a genuine
+        // single-page book (numPages===1), which is forced to 'single' with the
+        // traditional wrapper OFF and draws one page. Keying pagesAcross off `layout`
+        // instead sized a tall single-page canvas for a wide spread just under the
+        // breakpoint → the spread letterboxed with large vertical dead space.
+        const singlePageBook = bookObj && typeof bookObj.numPages === 'function' &&
+                               bookObj.numPages() === 1;
+        function contentHeightForWidth(w) {
+            if (!pageAspect) return null;
+            const pagesAcross = singlePageBook ? 1 : 2;
+            const spreadW = pageAspect.w * pagesAcross;
+            return w * (pageAspect.h / spreadW);
+        }
+
         let height;
+        const explicitH = parseInt(config.height, 10);
         if (isFullscreen) {
             // Prefer a live toolbar; fall back to the height captured before reinit
             // removed it (reserveHeight), then a sane default so the bar never clips.
             const toolbar = container.querySelector('.bws-pdf-viewer-controls');
             const toolbarH = (toolbar && toolbar.offsetHeight) || reserveHeight || 48;
-            height = Math.max(0, container.offsetHeight - toolbarH);
-        } else if (config.height === 'auto') {
-            height = 600; // temporary default; viewer adjusts after first page renders
+            // Clamp both dims to the screen box so neither overflows in fullscreen
+            // (the aspect-derived width can otherwise exceed the physical screen).
+            width  = Math.min(width, window.innerWidth || width);
+            height = Math.max(0, (container.offsetHeight || window.innerHeight) - toolbarH);
+        } else if (config.height === 'auto' || config.height === '' ||
+                   config.height == null || isNaN(explicitH)) {
+            // Derive an exact spread box from the page aspect so the canvas wraps the
+            // content edge-to-edge (no letterbox, truly centered). Without an aspect
+            // (page-1 fetch failed) fall back to the old temporary default.
+            height = contentHeightForWidth(width) || 600;
         } else {
-            height = parseInt(config.height, 10);
+            height = explicitH;
         }
 
         return { width: width, height: height };

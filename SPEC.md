@@ -1,4 +1,4 @@
-# SPEC — BWS PDF Viewer (0.4.4, pre-release / in-flight)
+# SPEC — BWS PDF Viewer (0.4.5, pre-release / in-flight)
 
 Living ledger. 001-pdf-viewer (viewer core) coded; 002-integrated-viewer-toolbar (shared toolbar +
 PDF.js component adoption) coded on branch `002-integrated-viewer-toolbar` — NOT yet tested/PR'd/merged.
@@ -24,7 +24,13 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   → shortcode atts; merged in `shortcode_handler()` (V5).
 - **C6.** PDF.js zero-config webpack: import `pdfjs-dist/webpack.mjs`, worker auto-chunked as
   `pdf.worker.js`, no fake-worker warning.
-- **C7.** Shortcode att names/values/defaults frozen — live-site back-compat (V8).
+- **C7.** Shortcode atts change DELIBERATELY, not never (revised 2026-07-09 — supersedes the old
+  "frozen for live-site back-compat" rule, which cargo-culted a public-v1.0 discipline onto a
+  pre-1.0 internal tool: version <1.0, not on wordpress.org, sole consumer is the BWS portal whose
+  shortcodes we generate — no unknown third-party embeds to protect). Rename/remove/repurpose an
+  att when it earns its keep; on any change, sweep the portal's own shortcodes first, fix usages,
+  note it in the changelog. Additionally: EVERY existing att is up for revision — the current set is
+  NOT cemented; review the whole surface before a 1.0 freeze (V8). Cites I.php,I.admin.
 - **C8.** PDF.js internals bundled twice (pdf.js + flipbook-viewer.js, +182KB) — known debt,
   dedup deferred (T13, issue #4, [[pdfjs-bundle-dedup]]).
 
@@ -62,9 +68,15 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 - **V7. Native mode uses maintained PDF.js layer builders.** canvas + TextLayerBuilder (selection +
   browser find) + AnnotationLayerBuilder (links) + shared link service; internal links navigate,
   external new-tab. No hand-rolled layer positioning. Cites I.native.
-- **V8. Shortcode atts frozen.** `view_mode`,`layout`,`book_layout`,`force_native`,`show_controls`,
-  `show_fullscreen`,`show_print`,`width`,`height` keep names/values/defaults/meaning. `singlepage`
-  legacy alias for `document`. Cites I.php.
+- **V8. Shortcode atts revisable, not frozen (pre-1.0).** Current set: `view_mode`,`layout`,
+  `book_layout`,`force_native`,`show_controls`,`show_fullscreen`,`show_print`,`width`,`height`
+  (`singlepage` legacy alias for `document`). NONE is cemented — any may be renamed/removed/
+  repurposed before 1.0 when justified. On change: sweep the portal's shortcodes, fix usages,
+  changelog it (C7). Before a 1.0 freeze, review the WHOLE att surface for vestigial/misleading
+  controls. Known vestigial: `layout` (auto/single/double) does nothing in the flipbook renderer
+  (which only draws spreads — V24/B17) and is dead in document mode; KEPT for now as the anchor for
+  the planned true single-page-flipbook feature (T23/#1), NOT because it currently works. Cites
+  I.php,I.admin,C7.
 - **V9. One control-set impl, all modes.** Exactly one toolbar component (I.controls, in WP layer)
   serves flipbook + native; no duplicate control code. Cites I.controls, C1.
 - **V10. Toolbar integrated + accessible.** Rendered inside viewer container (overlay bar, not
@@ -117,6 +129,34 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   color is `''`/`transparent`. `normalizeColor` maps undefined/null/`''` → fallback `#353535` (bare-lib
   / legacy empty-string rows read grey until re-saved), any other value used as-is (see B15). Fullscreen
   bg is exempt — the `:fullscreen` CSS forces `#353535` regardless (V22). Cites I.php,I.admin,I.index,I.flip.
+- **V24. Canvas dimensions derive from container + page aspect; empty means fill.**
+  `calculateDimensions` (I.wp): width of `''`/`'auto'`/`'100%'`/any non-numeric → `container.offsetWidth`
+  (fill), NOT `parseInt('')===NaN` → the library's 800px fallback (B16). Height of `''`/`'auto'`/non-
+  numeric → derived from page-1 aspect so the canvas exactly wraps the content — `height = width ×
+  (pageH / (pageW × pagesAcross))` — giving edge-to-edge, no letterbox, centered; NOT a fixed 600
+  that caps the spread width on wide containers. CRITICAL (B17): `pagesAcross` keys off
+  `bookObj.numPages()===1` (genuine single-page book → 1), NOT the `single`/`double` `layout` string.
+  The flipbook LIBRARY always renders a 2-page spread — it has no one-page-at-a-time mode; the layout
+  string drives only this calc + the ResizeObserver, never the renderer. Keying `pagesAcross` off
+  `layout` sized a TALL single-page canvas for the wide spread the library actually draws whenever the
+  container fell just under the breakpoint (auto→'single'), letterboxing the spread with large vertical
+  dead space. So a multi-page book is ALWAYS a spread box (pagesAcross=2, matches `calcLayoutParameters`
+  `pg.width*2`); only a 1-page book is one page wide. Page-1 aspect is fetched ONCE after load (getPage
+  caches → reused by first render), stored on `viewerData.pageAspect`, threaded into reinit. In
+  fullscreen both axes clamp to the screen box (`width ≤ innerWidth`; height = `offsetHeight −
+  toolbarHeight`) so neither overflows (V22). No aspect (fetch failed) → 600 fallback. The container
+  CSS defaults to `width:100%` + `align-items:center` so it fills its parent and centers a narrower
+  canvas even with no inline width. Cites I.wp,I.css.
+- **V25. Admin free-value fields are unset-preserving (blank → default, never materialized).**
+  Every non-enumerated admin option (`width`,`height`,`background_color`,`box_color`,`box_border`,
+  `margin`,`breakpoint`) MUST: (a) sanitize an empty/whitespace field by OMITTING the key so the
+  plugin default applies via `array_merge` and a future default change reaches unset rows — MUST NOT
+  store `''`/`0`/a concrete default (B15 color, B16 width); (b) render an EMPTY input when the key is
+  unset (never pre-fill the default value, which would be saved and freeze it) with a `placeholder`
+  showing the resolved default. `margin_top`/`margin_left` (shortcode-only, no UI) already store
+  `null` on empty. Enumerated selects + booleans (`layout`,`book_layout`,`view_mode`,
+  `enable_animations`,`default_show_controls`) are exempt. Generalizes V23's color-specific rule to
+  all free-value fields. Cites I.admin,I.php.
 - **V20. [deferred] Site-wide mode disable not built.** `disabled_modes` default exists in
   `bws-pdf-viewer.php` but no admin UI renders/sanitizes it; `view_mode` is single-select (pick
   one — neither document nor flipbook is individually disableable). If per-mode enable/disable
@@ -146,6 +186,8 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | T19 | .  | context-aware page-nav hide (continuous mode / 1-page file) + toolbar restyle (#7,#8) | V6,V10,I.controls,I.css |
 | T20 | .  | center lone flipbook page (cover/trailing-odd) — fix show_pgs_1 (#5) | V21,I.flip |
 | T21 | .  | relayout flipbook on fullscreenchange, document exempt (#6) | V22,I.wp,I.controls |
+| T22 | x  | empty-width viewer collapse fix + aspect-derived height + admin unset-preserving/placeholder all free-value fields (B16,B17) | V24,V25,I.wp,I.php,I.css,I.admin |
+| T23 | -  | [deferred, #1] true single-page flipbook on narrow: route to image/single viewer below breakpoint instead of the always-spread flipbook renderer; makes `layout=single`/auto-narrow actually page one-up. User wants to build; exploring first | V8,V24,I.wp,I.index,I.single |
 
 ## §B — bugs
 | id | date       | cause | fix |
@@ -165,3 +207,5 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | B13 | 2026-07-08 | fullscreen canvas undersized on 4K — single rAF read offsetWidth before the fullscreen relayout committed (pre-fs width); no `:fullscreen` CSS so container didn't fill screen → black right of canvas + below toolbar. Fixed: `:fullscreen` CSS (100vw/vh, canvas margin:auto) + double-rAF measure | V22 |
 | B14 | 2026-07-08 | fullscreen button label stuck on "Fullscreen" in fullscreen — relayout rebuilds the toolbar mid-fs and no fresh `fullscreenchange` fires for the new button; hardcoded default persisted. Fixed: init label from current fs state | V22 |
 | B15 | 2026-07-09 | cleared admin color field stored as "" (old `sanitize_hex_color`), overrode the transparent default via merge, then read as a falsy grey fallback in index.js — page grey despite blank fields + transparent default. Fixed: sanitize omits empty (unset); `normalizeColor`; `color.bx` set; transparent-aware fills | V23 |
+| B16 | 2026-07-09 | empty admin width (field cleared → stored "" → overrode PHP `100%` default via merge) collapsed the viewer: PHP emitted broken `style="width: ;"` (flex container shrank to content) AND `calculateDimensions` did `parseInt("")===NaN` → library 800px fallback → narrow, left-pinned; auto height stuck at 600 further capped the spread below full width. Fixed 4-file: JS empty/auto/100%→container width + page-aspect-derived height (edge-to-edge) + fullscreen clamp; PHP omits inline style when width empty; CSS container `width:100%`+`align-items:center`; admin sanitize omits empty width/height/border/margin/breakpoint + renders blank+placeholder (no materialized default) | V24,V25 |
+| B17 | 2026-07-09 | flipbook spread letterboxed with large vertical dead space when the container fell just under the breakpoint — `calculateDimensions` keyed `pagesAcross` off the `layout` string (auto→'single' below breakpoint → tall one-page canvas), but the flipbook library ALWAYS renders a 2-page spread (no single-page mode; layout string never reaches the renderer). Wide spread drawn into tall canvas → dead space. Diagnosed from live HTML: `canvas 1440×1851 style 720×925` at 720px container (< 768). Fixed: `pagesAcross` keys off `bookObj.numPages()===1`, so a multi-page book always gets a spread-aspect canvas. Surfaced that `layout` (auto/single/double) is vestigial in flipbook + dead in document mode → C7/V8 revised, T23 (#1) filed | V24,V8 |

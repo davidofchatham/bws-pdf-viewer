@@ -3,7 +3,7 @@ Contributors: charles.lobo@gmail.com
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
 Tested up to: 6.4
-Stable tag: 0.4.4
+Stable tag: 0.4.5
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -117,6 +117,25 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 4. Responsive layout adapting to narrow containers
 
 == Changelog ==
+
+= 0.4.5 =
+* FIX: Flipbook no longer leaves large empty bands above and below the pages at
+  narrower widths. The canvas is now sized to the two-page spread the viewer actually
+  draws, at every width, so the spread fills its box edge-to-edge with no letterbox.
+  (The layout previously sized a tall single-page canvas just below the responsive
+  breakpoint, while the viewer still rendered a wide spread into it.)
+* FIX: A blank Width in Settings no longer collapses the viewer to a narrow, left-pinned
+  box. Blank now means "fill the container" (its documented default) instead of an
+  invalid size. Height, likewise, is derived from the page aspect ratio so the pages
+  fit exactly.
+* CHANGE: The Settings fields for Width, Height, Border, Margin, Background/Box Color,
+  and Responsive Breakpoint now show their default as placeholder text and store
+  nothing when left blank — so the plugin default always applies and a future default
+  change reaches sites that never set a value. (Previously a blank or pre-filled field
+  could silently freeze the current default into your saved settings.)
+* NOTE: The "Layout Mode" option (Auto / Single Page / Double Page Spread) currently has
+  no visible effect in flipbook mode — the flipbook always renders a two-page spread.
+  It is retained pending a future single-page-on-narrow reading mode.
 
 = 0.4.4 =
 * CHANGE: Flipbook background and box colors now default to transparent, so the host
