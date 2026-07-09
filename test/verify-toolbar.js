@@ -74,6 +74,18 @@ async function main() {
   if (roving.tabbable === 1) pass(`inv4: one roving tab stop (of ${roving.total} controls)`);
   else fail(`inv4: ${roving.tabbable} tabbable controls (expected 1)`);
 
+  // inv4b: the single tab stop must be an ENABLED control. A disabled control
+  // with tabindex=0 (e.g. Prev on page 1) is skipped by the browser, leaving the
+  // whole toolbar unreachable by Tab until arrow navigation moves the roving
+  // index. Regression guard for that bug.
+  const tabStop = await page.evaluate(() => {
+    const bar = document.querySelector('#bws-pdf-flip .bws-pdf-viewer-controls');
+    const el = bar.querySelector('[tabindex="0"]');
+    return el ? { cls: el.className.split(' ')[0], disabled: !!el.disabled } : null;
+  });
+  if (tabStop && !tabStop.disabled) pass(`inv4b: tab stop is enabled (${tabStop.cls})`);
+  else fail(`inv4b: tab stop is disabled or missing (${JSON.stringify(tabStop)}) — toolbar unreachable by Tab`);
+
   // Assembly order: prev, page-nav (input), next, [fullscreen], [print]
   const orderOk = roving.order[0] === 'bws-pdf-prev'
     && roving.order.includes('bws-pdf-page-input')

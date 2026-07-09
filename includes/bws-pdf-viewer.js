@@ -58,13 +58,32 @@
             );
         }
 
-        const initial = items();
-        initial.forEach(function(el, i) {
-            el.setAttribute('tabindex', i === 0 ? '0' : '-1');
-        });
+        // The single tabbable control must be one that Tab can actually land on;
+        // a disabled control with tabindex 0 is skipped by the browser, so if the
+        // first control is disabled (e.g. Prev on page 1) the whole toolbar would
+        // be unreachable by Tab until arrow navigation moved the roving index onto
+        // an enabled control. Anchor tabindex 0 on the first ENABLED control, and
+        // re-assert whenever disabled state changes (see resetRovingTabindex).
+        function resetRovingTabindex() {
+            const list = items();
+            let anchor = list.findIndex(function(el) { return !el.disabled; });
+            if (anchor === -1) anchor = 0; // all disabled — keep first as a fallback
+            list.forEach(function(el, i) {
+                el.setAttribute('tabindex', i === anchor ? '0' : '-1');
+            });
+        }
+        resetRovingTabindex();
+        // Expose so the counter/disabled-state updater can re-anchor the tab stop.
+        controlsDiv._resetRovingTabindex = resetRovingTabindex;
 
         function focusAt(list, idx) {
-            const clamped = (idx + list.length) % list.length;
+            // Skip disabled controls when arrowing so focus never lands on one.
+            const n = list.length;
+            let clamped = (idx + n) % n;
+            const step = idx >= 0 ? 1 : -1; // preserve direction of travel
+            for (let tries = 0; tries < n && list[clamped].disabled; tries++) {
+                clamped = (clamped + step + n) % n;
+            }
             list.forEach(function(el) { el.setAttribute('tabindex', '-1'); });
             const target = list[clamped];
             target.setAttribute('tabindex', '0');
@@ -467,6 +486,15 @@
             pageCounter.textContent = t.of + ' ' + total;
             prevBtn.disabled = current <= 1;
             nextBtn.disabled = current >= total;
+            // Disabled state just changed; if the current tab stop is now on a
+            // disabled control (e.g. Prev on page 1), hand tabindex 0 to an enabled
+            // sibling so the toolbar stays reachable by Tab. Only re-anchor when no
+            // toolbar control is focused, so we never steal the roving index out
+            // from under a keyboard user mid-navigation.
+            if (controlsDiv._resetRovingTabindex &&
+                !controlsDiv.contains(document.activeElement)) {
+                controlsDiv._resetRovingTabindex();
+            }
         }
 
         // T021: Flipbook viewer emits a 0-based display index via the 'seen' event.
