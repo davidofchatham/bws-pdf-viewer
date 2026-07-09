@@ -167,6 +167,21 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   future asset rename: sweep PHP enqueue + test harnesses + `scripts/package.mjs` + docs, rebuild
   (webpack `clean:true` drops old file), changelog. Cites I.index,I.php,C8.
 
+- **V27. Toolbar roving-focus never strands focus.** The toolbar is ONE Tab stop (WAI-ARIA
+  toolbar / roving tabindex): exactly one control has `tabindex=0`, the rest `-1`; arrows move
+  focus within, Tab exits to the next page element. Three anti-stranding rules the naive roving
+  impl broke: (a) the `tabindex=0` anchor MUST sit on the first ENABLED control, not the first DOM
+  control — a disabled control (Prev on page 1) with `tabindex=0` is skipped by the browser,
+  making the WHOLE toolbar unreachable by Tab until arrow nav moved the index (B19); re-anchor when
+  disabled state changes (`updateCounter`), but ONLY while focus is outside the toolbar so a
+  keyboard user mid-nav is never yanked. (b) The container's click→`container.focus()` (for viewer
+  keyboard paging) MUST skip clicks originating inside `.bws-pdf-viewer-controls`, else clicking the
+  page-input instantly steals its focus and it can't be typed into (B20). (c) The page-input's
+  Left/Right/Home/End exemption MUST be caret-aware — the input owns an arrow only while the caret
+  can still move that way; at the text boundary the arrow falls through to toolbar nav, so the input
+  never traps keyboard navigation (B21). `focusAt` also skips disabled controls when arrowing. Cites
+  I.controls,I.wp,V10 (see B19,B20,B21).
+
 - **V20. [deferred] Site-wide mode disable not built.** `disabled_modes` default exists in
   `bws-pdf-viewer.php` but no admin UI renders/sanitizes it; `view_mode` is single-select (pick
   one — neither document nor flipbook is individually disableable). If per-mode enable/disable
@@ -185,7 +200,7 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | T8  | x  | fullscreen hidden-not-disabled + state label | V16,I.controls |
 | T9  | x  | keyboard nav (arrows/PgUp-Dn/Space) + focus mgmt | V10,I.wp |
 | T10 | x  | URL-fail inline error + link | V19,I.wp |
-| T11 | x  | verification harness (test/verify-toolbar.js, harness-toolbar.html) — automated | V9,V11,V12 |
+| T11 | x  | verification harness (test/verify-toolbar.js, harness-toolbar.html) — automated | V9,V11,V12,V27 |
 | T12 | x  | ESLint flat config + lint script | . |
 | T17 | .  | manual test pass 002 branch (real WP + browser): both modes, a11y/SR, back-compat atts | V9,V10,V11,V13 |
 | T18 | .  | PR 002-integrated-viewer-toolbar → master | . |
@@ -220,3 +235,6 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | B15 | 2026-07-09 | cleared admin color field stored as "" (old `sanitize_hex_color`), overrode the transparent default via merge, then read as a falsy grey fallback in index.js — page grey despite blank fields + transparent default. Fixed: sanitize omits empty (unset); `normalizeColor`; `color.bx` set; transparent-aware fills | V23 |
 | B16 | 2026-07-09 | empty admin width (field cleared → stored "" → overrode PHP `100%` default via merge) collapsed the viewer: PHP emitted broken `style="width: ;"` (flex container shrank to content) AND `calculateDimensions` did `parseInt("")===NaN` → library 800px fallback → narrow, left-pinned; auto height stuck at 600 further capped the spread below full width. Fixed 4-file: JS empty/auto/100%→container width + page-aspect-derived height (edge-to-edge) + fullscreen clamp; PHP omits inline style when width empty; CSS container `width:100%`+`align-items:center`; admin sanitize omits empty width/height/border/margin/breakpoint + renders blank+placeholder (no materialized default) | V24,V25 |
 | B18 | 2026-07-09 | delivered viewer bundle named `flipbook-viewer.js` but bundles all 3 engines (flip+native+image via `src/index.js`) — misleading: reader greps "why is native in the flipbook file?", wastes time; native/image invisible in DevTools (no standalone file, all inside the one bundle). Hygiene rename, not runtime bug. Fixed: `dist/bws-viewer-engines.js` (webpack entry key + PHP enqueue + index.html + 3 test harnesses + 3 test JS imports + `scripts/package.mjs` + CLAUDE/README/MEMORY docs); UMD global left `flipbook` (IDEAS #6) | V26 | — `calculateDimensions` keyed `pagesAcross` off the `layout` string (auto→'single' below breakpoint → tall one-page canvas), but the flipbook library ALWAYS renders a 2-page spread (no single-page mode; layout string never reaches the renderer). Wide spread drawn into tall canvas → dead space. Diagnosed from live HTML: `canvas 1440×1851 style 720×925` at 720px container (< 768). Fixed: `pagesAcross` keys off `bookObj.numPages()===1`, so a multi-page book always gets a spread-aspect canvas. Surfaced that `layout` (auto/single/double) is vestigial in flipbook + dead in document mode → C7/V8 revised, T23 (#1) filed | V24,V8 |
+| B19 | 2026-07-09 | toolbar unreachable by Tab on load — roving init put `tabindex=0` on the first DOM control (Prev), which is disabled on page 1; a disabled control with `tabindex=0` is skipped by the browser and every sibling was `-1`, so Tab never entered the toolbar until arrow/space nav moved the roving index onto an enabled control. Fixed: anchor `tabindex=0` on first ENABLED control; re-anchor in `updateCounter` on disabled-state change (only while focus outside toolbar); `focusAt` skips disabled. Guard: inv4b | V27 |
+| B20 | 2026-07-09 | clicking the page-jump input lost focus instantly (couldn't click-and-type) — container's click handler called `container.focus()` on EVERY click incl. toolbar clicks, which bubbled up and stole focus off the just-clicked input. Fixed: skip the container refocus when the click originates inside `.bws-pdf-viewer-controls`. Guard: inv4c | V27 |
+| B21 | 2026-07-09 | page-input trapped arrow keys — roving handler exempted the input from Left/Right/Home/End UNCONDITIONALLY, so once focus reached it those keys could never move back to Prev/Next. Fixed: caret-aware exemption — input owns an arrow only while the caret can still move that way; at the text boundary it falls through to toolbar nav. Guard: inv4d | V27 |
