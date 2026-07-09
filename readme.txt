@@ -8,7 +8,7 @@ Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
 
-PRE-RELEASE (pre-1.0) — NOT for production use. May break; no support or stability guarantee. PDF viewer with animated flipbook and single-page modes.
+PRE-RELEASE (pre-1.0) — NOT for production use. May break; no support or stability guarantee.
 
 == Description ==
 
@@ -19,102 +19,8 @@ stability guarantee, and no backward-compatibility promise between versions.
 Shortcode attributes and defaults may change without a migration path. Use at
 your own risk.
 
-BWS PDF Viewer embeds PDFs as animated flipbooks or scrollable single-page
-viewers in WordPress posts and pages.
-
-**Features:**
-
-* **Accessibility** - Screen reader announcements, ARIA labels, semantic HTML; targets WCAG 2.1 AA.
-* **Single-page default** - Accessible single-page view is the default; flipbook mode is opt-in.
-* **Keyboard navigation** - Arrow keys, Page Up/Down, Space, Home/End.
-* **Screen readers** - Tested with NVDA, JAWS, and VoiceOver.
-* **Reduced motion** - Respects `prefers-reduced-motion`.
-* **Multi-domain** - Filter hooks for rewriting asset and PDF URLs on multi-domain installs and CDNs.
-* **Container-based responsive** - Adapts to container width, not just device size.
-* **Lightweight** - 18 KB core library (vs ~10 MB for comparable solutions).
-* **Traditional book layout** - Page 1 as cover, then two-page spreads (2-3, 4-5, etc.).
-* **View modes** - Single-page (default) or animated flipbook.
-* **Multiple instances** - Multiple viewers per page.
-* **Container queries** - Layout switches on actual container width, not viewport.
-
-**Usage:**
-
-Simply use the shortcode with your PDF URL:
-
-`[bws_pdf]https://example.com/document.pdf[/bws_pdf]`
-
-**With Custom Parameters:**
-
-`[bws_pdf width="800px" height="600px" layout="double" view_mode="flipbook"]https://example.com/document.pdf[/bws_pdf]`
-
-**Available Parameters:**
-
-* `width` - Width (default: 100%)
-* `height` - Height (default: auto)
-* `background_color` - Background color hex code
-* `box_color` - Box color hex code
-* `layout` - auto, single, or double page layout
-* `book_layout` - traditional (page 1 alone) or spread (pages 1-2)
-* `view_mode` - document (default) or flipbook (animated); singlepage is a legacy alias for document
-* `breakpoint` - Container width in pixels for responsive switching
-* `enable_animations` - true or false
-* `force_native` - true, false, or empty (auto-detect native PDF.js vs image rendering)
-* `show_controls` - true or false (navigation toolbar)
-* `show_fullscreen` - true or false (fullscreen button)
-* `show_print` - true or false (print button)
-
-Multi-domain URL rewriting (assets and PDF source) is handled via the `bws_pdf_viewer_plugin_url` and `bws_pdf_viewer_pdf_url` filter hooks, not a shortcode attribute or admin setting. See README.md.
-
-The PDF URL is placed between the opening and closing shortcode tags. Parameters are added as attributes in the opening tag.
-
-All parameters can be configured with default values in Settings > BWS PDF Viewer.
-
-== Installation ==
-
-1. Upload the plugin files to the `/wp-content/plugins/bws-pdf-viewer` directory, or install the plugin through the WordPress plugins screen directly.
-2. Activate the plugin through the 'Plugins' screen in WordPress.
-3. Use Settings > BWS PDF Viewer to configure default options.
-4. Add the `[bws_pdf]URL[/bws_pdf]` shortcode to any post or page.
-
-== Frequently Asked Questions ==
-
-= Does this work with any PDF? =
-
-Yes! The plugin uses Mozilla's PDF.js library to render any standard PDF document.
-
-= Can I embed multiple flipbooks on one page? =
-
-Yes! Each flipbook instance is independent. Just use multiple shortcodes with different PDF URLs.
-
-= Does it work on mobile devices? =
-
-Yes. The responsive layout adapts to container width; on narrow containers it switches to single-page view.
-
-= What about accessibility? =
-
-The plugin targets WCAG 2.1 AA (not independently audited) and includes:
-- Default single-page (document) view mode (most accessible)
-- Screen reader announcements for page changes (NVDA, JAWS, VoiceOver)
-- Complete keyboard navigation (Arrow keys, Page Up/Down, Home/End, Space)
-- Proper ARIA labels and semantic HTML
-- Respects `prefers-reduced-motion` system setting
-- Enhanced focus indicators for keyboard users
-- High contrast mode support
-
-= Can I use it in a narrow sidebar? =
-
-Yes! Unlike most responsive solutions that only check viewport width, this plugin uses container-based detection. It will automatically switch to single-page layout when embedded in narrow containers.
-
-= How do I customize the appearance? =
-
-You can set default styles in Settings > BWS PDF Viewer, or override them per-instance using shortcode parameters.
-
-== Screenshots ==
-
-1. Flipbook viewer showing a PDF with animated page turns
-2. Admin settings panel for configuring defaults
-3. Single-page scrollable view mode
-4. Responsive layout adapting to narrow containers
+Embed PDFs via shortcode with support for flipbook effects, flow mode, and 
+image fallback for mobile devices. See README.md for instructions and details.
 
 == Changelog ==
 
@@ -310,4 +216,4 @@ Major update transforming the library into a full WordPress plugin with admin in
 - No external CDN dependencies
 
 **Credits:**
-Built on the amazing [flipbook-viewer](https://github.com/theproductiveprogrammer/flipbook-viewer) library and [PDF.js](https://mozilla.github.io/pdf.js/) from Mozilla.
+Built on [flipbook-viewer](https://github.com/theproductiveprogrammer/flipbook-viewer) by Charles (theproductiveprogrammer) and [PDF.js](https://mozilla.github.io/pdf.js/) from Mozilla.
