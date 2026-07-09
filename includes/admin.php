@@ -171,6 +171,22 @@ class BWS_PDF_Viewer_Admin {
             'bws_pdf_viewer_layout_section'
         );
 
+        add_settings_field(
+            'default_show_fullscreen',
+            __('Show Fullscreen Button', 'bws-pdf-viewer'),
+            array($this, 'render_show_fullscreen_field'),
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_layout_section'
+        );
+
+        add_settings_field(
+            'default_show_print',
+            __('Show Print Button', 'bws-pdf-viewer'),
+            array($this, 'render_show_print_field'),
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_layout_section'
+        );
+
         // Margin
         add_settings_field(
             'margin',
@@ -246,13 +262,12 @@ class BWS_PDF_Viewer_Admin {
             $sanitized['breakpoint'] = intval($input['breakpoint']);
         }
 
-        if (isset($input['enable_animations'])) {
-            $sanitized['enable_animations'] = (bool) $input['enable_animations'];
-        }
-
         // Checkbox: an unchecked box submits no value, so persist false on absence
         // rather than falling back to the default (which would make it un-uncheckable).
-        $sanitized['default_show_controls'] = ! empty($input['default_show_controls']);
+        $sanitized['enable_animations']       = ! empty($input['enable_animations']);
+        $sanitized['default_show_controls']   = ! empty($input['default_show_controls']);
+        $sanitized['default_show_fullscreen'] = ! empty($input['default_show_fullscreen']);
+        $sanitized['default_show_print']      = ! empty($input['default_show_print']);
 
         return $sanitized;
     }
@@ -484,6 +499,30 @@ class BWS_PDF_Viewer_Admin {
             <?php _e('Show the navigation controls toolbar (prev/next, page jump, fullscreen, print) by default', 'bws-pdf-viewer'); ?>
         </label>
         <p class="description"><?php _e('Site-wide default for the show_controls shortcode attribute. Individual shortcodes can override this with show_controls="true" or show_controls="false".', 'bws-pdf-viewer'); ?></p>
+        <?php
+    }
+
+    public function render_show_fullscreen_field() {
+        $options = get_option('bws_pdf_viewer_options', array());
+        $value = isset($options['default_show_fullscreen']) ? $options['default_show_fullscreen'] : true;
+        ?>
+        <label>
+            <input type="checkbox" name="bws_pdf_viewer_options[default_show_fullscreen]" value="1" <?php checked($value, true); ?>>
+            <?php _e('Show the fullscreen button in the toolbar by default', 'bws-pdf-viewer'); ?>
+        </label>
+        <p class="description"><?php _e('Site-wide default for the show_fullscreen shortcode attribute. Individual shortcodes can override this with show_fullscreen="true" or show_fullscreen="false".', 'bws-pdf-viewer'); ?></p>
+        <?php
+    }
+
+    public function render_show_print_field() {
+        $options = get_option('bws_pdf_viewer_options', array());
+        $value = isset($options['default_show_print']) ? $options['default_show_print'] : true;
+        ?>
+        <label>
+            <input type="checkbox" name="bws_pdf_viewer_options[default_show_print]" value="1" <?php checked($value, true); ?>>
+            <?php _e('Show the print button in the toolbar by default', 'bws-pdf-viewer'); ?>
+        </label>
+        <p class="description"><?php _e('Site-wide default for the show_print shortcode attribute. Individual shortcodes can override this with show_print="true" or show_print="false".', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 

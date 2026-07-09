@@ -188,6 +188,24 @@ class BWS_PDF_Viewer {
         wp_localize_script('bws-pdf-viewer-wp', 'bwsPdfViewerData', array(
             'pluginUrl' => $plugin_url,
             'ajaxUrl'   => admin_url('admin-ajax.php'),
+            // Toolbar strings, run through WordPress translation. Keys mirror the
+            // getStrings() reads in includes/bws-pdf-viewer.js; JS keeps English
+            // fallbacks so a stale/absent payload still renders.
+            'i18n'      => array(
+                'toolbarLabel'        => __('PDF viewer controls', 'bws-pdf-viewer'),
+                'prev'                => __('Previous', 'bws-pdf-viewer'),
+                'prevLabel'           => __('Previous page', 'bws-pdf-viewer'),
+                'next'                => __('Next', 'bws-pdf-viewer'),
+                'nextLabel'           => __('Next page', 'bws-pdf-viewer'),
+                'of'                  => __('of', 'bws-pdf-viewer'),
+                'pageNumberLabel'     => __('Page number', 'bws-pdf-viewer'),
+                'fullscreen'          => __('Fullscreen', 'bws-pdf-viewer'),
+                'fullscreenLabel'     => __('Enter fullscreen', 'bws-pdf-viewer'),
+                'exitFullscreen'      => __('Exit Fullscreen', 'bws-pdf-viewer'),
+                'exitFullscreenLabel' => __('Exit fullscreen', 'bws-pdf-viewer'),
+                'print'               => __('Print', 'bws-pdf-viewer'),
+                'printLabel'          => __('Print PDF', 'bws-pdf-viewer'),
+            ),
         ));
     }
 
@@ -298,7 +316,7 @@ class BWS_PDF_Viewer {
             esc_attr($instance_id),
             esc_attr(wp_json_encode($config)),
             $width_attr,
-            esc_html__('Loading PDF\xe2\x80\xa6', 'bws-pdf-viewer')
+            esc_html__('Loading PDF…', 'bws-pdf-viewer')
         );
 
         return $output;
