@@ -2,12 +2,11 @@
 /**
  * Plugin Name: BWS PDF Viewer
  * Plugin URI: https://github.com/davidofchatham/bws-pdf-viewer
- * Description: Accessibility-compliant PDF viewer with animated page flip effects. Embed PDFs using shortcode with support for responsive layouts, keyboard navigation, and screen reader compatibility.
+ * Description: Embed PDFs via shortcode with support for flipbook effects, flow mode, and image fallback for mobile devices.
  * Version: 0.4.7
  * Requires at least: 6.0
  * Requires PHP: 7.4
- * Author: charles.lobo@gmail.com
- * Author URI: https://github.com/theproductiveprogrammer
+ * Author: Charles (theproductiveprogrammer), David Mitchell (Bridge Web Solutions), and Claude AI
  * License: MIT
  * Text Domain: bws-pdf-viewer
  */

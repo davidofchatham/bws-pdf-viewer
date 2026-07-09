@@ -1,8 +1,8 @@
 === BWS PDF Viewer ===
-Contributors: charles.lobo@gmail.com
+Contributors:  Charles (theproductiveprogrammer), David Mitchell (Bridge Web Solutions), and Claude AI
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
-Tested up to: 6.4
+Tested up to: 7.0
 Stable tag: 0.4.7
 Requires PHP: 7.4
 License: MIT
@@ -141,6 +141,10 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
 * INTERNAL: Removed unused search-UI styles.
 * NEW: In-dashboard update notices and one-click updates via GitHub Releases,
   powered by the bundled Plugin Update Checker library.
+* INTERNAL: Updated plugin description and contributor/author credits.
+* INTERNAL: Reworked README — moved the underlying flipbook-viewer library's
+  raw JS API out to docs/reference/flipbook-viewer-library.md; the main README
+  now documents the shortcode only.
 
 = 0.4.6 =
 * INTERNAL: Renamed the delivered viewer bundle from `flipbook-viewer.js` to

@@ -7,125 +7,9 @@
 > intended for production sites**. No support, no stability guarantee, no
 > backward-compatibility promise between versions. Use at your own risk.
 
-A WordPress plugin that embeds PDFs as an animated flipbook or a scrollable
-single-page viewer. Built on a small flipbook library plus Mozilla PDF.js.
+A WordPress plugin that embeds PDFs as an animated flipbook or a scrollable vertical-flow viewer. Built on [flipbook-viewer](https://github.com/theproductiveprogrammer/flipbook-viewer) and [PDF.js](https://github.com/mozilla/pdf.js).
 
-![demo](./test/demo.gif)
-
-## WordPress Plugin
-
-Embed a PDF with the `[bws_pdf]` shortcode:
-
-```
-[bws_pdf]https://example.com/document.pdf[/bws_pdf]
-```
-
-See [WordPress Plugin Usage](#wordpress-plugin) below for full documentation.
-
-## Advantages
-
-1. Small (18 KB core library vs ~10 MB for [page-flip](https://www.npmjs.com/package/page-flip)).
-2. Any input works as a book via a "book provider". Example PDF book using [pdfjs](https://www.npmjs.com/package/pdfjs-dist) from Mozilla is in the test folder—[book-pdf.js](./test/book-pdf.js) (usage: [test-pdf.js](./test/test-pdf.js)).
-3. Supports panning, zooming, liking, sharing, and page-turn effects.
-4. Raises events to track which pages the user views.
-
-## Usage
-
-Below shows the flip `book` on the given `div` with the id `div-id`:
-
-```js
-'use strict'
-
-import { init as flipbook } from 'flipbook-viewer';
-
-...
-
-flipbook(book, 'div-id', (err, viewer) => {
-  if(err) console.error(err);
-
-  console.log('Number of pages: ' + viewer.page_count);
-  viewer.on('seen', n => console.log('page number: ' + n));
-
-  next.onclick = () => viewer.flip_forward();
-  prev.onclick = () => viewer.flip_back();
-  zoom.onclick = () => viewer.zoom();
-
-});
-```
-
-The viewer can show *any* flip book. All you need to do is provide a book interface:
-
-```js
-{
-  numPages: () => {
-    /* return number of pages */
-  },
-  getPage: (num, cb) => {
-    /* return page number 'num'
-     * in the callback 'cb'
-     * as any CanvasImageSource:
-     * (CSSImageValue, HTMLImageElement, 
-     *  SVGImageElement, HTMLVideoElement,
-     *  HTMLCanvasElement, ImageBitmap,
-     *  OffscreenCanvas)
-     */
-  }
-}
-```
-
-## Options
-
-An optional `opts` parameter can be passed in to change the UI:
-
-```js
-const opts = {
-  backgroundColor: "#353535",
-  boxColor: "#353535",
-  width: 800,
-  height: 600,
-}
-
-flipbook(book, 'div-id', opts, (err, viewer) => ...
-```
-
-## Events
-
-You can listen on the `viewer` for which pages were seen:
-
-```js
-viewer.on('seen', n => ...)
-```
-
-## Programmatic API
-
-The returned viewer can be used to programmatically control the viewer:
-
-```js
-viewer.flip_forward()
-viewer.flip_back()
-viewer.zoom()
-```
-
-## Single Page View
-
-Finally, sometimes it makes sense to just show the book as a simple, scrollable view. To pass in only a `singlepage:true` option:
-
-```js
-flipbook(book, 'div-id', {singlepage:true}, (err, viewer) => ...
-```
-
-This generates canvases with `class="flipbook__page"` and `id="flipbook__pgnum_<n>"`
-for CSS styling, and raises the same `seen` event as the flipbook viewer.
-
-> This library-level single-page path is the simple, image-based viewer. The
-> WordPress plugin's `document` mode adds the native PDF.js path (text/links,
-> lazy loading, memory management) on top — see below.
-
----
-
-## WordPress Plugin
-
-### Overview
+## Overview
 
 Features:
 
@@ -139,7 +23,7 @@ Features:
 - **Multi-instance** - Multiple viewers per page
 - **Multi-domain** - Works with multi-domain WordPress setups
 
-### Installation
+## Installation
 
 1. Install the plugin:
    - Upload to `/wp-content/plugins/flipbook-viewer`
@@ -148,14 +32,14 @@ Features:
 3. Configure defaults in Settings > BWS PDF Viewer (optional)
 4. Use shortcode in any post or page
 
-### Basic Usage
+## Basic Usage
 
 Embed a PDF with default settings:
 ```
 [bws_pdf]https://example.com/document.pdf[/bws_pdf]
 ```
 
-### Shortcode Parameters
+## Shortcode Parameters
 
 The PDF URL goes between the tags; all attributes are optional and can be defaulted
 in the admin panel. **The authoritative attribute list — names, defaults, and their
@@ -175,7 +59,7 @@ attribute name alone won't tell you:
 - **`show_controls`** gates the whole toolbar; **`show_fullscreen`** / **`show_print`**
   gate individual buttons and are ignored when `show_controls="false"`.
 
-### Examples
+## Examples
 
 ```
 # Narrow column, always single page
@@ -194,7 +78,7 @@ attribute name alone won't tell you:
 [bws_pdf show_controls="false"]https://example.com/doc.pdf[/bws_pdf]
 ```
 
-### Keyboard Navigation
+## Keyboard Navigation
 
 When the viewer is focused (click on it or tab to it):
 
@@ -211,7 +95,7 @@ The viewer also respects `prefers-reduced-motion` (disables animations), uses th
 WAI-ARIA toolbar pattern with a single Tab stop, and announces "Page N of M" to
 screen readers on navigation.
 
-### Container-Based Responsiveness
+## Container-Based Responsiveness
 
 This plugin uses **ResizeObserver** to detect actual container width, not viewport width:
 
@@ -220,12 +104,12 @@ This plugin uses **ResizeObserver** to detect actual container width, not viewpo
 - Both can be on the same page, each with its own layout
 - Works with any WordPress theme or page builder
 
-### Admin Settings
+## Admin Settings
 
 Set default values in **Settings > BWS PDF Viewer**; shortcode attributes override
 them per instance. Asset URLs are generated per current domain (multi-domain safe).
 
-### Performance Notes
+## Performance Notes
 
 - Document mode lazy-loads pages (IntersectionObserver) and keeps only a small window
   of pages in memory, tearing down distant ones.
@@ -233,7 +117,7 @@ them per instance. Asset URLs are generated per current domain (multi-domain saf
   setup (no "fake worker" warnings).
 - Canvas renders at `devicePixelRatio` for HiDPI/Retina.
 
-### Troubleshooting
+## Troubleshooting
 
 **PDF not loading:**
 - Verify PDF URL is accessible
@@ -249,20 +133,6 @@ them per instance. Asset URLs are generated per current domain (multi-domain saf
 - Check if `enable_animations="true"`
 - Verify user hasn't enabled `prefers-reduced-motion`
 - Try `view_mode="flipbook"` (not `singlepage`)
-
-### Development
-
-To build from source:
-
-```bash
-npm install
-npm run start  # Production build
-npm run test   # Development server
-```
-
-Files are built to `/dist` directory.
-
----
 
 ## Filter Hooks
 
@@ -304,6 +174,27 @@ The PDF is a separate concern from the assets. If the page references a PDF on a
 > migration path. Pin a version and re-test before updating.
 
 ---
+
+## Underlying Library
+
+The plugin wraps a small `flipbook-viewer` JavaScript library (the original
+engine `src/` builds on). Its raw JS API — the `numPages`/`getPage` book
+contract, `opts`, the `seen` event, and the `singlepage` path — is documented
+separately and is **not** needed to use the WordPress plugin:
+
+See [docs/reference/flipbook-viewer-library.md](docs/reference/flipbook-viewer-library.md).
+
+## Development
+
+To build from source:
+
+```bash
+npm install
+npm run start  # Production build
+npm run test   # Development server
+```
+
+Files are built to `/dist` directory.
 
 ## Acknowledgements
 
