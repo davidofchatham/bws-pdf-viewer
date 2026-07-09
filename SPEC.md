@@ -1,14 +1,13 @@
 # SPEC — BWS PDF Viewer (0.4.6, pre-release / in-flight)
 
-Living ledger. 001-pdf-viewer (viewer core) coded; 002-integrated-viewer-toolbar (shared toolbar +
-PDF.js component adoption) coded on branch `002-integrated-viewer-toolbar` — NOT yet tested/PR'd/merged.
+Living ledger. 001-pdf-viewer (viewer core) + 002-integrated-viewer-toolbar (shared toolbar +
+PDF.js component adoption) both coded, tested, merged to master.
 Distilled from SpecKit tree now archived at `docs/history/speckit/`. `check` diffs code vs §V;
 `backprop` appends §B+§V on new bugs. Full rationale/user-stories live in archived SpecKit
 artifacts; this file holds durable goals, invariants, debt, bug ledger.
-TODO before merge: manual test pass (T17), PR to master (T18). §T is scoped to THIS spec's
-shipped/in-flight work; future & deferred items (zoom, in-viewer search, Gutenberg block,
-PDF.js double-bundle dedup, true single-page flipbook) live in `docs/IDEAS.md`, resumed
-individually as their own efforts.
+§T is scoped to THIS spec's shipped/in-flight work; future & deferred items (zoom, in-viewer
+search, Gutenberg block, PDF.js double-bundle dedup, true single-page flipbook) live in
+`docs/IDEAS.md`, resumed individually as their own efforts.
 
 ## §G — goal
 WordPress plugin embed PDF inline. 3 render modes (flipbook animate / native PDF.js / image
@@ -205,8 +204,8 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | T10 | x  | URL-fail inline error + link | V19,I.wp |
 | T11 | x  | verification harness (test/verify-toolbar.js, harness-toolbar.html) — automated | V9,V11,V12,V27 |
 | T12 | x  | ESLint flat config + lint script | . |
-| T17 | .  | manual test pass 002 branch (real WP + browser): both modes, a11y/SR, back-compat atts | V9,V10,V11,V13 |
-| T18 | .  | PR 002-integrated-viewer-toolbar → master | . |
+| T17 | x  | manual test pass 002 branch (real WP + browser): both modes, a11y/SR, back-compat atts | V9,V10,V11,V13 |
+| T18 | x  | PR 002-integrated-viewer-toolbar → master | . |
 | T19 | x  | context-aware page-nav hide (continuous mode / 1-page file) + toolbar restyle (#7,#8) — coded 75590fc, headless-verified; final sign-off rides T17 | V6,V10,I.controls,I.css |
 | T20 | x  | center lone flipbook page (cover/trailing-odd) — fix show_pgs_1 (#5) — coded 7ca2a31, verified centered; final sign-off rides T17 | V21,I.flip |
 | T21 | x  | relayout flipbook on fullscreenchange, document exempt (#6) — coded 760c384/cc54c8c, verified 4K; final sign-off rides T17 | V22,I.wp,I.controls |
