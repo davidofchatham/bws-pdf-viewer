@@ -1,0 +1,3 @@
+# PDFs are binary — never apply CRLF conversion (byte offsets / xref tables break).
+*.pdf binary
+*.png binary

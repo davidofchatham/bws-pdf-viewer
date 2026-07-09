@@ -7,6 +7,30 @@ class FlipbookViewer extends EventEmitter {};
 const outputScale = window.devicePixelRatio || 1; // Support HiDPI-screens
 
 /*    way/
+ * pages drawn side-by-side in a spread: 2 normally, 1 for a genuine single-page
+ * book (no second half exists). Keeps the box/layout/centering math consistent
+ * so a 1-page book fills the box instead of drawing at half width (B22).
+ */
+function pagesAcross(ctx) {
+  return (ctx.book && ctx.book.numPages() <= 1) ? 1 : 2;
+}
+
+/*    way/
+ * number of spreads (views) to paginate over. The book wrapper knows how its
+ * display slots pack into spreads (traditional inserts a leading blank; plain
+ * packs two-up), so trust its numSpreads() when present. Fall back to the raw
+ * two-up estimate for bare sources that don't wrap (test image books). Keying
+ * the flip guards off spreads — not raw pages — is what stops a 2-page plain
+ * book from flipping to a phantom trailing blank (B23).
+ */
+function numSpreads(ctx) {
+  const b = ctx.book;
+  if (b && typeof b.numSpreads === 'function') return b.numSpreads();
+  const n = b ? b.numPages() : 0;
+  return n <= 0 ? 0 : Math.ceil(n / 2);
+}
+
+/*    way/
  * set up the canvas and the toolbar, return the viewer,
  * then show the first page
  */
@@ -87,14 +111,23 @@ function setupControls(ctx, viewer) {
     if(ctx.flipNdx || ctx.flipNdx === 0) return;
     const total = ctx.book.numPages();
     if(pageNum < 1 || pageNum > total) return;
-    ctx.showNdx = Math.floor(pageNum / 2);
+    // Map the 1-based real page to its spread. The wrapper owns the packing
+    // convention (traditional vs plain), so prefer its mapping; fall back to the
+    // traditional floor(page/2) for bare sources. Clamp to the last spread (B23).
+    const b = ctx.book;
+    let ndx = (b && typeof b.pageToSpread === 'function')
+      ? b.pageToSpread(pageNum)
+      : Math.floor(pageNum / 2);
+    const last = Math.max(0, numSpreads(ctx) - 1);
+    ctx.showNdx = Math.min(ndx, last);
     showPages(ctx, viewer);
   }
 
   viewer.flip_forward = () => {
     if(ctx.flipNdx || ctx.flipNdx === 0) return;
-    if(ctx.book.numPages() <= 1) return;
-    if((ctx.showNdx * 2 + 1) >= ctx.book.numPages()) return;
+    // Block at the last spread — guard on spread count, not raw pages, so a plain
+    // 2-page book (one [p1|p2] spread) can't flip to a phantom trailing blank (B23).
+    if(ctx.showNdx >= numSpreads(ctx) - 1) return;
     ctx.flipNdx = ctx.showNdx + 1;
     flip_1(ctx);
   }
@@ -165,14 +198,20 @@ function calcLayoutParameters(ctx, cb) {
   ctx.book.getPage(1, (err, pg) => {
     if(err) return cb(err);
 
+    // B22: a genuine 1-page book has no second half. The renderer otherwise assumes a
+    // 2-page spread everywhere (pg.width*2, then centeredHalf halves it), which — against
+    // a box the WP layer sized one page wide (V24) — draws the lone page at half width
+    // with dead space beside it. Key the across-factor off the real page count so the box,
+    // the layout, and centeredHalf all agree.
+    const across = pagesAcross(ctx);
     const usableH = 1 - (ctx.sz.marginTop/100);
     let height = h * usableH;
     const usableW = 1 - (ctx.sz.marginLeft/100);
-    let width = (pg.width * 2) * (height / pg.height);
+    let width = (pg.width * across) * (height / pg.height);
     const maxwidth = w * usableW;
     if(width > maxwidth) {
       width = maxwidth;
-      height = (pg.height) * (width / (pg.width * 2));
+      height = (pg.height) * (width / (pg.width * across));
     }
 
     ctx.layout = {
@@ -392,9 +431,13 @@ function showPages(ctx, viewer) {
    * V21: a single page occupies one half-width, centered in the full spread box.
    */
   function centeredHalf(layout) {
+    // For a multi-page spread this is one half (traditional cover / trailing odd page).
+    // For a 1-page book the layout box is already one page wide, so keep full width and
+    // don't offset — halving here is what left the lone page at 50% with dead space (B22).
+    const across = pagesAcross(ctx);
     const loc = Object.assign({}, layout);
-    loc.width = layout.width / 2;
-    loc.left = layout.left + layout.width / 4;
+    loc.width = layout.width / across;
+    loc.left = layout.left + (layout.width - loc.width) / 2;
     return loc;
   }
 

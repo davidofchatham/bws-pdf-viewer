@@ -1,4 +1,4 @@
-# SPEC — BWS PDF Viewer (0.4.6, pre-release / in-flight)
+# SPEC — BWS PDF Viewer (0.4.7, pre-1.0)
 
 Living ledger. 001-pdf-viewer (viewer core) + 002-integrated-viewer-toolbar (shared toolbar +
 PDF.js component adoption) both coded, tested, merged to master.
@@ -184,6 +184,23 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   never traps keyboard navigation (B21). `focusAt` also skips disabled controls when arrowing. Cites
   I.controls,I.wp,V10 (see B19,B20,B21).
 
+- **V28. Flipbook paginates by SPREADS; slot↔page mapping lives in ONE place.** The flipbook
+  library renders spread `s` from display slots `2s`,`2s+1` and has NO one-page mode (V24/B17); how
+  those slots pack into real PDF pages depends on layout, and that packing is owned solely by the
+  book wrapper (`createBookWrapper`, I.wp), which MUST expose: `numPages()` (real pages, for the
+  counter), `numSpreads()` (view count), `slotToPage(slot)` (→ 0 for a blank/filler), and
+  `pageToSpread(page)`. Two packings: TRADITIONAL (≥3 pages) — slots `[p1,blank,p2,p3,…]`, cover p1
+  alone in spread 0, `ceil((N+1)/2)` spreads; PLAIN — slots `[p1,p2,p3,…]` two-up, `ceil(N/2)`
+  spreads. The cover offset applies ONLY at `numPages()>=3` (a 2-page traditional book is a single
+  `[p1|p2]` plain spread, NOT `[p1|blank]`+`[p2|filler]` — B22). Every consumer of navigability MUST
+  derive from spreads, never raw page count: the library's `flip_forward` guard blocks at
+  `showNdx >= numSpreads()-1`, `goToPage` clamps to `numSpreads()-1` and maps via `pageToSpread`, the
+  WP nav-visibility gate shows prev/next only when `numSpreads()>1` (so a 2-page book has NO
+  navigation — B23), and `slotToPage` for the counter delegates to the wrapper. A genuine 1-page book
+  forces `pagesAcross=1` so the box, `calcLayoutParameters`, and `centeredHalf` all draw it full-width
+  (⊥ half-width lone page — B22). ⊥ any code path that infers spread count or slot identity from
+  `numPages()` alone. Cites I.flip,I.wp,I.controls,V24 (see B22,B23).
+
 - **V20. [deferred] Site-wide mode disable not built.** `disabled_modes` default exists in
   `bws-pdf-viewer.php` but no admin UI renders/sanitizes it; `view_mode` is single-select (pick
   one — neither document nor flipbook is individually disableable). If per-mode enable/disable
@@ -206,11 +223,12 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | T12 | x  | ESLint flat config + lint script | . |
 | T17 | x  | manual test pass 002 branch (real WP + browser): both modes, a11y/SR, back-compat atts | V9,V10,V11,V13 |
 | T18 | x  | PR 002-integrated-viewer-toolbar → master | . |
-| T19 | x  | context-aware page-nav hide (continuous mode / 1-page file) + toolbar restyle (#7,#8) — coded 75590fc, headless-verified; final sign-off rides T17 | V6,V10,I.controls,I.css |
-| T20 | x  | center lone flipbook page (cover/trailing-odd) — fix show_pgs_1 (#5) — coded 7ca2a31, verified centered; final sign-off rides T17 | V21,I.flip |
-| T21 | x  | relayout flipbook on fullscreenchange, document exempt (#6) — coded 760c384/cc54c8c, verified 4K; final sign-off rides T17 | V22,I.wp,I.controls |
+| T19 | x  | context-aware page-nav hide (continuous mode / 1-page file) + toolbar restyle (#7,#8) — coded 75590fc, headless + manual verified | V6,V10,I.controls,I.css |
+| T20 | x  | center lone flipbook page (cover/trailing-odd) — fix show_pgs_1 (#5) — coded 7ca2a31, verified centered | V21,I.flip |
+| T21 | x  | relayout flipbook on fullscreenchange, document exempt (#6) — coded 760c384/cc54c8c, verified 4K | V22,I.wp,I.controls |
 | T22 | x  | empty-width viewer collapse fix + aspect-derived height + admin unset-preserving/placeholder all free-value fields (B16,B17) | V24,V25,I.wp,I.php,I.css,I.admin |
 | T24 | x  | rename delivered bundle `flipbook-viewer.js`→`bws-viewer-engines.js` (name reflects all-3-engines, not flip-only) (B18) | V26,I.php,C8 |
+| T27 | x  | small-book flipbook fixes: 1-page fills width, 2-page = single `[p1\|p2]` spread w/ nav hidden, spread-count pagination (B22,B23) — coded + headless-verified (test/verify-b22.js, harness-b22.html, 10 checks) | V28,I.flip,I.wp,I.controls |
 
 ## §B — bugs
 | id | date       | cause | fix |
@@ -231,7 +249,10 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | B14 | 2026-07-08 | fullscreen button label stuck on "Fullscreen" in fullscreen — relayout rebuilds the toolbar mid-fs and no fresh `fullscreenchange` fires for the new button; hardcoded default persisted. Fixed: init label from current fs state | V22 |
 | B15 | 2026-07-09 | cleared admin color field stored as "" (old `sanitize_hex_color`), overrode the transparent default via merge, then read as a falsy grey fallback in index.js — page grey despite blank fields + transparent default. Fixed: sanitize omits empty (unset); `normalizeColor`; `color.bx` set; transparent-aware fills | V23 |
 | B16 | 2026-07-09 | empty admin width (field cleared → stored "" → overrode PHP `100%` default via merge) collapsed the viewer: PHP emitted broken `style="width: ;"` (flex container shrank to content) AND `calculateDimensions` did `parseInt("")===NaN` → library 800px fallback → narrow, left-pinned; auto height stuck at 600 further capped the spread below full width. Fixed 4-file: JS empty/auto/100%→container width + page-aspect-derived height (edge-to-edge) + fullscreen clamp; PHP omits inline style when width empty; CSS container `width:100%`+`align-items:center`; admin sanitize omits empty width/height/border/margin/breakpoint + renders blank+placeholder (no materialized default) | V24,V25 |
-| B18 | 2026-07-09 | delivered viewer bundle named `flipbook-viewer.js` but bundles all 3 engines (flip+native+image via `src/index.js`) — misleading: reader greps "why is native in the flipbook file?", wastes time; native/image invisible in DevTools (no standalone file, all inside the one bundle). Hygiene rename, not runtime bug. Fixed: `dist/bws-viewer-engines.js` (webpack entry key + PHP enqueue + index.html + 3 test harnesses + 3 test JS imports + `scripts/package.mjs` + CLAUDE/README/MEMORY docs); UMD global left `flipbook` (IDEAS #6) | V26 | — `calculateDimensions` keyed `pagesAcross` off the `layout` string (auto→'single' below breakpoint → tall one-page canvas), but the flipbook library ALWAYS renders a 2-page spread (no single-page mode; layout string never reaches the renderer). Wide spread drawn into tall canvas → dead space. Diagnosed from live HTML: `canvas 1440×1851 style 720×925` at 720px container (< 768). Fixed: `pagesAcross` keys off `bookObj.numPages()===1`, so a multi-page book always gets a spread-aspect canvas. Surfaced that `layout` (auto/single/double) is vestigial in flipbook + dead in document mode → C7/V8 revised, T23 (#1) filed | V24,V8 |
+| B17 | 2026-07-09 | `calculateDimensions` keyed `pagesAcross` off the `layout` string (auto→'single' below breakpoint → tall one-page canvas), but the flipbook library ALWAYS renders a 2-page spread (no single-page mode; layout string never reaches the renderer). Wide spread drawn into tall canvas → dead space. Diagnosed from live HTML: `canvas 1440×1851 style 720×925` at 720px container (< 768). Fixed: `pagesAcross` keys off `bookObj.numPages()===1`, so a multi-page book always gets a spread-aspect canvas. Surfaced that `layout` (auto/single/double) is vestigial in flipbook + dead in document mode → C7/V8 revised, T23 (#1) filed | V24,V8 |
+| B18 | 2026-07-09 | delivered viewer bundle named `flipbook-viewer.js` but bundles all 3 engines (flip+native+image via `src/index.js`) — misleading: reader greps "why is native in the flipbook file?", wastes time; native/image invisible in DevTools (no standalone file, all inside the one bundle). Hygiene rename, not runtime bug. Fixed: `dist/bws-viewer-engines.js` (webpack entry key + PHP enqueue + index.html + 3 test harnesses + 3 test JS imports + `scripts/package.mjs` + CLAUDE/README/MEMORY docs); UMD global left `flipbook` (IDEAS #6) | V26 |
+| B22 | 2026-07-09 | flipbook mis-rendered small books two ways. (a) 1-page book: library assumes a 2-page spread everywhere (`pg.width*2`, then `centeredHalf` halves), but the WP layer sized the box one page wide (V24, B17) → lone page drawn at HALF width with dead space beside it. (b) 2-page traditional book: cover offset applied at any page count → `[p1\|blank]`+`[p2\|filler]`, each page alone with an awkward flip. Also latent: the non-traditional wrapper returned the raw 1-based book to the 0-based library (slot 0 → page 0 → null), so a plain spread showed p1 lone. Fixed: `pagesAcross(ctx)` in the library (calcLayoutParameters + centeredHalf agree with the box); cover offset gated on `numPages()>=3`; wrapper always bridges `slot d → page d+1` for plain spreads | V28 |
+| B23 | 2026-07-09 | 2-page book let the user navigate to a phantom blank "page 2". Packing `[p1\|p2]` into one spread violated the library's slot==page assumption baked into `flip_forward`'s per-slot guard (`showNdx*2+1 >= numPages`), `goToPage`'s `floor(pageNum/2)`, the WP nav-visibility gate (`pageCount>1`), and `slotToPage` (`slot==page`) — all four thought a 2-page book had a second view. Fixed by making SPREAD count the source of truth: wrapper exposes `numSpreads()`/`slotToPage()`/`pageToSpread()` that know traditional-vs-plain packing; library guards + goToPage bound on `numSpreads(ctx)`; WP nav gate keys off `numSpreads()>1` (2-page → nav hidden); `slotToPage` delegates to the wrapper. `page_count` stays real-page count so the counter is correct | V28 |
 | B19 | 2026-07-09 | toolbar unreachable by Tab on load — roving init put `tabindex=0` on the first DOM control (Prev), which is disabled on page 1; a disabled control with `tabindex=0` is skipped by the browser and every sibling was `-1`, so Tab never entered the toolbar until arrow/space nav moved the roving index onto an enabled control. Fixed: anchor `tabindex=0` on first ENABLED control; re-anchor in `updateCounter` on disabled-state change (only while focus outside toolbar); `focusAt` skips disabled. Guard: inv4b | V27 |
 | B20 | 2026-07-09 | clicking the page-jump input lost focus instantly (couldn't click-and-type) — container's click handler called `container.focus()` on EVERY click incl. toolbar clicks, which bubbled up and stole focus off the just-clicked input. Fixed: skip the container refocus when the click originates inside `.bws-pdf-viewer-controls`. Guard: inv4c | V27 |
 | B21 | 2026-07-09 | page-input trapped arrow keys — roving handler exempted the input from Left/Right/Home/End UNCONDITIONALLY, so once focus reached it those keys could never move back to Prev/Next. Fixed: caret-aware exemption — input owns an arrow only while the caret can still move that way; at the text boundary it falls through to toolbar nav. Guard: inv4d | V27 |

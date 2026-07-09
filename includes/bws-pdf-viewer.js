@@ -380,11 +380,15 @@
 
         // V6: page-nav group is context-dependent. Hide prev/next + page-input +
         // counter when navigation is meaningless — continuous/document mode (all
-        // pages stacked/scrolled) or a single-page file (nothing to page through).
-        // Flipbook multi-page is the only case that shows nav. Fullscreen/print are
-        // unaffected and still render per their own gating.
-        const pageCount = viewerData.bookWrapper ? viewerData.bookWrapper.numPages() : 0;
-        const showPageNav = !config.singlepage && pageCount > 1;
+        // pages stacked/scrolled) or when there is only ONE spread to show. The gate
+        // keys off SPREAD count, not page count (B23): a 2-page plain book packs into
+        // a single [p1|p2] spread with nothing to navigate, so its nav is hidden even
+        // though it has >1 page. Fullscreen/print are unaffected.
+        const wrapper = viewerData.bookWrapper;
+        const spreadCount = (wrapper && typeof wrapper.numSpreads === 'function')
+            ? wrapper.numSpreads()
+            : (wrapper ? wrapper.numPages() : 0);
+        const showPageNav = !config.singlepage && spreadCount > 1;
 
         const controlsDiv = document.createElement('div');
         controlsDiv.className = 'bws-pdf-viewer-controls';
@@ -527,6 +531,14 @@
         function slotToPage(slot) {
             const v = viewerData.viewer;
             const total = (v && v.page_count) || Infinity;
+            const bw = viewerData.bookWrapper;
+            // The wrapper owns the slot→page mapping (it knows traditional vs plain
+            // packing — B23). A blank/filler slot maps to 0; keep the last real page
+            // in that case so the counter doesn't jump to a phantom page.
+            if (bw && typeof bw.slotToPage === 'function') {
+                const page = bw.slotToPage(slot);
+                return page > 0 ? Math.min(page, total) : (v && v.currentPage) || 1;
+            }
             const page = slot < 1 ? 1 : slot; // slot 0 → cover (page 1); else slot == page
             return Math.min(page, total);     // clamp trailing blank/over-count slots
         }
@@ -1022,48 +1034,92 @@
     // -------------------------------------------------------------------------
 
     /**
-     * Wrap a book object to implement the traditional layout.
-     * In traditional mode: page 1 occupies the left half of spread 0 alone;
-     * the right half of spread 0 is a blank page.
+     * Wrap a book object to bridge the flipbook library's 0-based display slots
+     * (showNdx*2, showNdx*2+1) to the raw book's 1-based PDF page numbers.
+     *
+     * In traditional mode: page 1 occupies the left half of spread 0 alone; the
+     * right half of spread 0 is a blank page. But the lone cover only reads as a
+     * cover when real spreads follow it — i.e. ≥3 pages. A 2-page book with the
+     * cover offset becomes [p1|blank] + [p2|filler], showing each page alone with
+     * an awkward flip between them (B22). So for exactly 2 pages we fall through to
+     * the plain-spread mapping, drawing [p1|p2] as one spread.
      *
      * @param {Object}  bookObj
      * @param {boolean} useTraditionalLayout
      * @returns {Object} Wrapped book interface
      */
     function createBookWrapper(bookObj, useTraditionalLayout) {
-        if (!useTraditionalLayout) return bookObj;
+        const traditional = useTraditionalLayout && bookObj.numPages() >= 3;
 
         let blankPageCache = null;
+        const blankFor = function(cb) {
+            if (blankPageCache) return cb(blankPageCache);
+            bookObj.getPage(1, function(err, firstPage) {
+                blankPageCache = createBlankPage(
+                    firstPage ? firstPage.width  : undefined,
+                    firstPage ? firstPage.height : undefined
+                );
+                cb(blankPageCache);
+            });
+        };
+
+        const N = bookObj.numPages();
 
         return {
             pdf: bookObj.pdf,
             numPages: function() { return bookObj.numPages(); },
+
+            // Number of spreads (views) the flipbook paginates over. The library's
+            // next/prev guards and goToPage bound themselves on this, NOT on the raw
+            // page count — the two differ whenever the display slots don't line up
+            // 1:1 with PDF pages (B23):
+            //   traditional — slots [p1, blank, p2, p3, …]: ceil((N+1)/2) spreads
+            //                 (the leading blank pushes everything one slot right).
+            //   plain spread — slots [p1, p2, p3, …] packed two-up: ceil(N/2) spreads.
+            // A 2-page plain book is therefore ONE spread ([p1|p2]) — no phantom
+            // trailing blank page to navigate to.
+            numSpreads: function() {
+                if (N <= 0) return 0;
+                return traditional ? Math.ceil((N + 1) / 2) : Math.ceil(N / 2);
+            },
+
+            // Map a 0-based display slot to the real 1-based PDF page it draws (or 0
+            // for a blank/filler slot). Consumed by the WP 'seen' handler so the page
+            // counter tracks real pages regardless of layout convention.
+            slotToPage: function(slot) {
+                if (traditional) {
+                    if (slot <= 0) return 1;      // slot 0 → cover (page 1)
+                    if (slot === 1) return 0;     // slot 1 → blank right of cover
+                    return slot > N ? 0 : slot;   // slot s (≥2) → page s
+                }
+                const page = slot + 1;            // packed: slot d → page d+1
+                return page > N ? 0 : page;
+            },
+
+            // Map a 1-based real PDF page to the spread (view) that shows it. Inverse
+            // of slotToPage at the spread granularity; used by goToPage.
+            pageToSpread: function(pageNum) {
+                if (traditional) return pageNum <= 1 ? 0 : Math.floor(pageNum / 2);
+                return Math.floor((pageNum - 1) / 2);
+            },
+
             getPage: function(displayNum, cb) {
-                // displayNum 0 → page 1 (left, alone in spread 0)
-                // displayNum 1 → blank  (right of spread 0)
-                // displayNum 2 → page 2 (left of spread 1)
-                // displayNum 3 → page 3 (right of spread 1)
-                // …
-
-                if (displayNum === 1) {
-                    // Right half of first spread is blank in traditional layout
-                    if (blankPageCache) return cb(null, blankPageCache);
-                    bookObj.getPage(1, function(err, firstPage) {
-                        blankPageCache = createBlankPage(
-                            firstPage ? firstPage.width  : undefined,
-                            firstPage ? firstPage.height : undefined
-                        );
-                        cb(null, blankPageCache);
-                    });
-                    return;
+                if (traditional) {
+                    // displayNum 0 → page 1 (left, alone in spread 0)
+                    // displayNum 1 → blank  (right of spread 0)
+                    // displayNum 2 → page 2, 3 → page 3, … (later spreads)
+                    if (displayNum === 1) return blankFor(function(p) { cb(null, p); });
+                    const actualPage = (displayNum === 0) ? 1 : displayNum;
+                    if (actualPage > N) return blankFor(function(p) { cb(null, p); });
+                    return bookObj.getPage(actualPage, cb);
                 }
 
-                const actualPage = (displayNum === 0) ? 1 : displayNum;
-                if (actualPage > bookObj.numPages()) {
-                    if (!blankPageCache) blankPageCache = createBlankPage();
-                    return cb(null, blankPageCache);
-                }
-                bookObj.getPage(actualPage, cb);
+                // Plain spread: display slot d → PDF page d+1 (0→p1, 1→p2, 2→p3, …).
+                // Trailing odd slot past the last page → blank filler so the lone
+                // final page centers (V21) instead of erroring.
+                const actualPage = displayNum + 1;
+                if (actualPage > N) return blankFor(function(p) { cb(null, p); });
+                return bookObj.getPage(actualPage, cb);
             },
         };
     }

@@ -3,7 +3,7 @@ Contributors:  Charles (theproductiveprogrammer), David Mitchell (Bridge Web Sol
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
 Tested up to: 7.0
-Stable tag: 0.4.7
+Stable tag: 0.4.8
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -23,6 +23,15 @@ Embed PDFs via shortcode with support for flipbook effects, flow mode, and
 image fallback for mobile devices. See README.md for instructions and details.
 
 == Changelog ==
+
+= 0.4.8 =
+* FIX: A one-page PDF in flipbook mode now fills the viewer width instead of
+  being drawn at half width with empty space beside it.
+* FIX: A two-page PDF now shows both pages side by side as a single spread,
+  rather than each page alone with an awkward flip between them.
+* FIX: A two-page PDF no longer lets you page forward to a blank "page 2" —
+  there is only one spread, so the Previous/Next controls are hidden.
+  Books of three or more pages still page and count normally.
 
 = 0.4.7 =
 * FIX: The toolbar is now reachable by keyboard on load. Previously, when the

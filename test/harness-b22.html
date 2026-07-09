@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>B22 harness — 1-page and 2-page flipbook fill width</title>
+<link rel="stylesheet" href="/includes/bws-pdf-viewer.css">
+<style>
+  body { width: 940px; margin: 0 auto; background:#fff; }
+  h2 { font: 16px sans-serif; }
+</style>
+</head>
+<body>
+  <h2>1-page portrait (should fill width, no half-page dead space)</h2>
+  <div id="bws-pdf-one" class="bws-pdf-viewer-container" style="width: 100%;"
+    data-config='{"pdf":"/test/one-page.pdf","viewMode":"flipbook","singlepage":false,"layout":"auto","bookLayout":"traditional","width":"100%","height":"auto","backgroundColor":"transparent","boxColor":"transparent","boxBorder":0,"margin":0,"marginTop":null,"marginLeft":null,"breakpoint":768,"enableAnimations":true,"showControls":true,"showFullscreen":false,"showPrint":true,"forceNative":null}'>
+    <div class="bws-pdf-viewer-loading"><span>Loading PDF…</span></div>
+  </div>
+
+  <h2>2-page landscape (should show BOTH pages as one spread; Next disabled)</h2>
+  <div id="bws-pdf-two" class="bws-pdf-viewer-container" style="width: 100%;"
+    data-config='{"pdf":"/test/two-page.pdf","viewMode":"flipbook","singlepage":false,"layout":"auto","bookLayout":"traditional","width":"100%","height":"auto","backgroundColor":"transparent","boxColor":"transparent","boxBorder":0,"margin":0,"marginTop":null,"marginLeft":null,"breakpoint":768,"enableAnimations":true,"showControls":true,"showFullscreen":false,"showPrint":true,"forceNative":null}'>
+    <div class="bws-pdf-viewer-loading"><span>Loading PDF…</span></div>
+  </div>
+
+  <h2>3-page portrait (traditional cover: p1 ALONE centered; Next enabled)</h2>
+  <div id="bws-pdf-three" class="bws-pdf-viewer-container" style="width: 100%;"
+    data-config='{"pdf":"/test/three-page.pdf","viewMode":"flipbook","singlepage":false,"layout":"auto","bookLayout":"traditional","width":"100%","height":"auto","backgroundColor":"transparent","boxColor":"transparent","boxBorder":0,"margin":0,"marginTop":null,"marginLeft":null,"breakpoint":768,"enableAnimations":true,"showControls":true,"showFullscreen":false,"showPrint":true,"forceNative":null}'>
+    <div class="bws-pdf-viewer-loading"><span>Loading PDF…</span></div>
+  </div>
+
+  <script src="/dist/pdf.js"></script>
+  <script src="/dist/bws-viewer-engines.js"></script>
+  <script src="/includes/bws-pdf-viewer.js"></script>
+</body>
+</html>
