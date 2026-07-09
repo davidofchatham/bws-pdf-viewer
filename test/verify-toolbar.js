@@ -103,6 +103,16 @@ async function main() {
   if (afterArrow && afterArrow !== 'bws-pdf-next') pass(`inv4: ArrowRight moved focus (${afterArrow})`);
   else fail('inv4: ArrowRight did not move focus');
 
+  // inv4c: clicking the page-jump input must KEEP focus. The container's click
+  // handler refocuses the container to enable keyboard paging; without a toolbar
+  // guard it steals focus off a just-clicked input so it can't be typed into.
+  await page.click('#bws-pdf-flip .bws-pdf-page-input');
+  await page.waitForTimeout(100);
+  const clickFocus = await page.evaluate(() =>
+    document.activeElement?.className.split(' ')[0]);
+  if (clickFocus === 'bws-pdf-page-input') pass('inv4c: clicked page-input retains focus');
+  else fail(`inv4c: click stole focus off page-input (activeElement=${clickFocus})`);
+
   // ---------- Invariant 5 + page-jump state machine ----------
   const jump = async (id, value, key) => {
     const sel = '#' + id + ' .bws-pdf-page-input';

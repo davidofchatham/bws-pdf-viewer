@@ -898,7 +898,12 @@
         container.addEventListener('blur', function() {
             if (currentFocusedViewer === containerId) currentFocusedViewer = null;
         });
-        container.addEventListener('click', function() {
+        container.addEventListener('click', function(e) {
+            // Clicks on toolbar controls (page-jump input, buttons) must keep their
+            // own focus — refocusing the container here would immediately steal focus
+            // off a just-clicked input so it can't be typed into. Only grab focus for
+            // clicks on the viewer surface itself (to enable keyboard paging).
+            if (e.target.closest && e.target.closest('.bws-pdf-viewer-controls')) return;
             container.focus();
         });
     }
