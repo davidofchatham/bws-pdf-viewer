@@ -1152,6 +1152,67 @@
      * @param {string}      layout   'single' or 'double'
      * @returns {{ width: number, height: number }}
      */
+    /*
+     * B24: find the vertical ceiling an ancestor imposes on the flipbook, so a portrait
+     * single-page canvas (as tall as its page) is capped to fit instead of overflowing a
+     * wrapper/section that has a max-height. The container's own height is auto and simply
+     * overflows such a cap (overflow:visible), so there is nothing to measure on our own
+     * box — the constraint lives on an ancestor and must be read from its computed style.
+     *
+     * Walk from the container's parent up to <body>, reading each ancestor's computed
+     * max-height and (fixed) height. Resolve px / vh / % to pixels; a % is only usable
+     * when that ancestor's parent has a resolvable height, else it's indeterminate (CSS
+     * ignores it too) and skipped. Return the SMALLEST resolved ceiling found, or null
+     * when no ancestor constrains height (content grows freely — no cap needed). The
+     * caller reserves toolbar room; this returns the raw ancestor ceiling.
+     */
+    function resolveCssLen(value, ancestor) {
+        // value: a computed length string ('320px', '80vh', '50%', 'none', 'auto', '').
+        if (!value || value === 'none' || value === 'auto') return null;
+        if (value.slice(-2) === 'px') {
+            const px = parseFloat(value);
+            return isNaN(px) ? null : px;
+        }
+        if (value.slice(-2) === 'vh') {
+            const vh = parseFloat(value);
+            if (isNaN(vh)) return null;
+            return vh / 100 * (window.innerHeight || 0);
+        }
+        if (value.slice(-1) === '%') {
+            const pct = parseFloat(value);
+            const parent = ancestor.parentElement;
+            if (isNaN(pct) || !parent) return null;
+            // % height resolves against the parent's content height only when that
+            // parent itself has a determinate height. Reading clientHeight is a
+            // pragmatic proxy: if the parent is auto-height this is the laid-out size,
+            // which is the effective basis the browser used.
+            const basis = parent.clientHeight;
+            return basis > 0 ? pct / 100 * basis : null;
+        }
+        return null;
+    }
+
+    function availableHeight(container) {
+        let cap = null;
+        let el = container.parentElement;
+        // Bound the walk at <body>/<html> so we don't read the viewport as a "cap".
+        while (el && el !== document.body && el !== document.documentElement) {
+            const cs = window.getComputedStyle(el);
+            // Only max-height reliably signals an author-imposed ceiling. Computed
+            // `height` is ALWAYS a resolved px value (the used height), even for an
+            // auto-height box, so it can't distinguish "author set a fixed height" from
+            // "browser laid this out" — reading it would treat every ancestor as a cap.
+            // A fixed inline height is caught via el.style.height instead.
+            const maxH = resolveCssLen(cs.maxHeight, el);
+            const inlineH = el.style && el.style.height ? resolveCssLen(el.style.height, el) : null;
+            const c = (maxH != null && inlineH != null) ? Math.min(maxH, inlineH)
+                    : (maxH != null ? maxH : inlineH);
+            if (c && c > 0 && (cap === null || c < cap)) cap = c;
+            el = el.parentElement;
+        }
+        return cap;
+    }
+
     function calculateDimensions(container, config, bookObj, layout, reserveHeight, pageAspect) {
         // Width: 'auto', '100%', empty, or any non-numeric value → fill the container.
         // A truly-empty width (admin field cleared, overriding the PHP '100%' default
@@ -1207,6 +1268,31 @@
             // content edge-to-edge (no letterbox, truly centered). Without an aspect
             // (page-1 fetch failed) fall back to the old temporary default.
             height = contentHeightForWidth(width) || 600;
+
+            // B24: if an ancestor caps vertical space (e.g. a wrapper with max-height),
+            // the aspect-derived height can overflow it — most visible for a portrait
+            // single-page flipbook, whose canvas is as tall as the page. Cap the height
+            // to what the container is actually allowed, then shrink the width to keep
+            // the spread aspect so the page still fills the canvas width (no reintroduced
+            // side whitespace — B22) and the box simply scales down to fit. Flipbook mode
+            // only: document (native/image) modes scroll all pages, so a height cap there
+            // would clip content, not fit it. Skipped in fullscreen (sized to the screen
+            // box above) and when the aspect is unknown (nothing to preserve).
+            if (!config.singlepage && !isFullscreen && pageAspect) {
+                let capH = availableHeight(container);
+                if (capH) {
+                    // The docked toolbar (if shown) also lives inside the ancestor's
+                    // ceiling; reserve room for it so canvas + toolbar fit, not just the
+                    // canvas. The toolbar isn't built yet here, so use a conservative
+                    // estimate matching its typical height.
+                    if (config.showControls !== false) capH -= 48;
+                    if (capH > 0 && height > capH) {
+                        const derivedH = height;
+                        height = capH;
+                        width = width * (capH / derivedH);
+                    }
+                }
+            }
         } else {
             height = explicitH;
         }

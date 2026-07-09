@@ -32,6 +32,9 @@ image fallback for mobile devices. See README.md for instructions and details.
 * FIX: A two-page PDF no longer lets you page forward to a blank "page 2" —
   there is only one spread, so the Previous/Next controls are hidden.
   Books of three or more pages still page and count normally.
+* FIX: A flipbook now stays within an ancestor container's max-height instead
+  of overflowing it. When a wrapper limits the height, the viewer scales down
+  (keeping the page proportions and centering) rather than spilling past the box.
 
 = 0.4.7 =
 * FIX: The toolbar is now reachable by keyboard on load. Previously, when the

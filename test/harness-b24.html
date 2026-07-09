@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>B24 harness — flipbook honors ancestor max-height</title>
+<link rel="stylesheet" href="/includes/bws-pdf-viewer.css">
+<style>
+  body { width: 940px; margin: 0 auto; background:#fff; }
+  h2 { font: 16px sans-serif; }
+  /* Ancestor cap two levels above the container. Portrait 1-page canvas would be
+     far taller than 400px; must be capped to fit, width shrinking to keep aspect. */
+  .capped-wrap { max-height: 400px; overflow: hidden; background:#eef; }
+  .inner { padding: 0; }
+  /* Uncapped control: same structure, no max-height → no cap applied. */
+  .free-wrap { background:#efe; }
+</style>
+</head>
+<body>
+  <h2>1-page portrait inside max-height:400px wrapper (canvas must fit ≤400px, width shrinks, centered)</h2>
+  <div class="capped-wrap"><div class="inner">
+    <div id="bws-pdf-capped" class="bws-pdf-viewer-container" style="width: 100%;"
+      data-config='{"pdf":"/test/one-page.pdf","viewMode":"flipbook","singlepage":false,"layout":"auto","bookLayout":"traditional","width":"100%","height":"auto","backgroundColor":"transparent","boxColor":"transparent","boxBorder":0,"margin":0,"marginTop":null,"marginLeft":null,"breakpoint":768,"enableAnimations":true,"showControls":true,"showFullscreen":false,"showPrint":true,"forceNative":null}'>
+      <div class="bws-pdf-viewer-loading"><span>Loading PDF…</span></div>
+    </div>
+  </div></div>
+
+  <h2>1-page portrait, NO ancestor cap (control: fills width, tall canvas — B22 unchanged)</h2>
+  <div class="free-wrap"><div class="inner">
+    <div id="bws-pdf-free" class="bws-pdf-viewer-container" style="width: 100%;"
+      data-config='{"pdf":"/test/one-page.pdf","viewMode":"flipbook","singlepage":false,"layout":"auto","bookLayout":"traditional","width":"100%","height":"auto","backgroundColor":"transparent","boxColor":"transparent","boxBorder":0,"margin":0,"marginTop":null,"marginLeft":null,"breakpoint":768,"enableAnimations":true,"showControls":true,"showFullscreen":false,"showPrint":true,"forceNative":null}'>
+      <div class="bws-pdf-viewer-loading"><span>Loading PDF…</span></div>
+    </div>
+  </div></div>
+
+  <script src="/dist/pdf.js"></script>
+  <script src="/dist/bws-viewer-engines.js"></script>
+  <script src="/includes/bws-pdf-viewer.js"></script>
+</body>
+</html>
