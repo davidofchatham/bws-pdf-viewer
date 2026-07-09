@@ -302,3 +302,15 @@ The PDF is a separate concern from the assets. If the page references a PDF on a
 
 > Pre-1.0: shortcode attributes and defaults may change between versions without a
 > migration path. Pin a version and re-test before updating.
+
+---
+
+## Acknowledgements
+
+This project is a fork of [flipbook-viewer](https://github.com/theproductiveprogrammer/flipbook-viewer) by [Charles Lobo / The Productive Programmer](https://github.com/theproductiveprogrammer) (MIT-licensed). The animated page-flip engine and the "book provider" interface originate there; this plugin wraps it in a WordPress integration and adds the native PDF.js and image document viewers.
+
+### Libraries
+
+- PDF rendering is powered by [PDF.js](https://github.com/mozilla/pdf.js) by [Mozilla](https://mozilla.github.io/pdf.js/) (Apache-2.0), bundled at [`dist/pdf.js`](dist/pdf.js).
+- DOM helpers are provided by [@tpp/htm-x](https://github.com/theproductiveprogrammer/htm-x) by [The Productive Programmer](https://github.com/theproductiveprogrammer) (MIT-licensed).
+- In-WordPress update notices and one-click updates are powered by [Plugin Update Checker](https://github.com/YahnisElsts/plugin-update-checker) by [Yahnis Elsts](https://github.com/YahnisElsts) (MIT-licensed), bundled at [`libs/plugin-update-checker/`](libs/plugin-update-checker/).

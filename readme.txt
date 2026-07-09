@@ -139,6 +139,8 @@ You can set default styles in Settings > BWS PDF Viewer, or override them per-in
   editable under Settings > BWS PDF Viewer. The "Enable flip animations" setting
   can now be turned off and saved.
 * INTERNAL: Removed unused search-UI styles.
+* NEW: In-dashboard update notices and one-click updates via GitHub Releases,
+  powered by the bundled Plugin Update Checker library.
 
 = 0.4.6 =
 * INTERNAL: Renamed the delivered viewer bundle from `flipbook-viewer.js` to

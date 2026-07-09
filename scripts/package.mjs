@@ -38,10 +38,20 @@ const include = [
   'dist/bws-viewer-engines.js',
   'dist/pdf.js',
   'dist/pdf.worker.js',
+  // Plugin Update Checker — only the runtime subset. The library's vendor/,
+  // css/, js/, languages/, README.md and composer.json are dev/demo cruft the
+  // plugin never loads; load-v5p7.php + Puc/ is all the update checker needs.
+  // license.txt ships to honor its MIT terms.
+  'libs/plugin-update-checker/load-v5p7.php',
+  'libs/plugin-update-checker/license.txt',
 ];
 
 // Optional extras shipped only if present. A directory (e.g. languages/) is walked.
-const optional = ['dist/pdf.worker.js.LICENSE.txt', 'languages'];
+// libs/plugin-update-checker/Puc is a directory, so it lives here (the required-
+// files sanity check compares against exact file entryNames, which a dir never
+// produces) — but load-v5p7.php above hard-fails if the library is absent, so a
+// missing Puc/ can't slip through silently.
+const optional = ['dist/pdf.worker.js.LICENSE.txt', 'languages', 'libs/plugin-update-checker/Puc'];
 
 function fail(msg) {
   console.error(`\n✗ package failed: ${msg}\n`);

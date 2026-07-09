@@ -334,7 +334,33 @@ class BWS_PDF_Viewer {
  * Initialize plugin
  */
 function bws_pdf_viewer_init() {
+    bws_pdf_viewer_setup_update_checker();
     return BWS_PDF_Viewer::get_instance();
+}
+
+/**
+ * Wire up in-dashboard update notices and one-click updates via Plugin Update
+ * Checker, sourced from GitHub Releases. The release ZIP attached by
+ * .github/workflows/release.yml on each `v*` tag is named
+ * bws-pdf-viewer-<version>.zip, so match the asset by regex rather than PUC's
+ * exact-name auto-picker. The slug must equal the installed plugin folder
+ * (bws-pdf-viewer).
+ */
+function bws_pdf_viewer_setup_update_checker() {
+    $loader = BWS_PDF_VIEWER_PLUGIN_DIR . 'libs/plugin-update-checker/load-v5p7.php';
+    if (!file_exists($loader)) {
+        return;
+    }
+    require_once $loader;
+
+    $update_checker = \YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
+        'https://github.com/davidofchatham/bws-pdf-viewer/',
+        __FILE__,
+        'bws-pdf-viewer'
+    );
+
+    // Use GitHub Releases (not branch tips) and the attached versioned ZIP asset.
+    $update_checker->getVcsApi()->enableReleaseAssets('/bws-pdf-viewer-[\d.]+\.zip/');
 }
 
 // Start the plugin
