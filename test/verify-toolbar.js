@@ -121,17 +121,18 @@ async function main() {
   // continuous mode — all pages are stacked, so prev/next + page-jump are
   // meaningless. The page-jump state machine is therefore verified against a
   // FLIPBOOK container (#bws-pdf-flip: double/traditional, 12-page fixture) where
-  // navigation is meaningful. Flipbook counter maps a jumped page to its spread's
-  // left page (floor mapping): goToPage(5) lands the spread whose left page is 4.
+  // navigation is meaningful. The counter reports the RIGHTMOST real page of the
+  // spread a jump lands on, so the typed page sticks: goToPage(5) lands the spread
+  // showing pages 4-5 and the counter/input read 5 (the page the user asked for).
   // NOTE: if IDEAS #1 "Contained Continuous" ships (a viewport-bounded continuous
   // mode), page-nav returns for that mode and needs its own coverage here.
 
-  // Valid in-range jump — flipbook maps page 5 -> spread left page 4.
+  // Valid in-range jump — typed odd page sticks (spread shows 4-5, counter reads 5).
   let r = await jump('bws-pdf-flip', '5', 'Enter');
-  if (String(r.currentPage) === '4' && String(r.value) === '4') pass('jump: valid page navigates + syncs input (flip spread map 5->4)');
+  if (String(r.currentPage) === '5' && String(r.value) === '5') pass('jump: valid page navigates + syncs input (jumped page 5 sticks)');
   else fail('jump: valid failed: ' + JSON.stringify(r));
 
-  // Out-of-range clamps to last page (12, even -> its own spread left page).
+  // Out-of-range clamps to last page (12); counter reads page_count, Next disables.
   r = await jump('bws-pdf-flip', '999', 'Enter');
   if (String(r.currentPage) === '12') pass('jump: out-of-range clamps to last page (12)');
   else fail('jump: clamp failed: ' + JSON.stringify(r));
@@ -185,6 +186,19 @@ async function main() {
   if (counter.ariaHidden === 'true' && /of\s+12/.test(counter.text)) pass(`inv10: counter aria-hidden, text "${counter.text}"`);
   else fail('inv10: counter wrong: ' + JSON.stringify(counter));
 
+  // inv11: on the LAST spread (we are at page 12 from the clamp jump above), Next
+  // must be disabled and the counter must read the true last page — not the
+  // spread's left page. Regression guard: the old floor mapping reported the left
+  // page, so Next stayed enabled and the counter under-read on the final spread.
+  const lastSpread = await page.evaluate(() => {
+    const bar = document.querySelector('#bws-pdf-flip .bws-pdf-viewer-controls');
+    const next = bar.querySelector('.bws-pdf-next');
+    const input = bar.querySelector('.bws-pdf-page-input');
+    return { nextDisabled: !!next.disabled, inputValue: input.value };
+  });
+  if (lastSpread.nextDisabled && lastSpread.inputValue === '12') pass('inv11: last spread disables Next, counter reads 12');
+  else fail('inv11: last spread wrong (Next stayed enabled or counter under-read): ' + JSON.stringify(lastSpread));
+
   // ---------- Invariant 8: SR live region carries "Page N of M" (flip) ----------
   const announcer = await page.evaluate(() => {
     const a = document.querySelector('#bws-pdf-flip .bws-pdf-viewer-sr-announcer');
@@ -227,24 +241,24 @@ async function main() {
   else fail(`reinit: page not preserved (jumped to 4, landed ${preserved})`);
 
   // ---------- Spread-layout goToPage lands on the correct spread ----------
-  // book_layout="spread": page 1 alone on the right of spread 0, then 2-3, 4-5, …
-  // goToPage uses floor(pageNum/2), so jumping to page 5 shows spread 2 (pages 4-5)
-  // and the counter reports that spread's left page = 4. (Previously the traditional-
-  // only formula landed on the wrong spread here.)
+  // book_layout="spread": page 1 alone on the right of spread 0, then 2-3, 4-5, 6-7…
+  // goToPage uses floor(pageNum/2): page 5 → showNdx 2 → spread showing pages 4-5;
+  // page 6 → showNdx 3 → spread showing pages 6-7. The counter reports the spread's
+  // RIGHTMOST page (so the last spread reaches page_count and Next disables): 5→5,
+  // 6→7.
   await page.waitForSelector('#bws-pdf-spread .bws-pdf-viewer-controls', { timeout: 20000 });
   await page.waitForTimeout(500);
   const spreadJump = await jump('bws-pdf-spread', '5', 'Enter');
-  if (String(spreadJump.currentPage) === '4') {
-    pass(`spread: goToPage(5) lands on spread with left page 4 (got ${spreadJump.currentPage})`);
+  if (String(spreadJump.currentPage) === '5') {
+    pass(`spread: goToPage(5) shows spread 4-5, counter reads right page 5 (got ${spreadJump.currentPage})`);
   } else {
-    fail(`spread: goToPage(5) landed wrong (currentPage=${spreadJump.currentPage}, expected 4)`);
+    fail(`spread: goToPage(5) landed wrong (currentPage=${spreadJump.currentPage}, expected 5)`);
   }
-  // A jump to an even page should land that page as the spread's left page.
   const spreadJump2 = await jump('bws-pdf-spread', '6', 'Enter');
-  if (String(spreadJump2.currentPage) === '6') {
-    pass(`spread: goToPage(6) lands on spread with left page 6 (got ${spreadJump2.currentPage})`);
+  if (String(spreadJump2.currentPage) === '7') {
+    pass(`spread: goToPage(6) shows spread 6-7, counter reads right page 7 (got ${spreadJump2.currentPage})`);
   } else {
-    fail(`spread: goToPage(6) landed wrong (currentPage=${spreadJump2.currentPage}, expected 6)`);
+    fail(`spread: goToPage(6) landed wrong (currentPage=${spreadJump2.currentPage}, expected 7)`);
   }
 
   // ---------- Zero console errors ----------

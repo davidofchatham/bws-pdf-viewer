@@ -497,12 +497,26 @@
             }
         }
 
-        // T021: Flipbook viewer emits a 0-based display index via the 'seen' event.
-        // Map it to the 1-based page number shown in the counter: the left page of
-        // the current spread. Spread s = floor(idx/2); its left page is s*2, except
-        // spread 0 which shows page 1 (the cover, traditional; or page 1 alone-on-
-        // right, spread layout). This holds for both book_layout modes — same as
-        // flipbookviewer.js goToPage's floor(pageNum/2) mapping.
+        // T021: Flipbook viewer emits 'seen' with a display-slot index, once per
+        // visible page (left then right of the current spread). showPages renders
+        // slot S as book.getPage(S) — and getPage treats its argument as a 1-based
+        // PDF page in BOTH layouts, so the emitted slot IS the PDF page number, with
+        // two exceptions: slot 0 is the traditional cover (PDF page 1), and any slot
+        // that maps to a blank/out-of-range filler (traditional slot 1; a trailing
+        // slot past the last page) is not a real page.
+        //
+        // We report the RIGHTMOST real page of the current spread as currentPage so
+        // the last spread reaches page_count — otherwise Next never disables and the
+        // counter under-reads on the final spread of an even-page book. Left emits
+        // before right, so taking each emit as it arrives naturally lands on the
+        // right page; slot 0 maps to page 1 and any over-count slot is clamped.
+        function slotToPage(slot) {
+            const v = viewerData.viewer;
+            const total = (v && v.page_count) || Infinity;
+            const page = slot < 1 ? 1 : slot; // slot 0 → cover (page 1); else slot == page
+            return Math.min(page, total);     // clamp trailing blank/over-count slots
+        }
+
         function onSeen(displayIndexOrPageNum) {
             const viewer = viewerData.viewer;
             if (!viewer) return;
@@ -511,9 +525,8 @@
                 // Document / native mode: event already emits 1-based page number
                 viewer.currentPage = displayIndexOrPageNum;
             } else {
-                // Flipbook mode: event emits 0-based display index.
-                const spread = Math.floor(displayIndexOrPageNum / 2);
-                viewer.currentPage = (spread === 0) ? 1 : spread * 2;
+                // Flipbook mode: event emits a 0-based display-slot index.
+                viewer.currentPage = slotToPage(displayIndexOrPageNum);
             }
 
             updateCounter();
@@ -823,10 +836,15 @@
                 case 'PageDown':
                 case ' ':
                     e.preventDefault();
+                    // Flipbook/native expose flip_forward; the image single-page viewer
+                    // exposes only goToPage, so fall back to a ±1 page jump — otherwise
+                    // arrow/space/pgdn silently no-op in mobile document mode.
                     if (viewer.flip_forward) {
                         viewer.flip_forward();
                         // T018: Announce page change to screen readers after navigation
                         // (page number update happens asynchronously via 'seen' event)
+                    } else if (viewer.goToPage) {
+                        viewer.goToPage((Number(viewer.currentPage) || 1) + 1);
                     }
                     break;
 
@@ -837,6 +855,8 @@
                     e.preventDefault();
                     if (viewer.flip_back) {
                         viewer.flip_back();
+                    } else if (viewer.goToPage) {
+                        viewer.goToPage((Number(viewer.currentPage) || 1) - 1);
                     }
                     break;
 
