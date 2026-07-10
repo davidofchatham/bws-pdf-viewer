@@ -84,9 +84,15 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 - **V10. Toolbar integrated + accessible.** Rendered inside viewer container (overlay bar, not
   detached row); role=toolbar, labelled; every control keyboard-operable; visible focus; ≥24×24px
   targets; AA contrast all states. Cites I.controls,I.css.
-- **V11. Page-field commit clamps/restores.** valid num → navigate (flipbook: spread containing
-  page); invalid/out-of-range → no nav, restore field (may clamp nearest). Field+count stay synced
-  regardless of nav source (button/kbd/field/edge-click). Cites I.controls.
+- **V11. Jump-to field is write-only; commit clamps.** The page field is a WRITE-ONLY "Jump to"
+  control (empty by default, `Jump to…` placeholder, "Jump to page" aria-label) — it does NOT mirror
+  the current page (superseded 2026-07-10, T33: mirroring produced a "type 5, land on the [5|6]
+  spread, field shows 6" contradiction — V33). Commit: valid num → navigate (flipbook: spread
+  containing page — V12/V28); invalid/empty/out-of-range → no navigation. After ANY commit (valid or
+  not) the field CLEARS back to empty — there is nothing to restore-to-current because it never
+  mirrored. Clamp-on-jump semantics (a value past page_count clamps to the last page before
+  navigating) stay. The visible page position is carried by the range counter (V33), not this field.
+  Cites I.controls,V33.
 - **V12. Spread page-jump mapping correct.** flipbook `goToPage` maps page# → correct spread display
   index; `onSeen` maps display-index → page# consistently (see B7,B8). Cites I.flip.
 - **V13. Native lazy-load + memory cap.** IntersectionObserver ~200px buffer renders on approach;
@@ -243,6 +249,21 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   → `shortcode_atts` → `$config` → `initViewer` → `addNavigationControls` gate, + an admin field
   (I.admin). Adds `show_download` to the V8 att surface. Cites I.controls,I.php,I.admin,V5,V8,V30.
 
+- **V33. Counter shows the spread's visible page RANGE, independent of the gating number.** The
+  read-only page counter reports the real pages VISIBLE in the current spread: `N–M of T` (en-dash)
+  when both halves are real pages, collapsing to a single `N of T` when only one half is real (a
+  traditional cover, a trailing-odd final page, a genuine 1-page book, or any spread with one blank
+  half). T = `page_count` (real pages). The displayed range is derived from the current spread's two
+  display slots via the wrapper's `slotToPage` (V28) — `onSeen` emits left slot then right slot per
+  spread, so BOTH are captured to form `[N,M]`, not just the rightmost. CRITICAL: this range is a
+  DISPLAY concern ONLY and is computed separately from the internal `currentPage`, which STAYS equal
+  to the rightmost real page of the spread so the edge-disable gating (`currentPage >= page_count`
+  disables Next/Last; `<= 1` disables Prev/First) is unchanged — the counter never lies about what is
+  on screen, and the gating never under-reads on the final spread (the reason rightmost exists — see
+  V28 note, old B23 rationale). Distinct from PDF.js's own viewer, which shows the leftmost page and
+  lets the counter lag the spread — deliberately NOT followed. Document/continuous mode has no
+  page-nav (V6) so no range. Cites I.controls,I.wp,V6,V11,V28.
+
 - **V20. [deferred] Site-wide mode disable not built.** `disabled_modes` default exists in
   `bws-pdf-viewer.php` but no admin UI renders/sanitizes it; `view_mode` is single-select (pick
   one — neither document nor flipbook is individually disableable). If per-mode enable/disable
@@ -275,6 +296,7 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | T29 | x  | adopt PDF.js SVG icons (inline `currentColor`) into toolbar: prev/next icon+text, fullscreen/print icon-only w/ aria-label+title, SVG aria-hidden+focusable=false; icon-button CSS (padding, ≥24×24, hover/focus) | V30,I.controls,I.css |
 | T30 | x  | first/last-page buttons (icon-only) in page-nav group, same showPageNav gate; join roving order (⇤first\|prev\|nav\|next\|last⇥), disable First@1 / Last@count; goToPage(1)/goToPage(page_count) — promotes IDEAS #4 | V30,V6,V27,I.controls,I.flip |
 | T31 | x  | download button (icon-only, all modes) + new `show_download` att (default true) 3-tier: `$default_options`→`shortcode_atts`→`$config`→`initViewer`→gate + admin field | V32,I.controls,I.php,I.admin |
+| T33 | x  | spread-range counter (`N–M of T`, lone→`N of T`) + decouple field into write-only `Jump to…` input that clears on commit; internal currentPage stays rightmost (gating intact). Supersedes the stale `#bws-pdf-spread` assertions in test/verify-toolbar.js (they encoded a packing the code never had) + adds range coverage | V33,V11,V28,I.controls,I.wp,I.css |
 | T32 | x  | toolbar docks by mode via real DOM move: flow/`singlepage` ABOVE (insertBefore firstChild), flip BELOW (appendChild); re-apply on fullscreen rebuild (V22) | V31,I.controls,I.css |
 
 ## §B — bugs

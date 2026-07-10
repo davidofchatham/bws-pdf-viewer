@@ -175,17 +175,24 @@
 }
 
 .bws-pdf-page-input {
-    /* T022: min 24×24 target; narrow, centred, numeric */
-    width: 3.5em;
+    /* T022: min 24×24 target. Write-only "Jump to" field (V11/V33): wide enough to
+       show the "Jump to…" placeholder, left-aligned like a prompt rather than a
+       centred page number. */
+    width: 7em;
     min-height: 24px;
-    padding: 4px 6px;
-    text-align: center;
+    padding: 4px 8px;
+    text-align: left;
     border: 1px solid var(--bws-input-border);
     border-radius: 4px;
     background-color: var(--bws-input-bg);
     color: var(--bws-input-fg);
     font-size: 14px;
     line-height: 1.4;
+}
+
+.bws-pdf-page-input::placeholder {
+    color: var(--bws-input-fg);
+    opacity: 0.6;
 }
 
 .bws-pdf-page-input:focus-visible {

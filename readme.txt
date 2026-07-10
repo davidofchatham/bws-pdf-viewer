@@ -36,6 +36,12 @@ image fallback for mobile devices. See README.md for instructions and details.
   default (both on by default).
 * CHANGE: In document (continuous) mode the toolbar now sits ABOVE the pages;
   in flipbook mode it stays below. This matches how each mode is read.
+* CHANGE: The flipbook page counter now shows the pages visible in the current
+  spread as a range (e.g. "5–6 of 12"), collapsing to a single number for a lone
+  page (cover, last page, or a one-page file).
+* CHANGE: The page field is now a "Jump to…" box: type a page and press Enter to
+  go there; it clears afterward rather than mirroring the current page. This
+  removes the confusion where jumping to one page of a spread showed the other.
 
 = 0.4.8 =
 * FIX: A one-page PDF in flipbook mode now fills the viewer width instead of

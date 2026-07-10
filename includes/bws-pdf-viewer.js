@@ -31,6 +31,8 @@
             nextLabel:           i18n.nextLabel           || 'Next page',
             of:                  i18n.of                  || 'of',
             pageNumberLabel:     i18n.pageNumberLabel     || 'Page number',
+            jumpToLabel:         i18n.jumpToLabel         || 'Jump to page',
+            jumpToPlaceholder:   i18n.jumpToPlaceholder   || 'Jump to…',
             fullscreen:          i18n.fullscreen          || 'Fullscreen',
             fullscreenLabel:     i18n.fullscreenLabel     || 'Enter fullscreen',
             exitFullscreen:      i18n.exitFullscreen      || 'Exit Fullscreen',
@@ -471,26 +473,30 @@
             }
         });
 
-        // --- Page-nav group: editable page-jump input + display-only counter ---
-        // T011: net-new page-jump control (the only net-new control this feature adds).
+        // --- Page-nav group: range counter + write-only "Jump to" input (V11/V33) ---
+        // The counter (display-only) shows the spread's visible page RANGE; the input
+        // is a write-only jump target that clears after commit and never mirrors the
+        // current page. Counter first, then input, so the display reads left-to-right
+        // "2–3 of 6  [Jump to…]".
         const pageNav = document.createElement('span');
         pageNav.className = 'bws-pdf-viewer-page-nav';
+
+        // Display-only range counter ("N–M of T"). Not aria-live; announcements come
+        // from the dedicated SR live region (toolbar-dom.md invariants 8 and 10).
+        const pageCounter = document.createElement('span');
+        pageCounter.className = 'bws-pdf-viewer-page-counter';
+        pageCounter.setAttribute('aria-hidden', 'true');
 
         const pageInput = document.createElement('input');
         pageInput.className = 'bws-pdf-page-input';
         pageInput.setAttribute('type', 'text');
         pageInput.setAttribute('inputmode', 'numeric');
         pageInput.setAttribute('pattern', '[0-9]*');
-        pageInput.setAttribute('aria-label', t.pageNumberLabel);
+        pageInput.setAttribute('aria-label', t.jumpToLabel);
+        pageInput.setAttribute('placeholder', t.jumpToPlaceholder);
 
-        // Display-only "of N" counter. No longer aria-live; announcements come from
-        // the dedicated SR live region (toolbar-dom.md invariants 8 and 10).
-        const pageCounter = document.createElement('span');
-        pageCounter.className = 'bws-pdf-viewer-page-counter';
-        pageCounter.setAttribute('aria-hidden', 'true');
-
-        pageNav.appendChild(pageInput);
         pageNav.appendChild(pageCounter);
+        pageNav.appendChild(pageInput);
 
         // --- Next button ---
         const nextBtn = document.createElement('button');
@@ -543,36 +549,23 @@
             if (viewer && viewer.goToPage) viewer.goToPage(viewer.page_count || 1);
         });
 
-        // --- Page-jump commit state machine (data-model.md) ---
-        // `editing` guards updateCounter from clobbering the field mid-type.
-        let editing = false;
-
-        function restorePageInput() {
-            const viewer = viewerData.viewer;
-            pageInput.value = (viewer && viewer.currentPage) || 1;
-        }
-
+        // --- "Jump to" commit (V11) ---
+        // Write-only field: it never mirrors the current page, so there is no live
+        // sync to guard and nothing to "restore" — every commit path just clears it.
         function commitPageInput() {
             const viewer = viewerData.viewer;
-            editing = false;
-            if (!viewer || !viewer.goToPage) { restorePageInput(); return; }
-
             const raw = pageInput.value.trim();
+            pageInput.value = ''; // clears on every commit, valid or not (V11)
+            if (!viewer || !viewer.goToPage) return;
+
             const n = parseInt(raw, 10);
-            if (raw === '' || isNaN(n)) {
-                // non-numeric / empty -> restore current page, no navigation
-                restorePageInput();
-                return;
-            }
+            if (raw === '' || isNaN(n)) return; // empty / non-numeric → no navigation
+
             const total = viewer.page_count || 1;
-            const clamped = Math.max(1, Math.min(n, total));
+            const clamped = Math.max(1, Math.min(n, total)); // clamp-on-jump (V11)
             viewer.goToPage(clamped);
-            // The 'seen' -> onSeen -> updateCounter path refreshes the field to the
-            // landed page; set it now too in case goToPage is a no-op (already there).
-            pageInput.value = clamped;
         }
 
-        pageInput.addEventListener('focus', function() { editing = true; });
         pageInput.addEventListener('blur', commitPageInput);
         pageInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
@@ -581,11 +574,25 @@
                 pageInput.blur();
             } else if (e.key === 'Escape') {
                 e.preventDefault();
-                editing = false;
-                restorePageInput();
+                pageInput.value = ''; // abandon the jump, clear the field
                 pageInput.blur();
             }
         });
+
+        // The real pages visible in the current spread, as [low, high] (V33). Updated
+        // by onSeen from the landed spread's two slots; drives the range counter. The
+        // internal currentPage (rightmost, for gating) is tracked separately.
+        let spreadRange = null;
+
+        // Format the spread range for display (V33): "N–M of T" for a two-page spread,
+        // "N of T" for a lone real page. Falls back to the single current page when no
+        // range has been captured yet (e.g. first paint before the first 'seen').
+        function formatCounter(current, total) {
+            let lo = current, hi = current;
+            if (spreadRange) { lo = spreadRange[0]; hi = spreadRange[1]; }
+            const pages = (lo === hi) ? String(lo) : (lo + '–' + hi); // en-dash
+            return pages + ' ' + t.of + ' ' + total;
+        }
 
         // Counter update: reads from viewerData.viewer each call so it stays correct
         // after responsive reinit replaces the viewer instance.
@@ -594,8 +601,7 @@
             const viewer = viewerData.viewer;
             const current = (viewer && viewer.currentPage) || 1;
             const total   = (viewer && viewer.page_count) || 0;
-            if (!editing) pageInput.value = current;
-            pageCounter.textContent = t.of + ' ' + total;
+            pageCounter.textContent = formatCounter(current, total);
             prevBtn.disabled  = current <= 1;
             firstBtn.disabled = current <= 1;
             nextBtn.disabled  = current >= total;
@@ -639,16 +645,42 @@
             return Math.min(page, total);     // clamp trailing blank/over-count slots
         }
 
+        // Real pages visible in the spread that owns display slot `slot` (V33). The
+        // spread's two slots are floor(slot/2)*2 and +1; map each to a real page,
+        // drop blanks (slotToPage → 0 for a filler/cover-blank half), and return
+        // [low, high] — collapsing to [p,p] when only one half is real (cover,
+        // trailing-odd, 1-page book). Uses the WP-side slotToPage below, which
+        // delegates to the wrapper's packing-aware mapping (V28).
+        function spreadPagesFor(slot) {
+            const base = Math.floor(slot / 2) * 2;
+            const bw = viewerData.bookWrapper;
+            const raw = bw && typeof bw.slotToPage === 'function';
+            const pageOf = function(s) {
+                return raw ? bw.slotToPage(s) : (s < 1 ? 1 : s);
+            };
+            const pages = [pageOf(base), pageOf(base + 1)]
+                .filter(function(p) { return p > 0; }); // drop blank/filler halves
+            if (!pages.length) return null;
+            const total = (viewerData.viewer && viewerData.viewer.page_count) || Infinity;
+            const clamped = pages.map(function(p) { return Math.min(p, total); });
+            return [Math.min.apply(null, clamped), Math.max.apply(null, clamped)];
+        }
+
         function onSeen(displayIndexOrPageNum) {
             const viewer = viewerData.viewer;
             if (!viewer) return;
 
             if (config.singlepage) {
-                // Document / native mode: event already emits 1-based page number
+                // Document / native mode: event already emits 1-based page number.
+                // No spread range here (page-nav is hidden in this mode — V6).
                 viewer.currentPage = displayIndexOrPageNum;
+                spreadRange = null;
             } else {
-                // Flipbook mode: event emits a 0-based display-slot index.
+                // Flipbook mode: event emits a 0-based display-slot index. currentPage
+                // stays the RIGHTMOST real page (gating — V33); the visible range is
+                // derived separately from the spread's two slots.
                 viewer.currentPage = slotToPage(displayIndexOrPageNum);
+                spreadRange = spreadPagesFor(displayIndexOrPageNum);
             }
 
             updateCounter();

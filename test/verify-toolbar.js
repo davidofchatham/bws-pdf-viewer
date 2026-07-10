@@ -151,7 +151,7 @@ async function main() {
   });
   await page.waitForTimeout(200);
 
-  // ---------- Invariant 5 + page-jump state machine ----------
+  // ---------- V11 + V33: write-only "Jump to" field + range counter ----------
   const jump = async (id, value, key) => {
     const sel = '#' + id + ' .bws-pdf-page-input';
     await page.click(sel);
@@ -161,43 +161,42 @@ async function main() {
     return page.$eval('#' + id, (c) => {
       const v = c.querySelector('.bws-pdf-page-input').value;
       const cur = window.BwsPdfViewerWP.activeViewers.get(c.id)?.viewer?.currentPage;
-      return { value: v, currentPage: cur };
+      const counter = c.querySelector('.bws-pdf-viewer-page-counter')?.textContent;
+      return { value: v, currentPage: cur, counter };
     });
   };
 
-  // V6 (amended 2026-07-08, issue #8): the page-nav group is hidden in document/
-  // continuous mode — all pages are stacked, so prev/next + page-jump are
-  // meaningless. The page-jump state machine is therefore verified against a
-  // FLIPBOOK container (#bws-pdf-flip: double/traditional, 12-page fixture) where
-  // navigation is meaningful. The counter reports the RIGHTMOST real page of the
-  // spread a jump lands on, so the typed page sticks: goToPage(5) lands the spread
-  // showing pages 4-5 and the counter/input read 5 (the page the user asked for).
-  // NOTE: if IDEAS #1 "Contained Continuous" ships (a viewport-bounded continuous
-  // mode), page-nav returns for that mode and needs its own coverage here.
+  // V6: page-nav is hidden in document/continuous mode, so the jump/range behavior
+  // is verified against a FLIPBOOK container (#bws-pdf-flip: double/traditional,
+  // 12-page fixture). V11: the field is WRITE-ONLY — it clears after every commit
+  // and never mirrors the current page. V33: the counter shows the spread's visible
+  // RANGE ("N–M of T"); internal currentPage stays the rightmost real page so the
+  // edge-disable gating is unchanged.
 
-  // Valid in-range jump — typed odd page sticks (spread shows 4-5, counter reads 5).
+  // Valid jump — navigates to the spread containing page 5 (traditional: [4|5]),
+  // currentPage = rightmost real page (5 here), field CLEARS, counter shows the
+  // range "4–5 of 12".
   let r = await jump('bws-pdf-flip', '5', 'Enter');
-  if (String(r.currentPage) === '5' && String(r.value) === '5') pass('jump: valid page navigates + syncs input (jumped page 5 sticks)');
-  else fail('jump: valid failed: ' + JSON.stringify(r));
+  if (String(r.currentPage) === '5' && r.value === '') pass('V11: valid jump navigates + field clears');
+  else fail('V11: valid jump failed: ' + JSON.stringify(r));
+  if (/4[–-]5\s+of\s+12/.test(r.counter)) pass(`V33: counter shows spread range "${r.counter}"`);
+  else fail('V33: range counter wrong: ' + JSON.stringify(r.counter));
 
-  // Out-of-range clamps to last page (12); counter reads page_count, Next disables.
+  // Out-of-range clamps to last page (12); field clears; Next disables. #bws-pdf-flip
+  // is TRADITIONAL (cover-alone) → 12 pages pack as [p1][p2|p3]…[p10|p11][p12|filler],
+  // so the final spread is a LONE page 12 → counter collapses to "12 of 12" (V33).
   r = await jump('bws-pdf-flip', '999', 'Enter');
-  if (String(r.currentPage) === '12') pass('jump: out-of-range clamps to last page (12)');
-  else fail('jump: clamp failed: ' + JSON.stringify(r));
+  if (String(r.currentPage) === '12' && r.value === '') pass('V11: out-of-range clamps to last page, field clears');
+  else fail('V11: clamp failed: ' + JSON.stringify(r));
+  if (/(^|\D)12\s+of\s+12/.test(r.counter) && !/[–-]/.test(r.counter)) pass(`V33: lone final page collapses to single "${r.counter}"`);
+  else fail('V33: last spread counter wrong: ' + JSON.stringify(r.counter));
 
-  // Non-numeric restores current page, no navigation
-  await page.click('#bws-pdf-flip .bws-pdf-page-input');
-  await page.fill('#bws-pdf-flip .bws-pdf-page-input', 'abc');
-  await page.press('#bws-pdf-flip .bws-pdf-page-input', 'Enter');
-  await page.waitForTimeout(400);
-  r = await page.$eval('#bws-pdf-flip', (c) => ({
-    value: c.querySelector('.bws-pdf-page-input').value,
-    currentPage: window.BwsPdfViewerWP.activeViewers.get(c.id)?.viewer?.currentPage,
-  }));
-  if (String(r.value) === String(r.currentPage) && String(r.currentPage) === '12') pass('jump: non-numeric restores current page');
-  else fail('jump: non-numeric restore failed: ' + JSON.stringify(r));
+  // Non-numeric → no navigation, field clears (was on page 12).
+  r = await jump('bws-pdf-flip', 'abc', 'Enter');
+  if (String(r.currentPage) === '12' && r.value === '') pass('V11: non-numeric commits nothing + clears field');
+  else fail('V11: non-numeric failed: ' + JSON.stringify(r));
 
-  // Escape restores without navigating
+  // Escape → abandon jump, field clears, no navigation.
   await page.click('#bws-pdf-flip .bws-pdf-page-input');
   await page.fill('#bws-pdf-flip .bws-pdf-page-input', '3');
   await page.press('#bws-pdf-flip .bws-pdf-page-input', 'Escape');
@@ -206,8 +205,8 @@ async function main() {
     value: c.querySelector('.bws-pdf-page-input').value,
     currentPage: window.BwsPdfViewerWP.activeViewers.get(c.id)?.viewer?.currentPage,
   }));
-  if (String(r.currentPage) === '12' && String(r.value) === '12') pass('inv5: Escape restores without navigating');
-  else fail('inv5: Escape failed: ' + JSON.stringify(r));
+  if (String(r.currentPage) === '12' && r.value === '') pass('V11: Escape abandons jump + clears field');
+  else fail('V11: Escape failed: ' + JSON.stringify(r));
 
   // ---------- V6: page-nav HIDDEN in document/continuous mode ----------
   const docNav = await page.evaluate(() => {
@@ -226,7 +225,7 @@ async function main() {
   if (docNav.hasFullscreen && docNav.hasPrint) pass('V6: document-mode toolbar keeps fullscreen + print');
   else fail('V6: document-mode fullscreen/print missing: ' + JSON.stringify(docNav));
 
-  // ---------- Invariant 10: counter aria-hidden; input carries the page (flip) ----------
+  // ---------- Invariant 10: counter aria-hidden; shows a range (flip) ----------
   const counter = await page.evaluate(() => {
     const c = document.querySelector('#bws-pdf-flip .bws-pdf-viewer-page-counter');
     return { ariaHidden: c?.getAttribute('aria-hidden'), text: c?.textContent };
@@ -234,18 +233,19 @@ async function main() {
   if (counter.ariaHidden === 'true' && /of\s+12/.test(counter.text)) pass(`inv10: counter aria-hidden, text "${counter.text}"`);
   else fail('inv10: counter wrong: ' + JSON.stringify(counter));
 
-  // inv11: on the LAST spread (we are at page 12 from the clamp jump above), Next
-  // must be disabled and the counter must read the true last page — not the
-  // spread's left page. Regression guard: the old floor mapping reported the left
-  // page, so Next stayed enabled and the counter under-read on the final spread.
+  // inv11 (V33): on the LAST spread (page 12 from the clamp jump above), Next must be
+  // disabled and the counter must reach 12 (rightmost real page drives the gating).
+  // The write-only jump field is EMPTY (V11) — it no longer carries the page number.
   const lastSpread = await page.evaluate(() => {
     const bar = document.querySelector('#bws-pdf-flip .bws-pdf-viewer-controls');
     const next = bar.querySelector('.bws-pdf-next');
     const input = bar.querySelector('.bws-pdf-page-input');
-    return { nextDisabled: !!next.disabled, inputValue: input.value };
+    const counter = bar.querySelector('.bws-pdf-viewer-page-counter');
+    return { nextDisabled: !!next.disabled, inputValue: input.value, counter: counter.textContent };
   });
-  if (lastSpread.nextDisabled && lastSpread.inputValue === '12') pass('inv11: last spread disables Next, counter reads 12');
-  else fail('inv11: last spread wrong (Next stayed enabled or counter under-read): ' + JSON.stringify(lastSpread));
+  if (lastSpread.nextDisabled && /12\s+of\s+12/.test(lastSpread.counter) && lastSpread.inputValue === '')
+    pass(`inv11: last spread disables Next, counter reaches 12 ("${lastSpread.counter}"), field empty`);
+  else fail('inv11: last spread wrong: ' + JSON.stringify(lastSpread));
 
   // ---------- Invariant 8: SR live region carries "Page N of M" (flip) ----------
   const announcer = await page.evaluate(() => {
@@ -288,25 +288,26 @@ async function main() {
   if (rjump && Number(preserved) >= 3) pass(`reinit: page preserved across layout change (landed ${preserved})`);
   else fail(`reinit: page not preserved (jumped to 4, landed ${preserved})`);
 
-  // ---------- Spread-layout goToPage lands on the correct spread ----------
-  // book_layout="spread": page 1 alone on the right of spread 0, then 2-3, 4-5, 6-7…
-  // goToPage uses floor(pageNum/2): page 5 → showNdx 2 → spread showing pages 4-5;
-  // page 6 → showNdx 3 → spread showing pages 6-7. The counter reports the spread's
-  // RIGHTMOST page (so the last spread reaches page_count and Next disables): 5→5,
-  // 6→7.
+  // ---------- Spread-layout goToPage lands on the correct spread (V28/V33) ----------
+  // book_layout="spread" = PLAIN two-up packing [p1|p2] [p3|p4] [p5|p6] … (NO lone
+  // cover — that is traditional layout). pageToSpread(p) = floor((p-1)/2):
+  //   jump 5 → spread 2 → slots [4,5] → pages [5|6] → currentPage 6, range "5–6 of 12"
+  //   jump 6 → spread 2 → SAME [5|6] spread → currentPage 6, range "5–6 of 12"
+  // currentPage is the rightmost real page (gating); the counter names both visible
+  // pages. (The previous expectation of 5/7 encoded a packing the code never had.)
   await page.waitForSelector('#bws-pdf-spread .bws-pdf-viewer-controls', { timeout: 20000 });
   await page.waitForTimeout(500);
   const spreadJump = await jump('bws-pdf-spread', '5', 'Enter');
-  if (String(spreadJump.currentPage) === '5') {
-    pass(`spread: goToPage(5) shows spread 4-5, counter reads right page 5 (got ${spreadJump.currentPage})`);
+  if (String(spreadJump.currentPage) === '6' && /5[–-]6\s+of\s+12/.test(spreadJump.counter)) {
+    pass(`spread: jump 5 → [5|6] spread, currentPage 6, counter "${spreadJump.counter}"`);
   } else {
-    fail(`spread: goToPage(5) landed wrong (currentPage=${spreadJump.currentPage}, expected 5)`);
+    fail(`spread: jump 5 wrong: ${JSON.stringify(spreadJump)}`);
   }
   const spreadJump2 = await jump('bws-pdf-spread', '6', 'Enter');
-  if (String(spreadJump2.currentPage) === '7') {
-    pass(`spread: goToPage(6) shows spread 6-7, counter reads right page 7 (got ${spreadJump2.currentPage})`);
+  if (String(spreadJump2.currentPage) === '6' && /5[–-]6\s+of\s+12/.test(spreadJump2.counter)) {
+    pass(`spread: jump 6 → same [5|6] spread, currentPage 6, counter "${spreadJump2.counter}"`);
   } else {
-    fail(`spread: goToPage(6) landed wrong (currentPage=${spreadJump2.currentPage}, expected 7)`);
+    fail(`spread: jump 6 wrong: ${JSON.stringify(spreadJump2)}`);
   }
 
   // ---------- Zero console errors ----------

@@ -150,14 +150,14 @@ async function main() {
   // click by stubbing HTMLAnchorElement.click and capturing the href.
   const dlTarget = await page.evaluate(() => {
     return new Promise((resolve) => {
-      const orig = HTMLAnchorElement.prototype.click;
+      const orig = window.HTMLAnchorElement.prototype.click;
       let captured = null;
-      HTMLAnchorElement.prototype.click = function () {
+      window.HTMLAnchorElement.prototype.click = function () {
         captured = { href: this.getAttribute('href'), download: this.hasAttribute('download') };
         // don't actually navigate
       };
       document.querySelector('#bws-pdf-flip .bws-pdf-download').click();
-      HTMLAnchorElement.prototype.click = orig;
+      window.HTMLAnchorElement.prototype.click = orig;
       resolve(captured);
     });
   });
@@ -196,7 +196,8 @@ async function main() {
   if (edgeStart.firstDisabled && !edgeStart.lastDisabled) pass('V27: on page 1, First disabled + Last enabled');
   else fail('V27: page-1 edge state wrong: ' + JSON.stringify(edgeStart));
 
-  // Click Last → jump to final page; First enables, Last disables.
+  // Click Last → jump to final page; First enables, Last disables. The write-only
+  // jump field stays empty (V11); the range counter reaches "12 of 12" (V33).
   await page.click('#bws-pdf-flip .bws-pdf-last');
   await page.waitForTimeout(700);
   const edgeEnd = await page.evaluate(() => {
@@ -204,22 +205,28 @@ async function main() {
     return {
       firstDisabled: !!bar.querySelector('.bws-pdf-first').disabled,
       lastDisabled: !!bar.querySelector('.bws-pdf-last').disabled,
-      page: bar.querySelector('.bws-pdf-page-input').value,
+      counter: bar.querySelector('.bws-pdf-viewer-page-counter').textContent,
     };
   });
-  if (!edgeEnd.firstDisabled && edgeEnd.lastDisabled && edgeEnd.page === '12') {
-    pass('V27: Last jumps to page 12 → First enabled, Last disabled');
+  if (!edgeEnd.firstDisabled && edgeEnd.lastDisabled && /12\s+of\s+12/.test(edgeEnd.counter)) {
+    pass(`V27: Last jumps to last page → First enabled, Last disabled ("${edgeEnd.counter}")`);
   } else {
     fail('V27: last-page edge state wrong: ' + JSON.stringify(edgeEnd));
   }
 
-  // Click First → back to page 1.
+  // Click First → back to page 1 (counter "1 of 12", First disabled again).
   await page.click('#bws-pdf-flip .bws-pdf-first');
   await page.waitForTimeout(700);
-  const backToFirst = await page.evaluate(() =>
-    document.querySelector('#bws-pdf-flip .bws-pdf-page-input').value);
-  if (backToFirst === '1') pass('V27: First jumps back to page 1');
-  else fail(`V27: First did not reach page 1 (got ${backToFirst})`);
+  const backToFirst = await page.evaluate(() => {
+    const bar = document.querySelector('#bws-pdf-flip .bws-pdf-viewer-controls');
+    return {
+      counter: bar.querySelector('.bws-pdf-viewer-page-counter').textContent,
+      firstDisabled: !!bar.querySelector('.bws-pdf-first').disabled,
+    };
+  });
+  if (/1\s+of\s+12/.test(backToFirst.counter) && backToFirst.firstDisabled)
+    pass('V27: First jumps back to page 1');
+  else fail(`V27: First did not reach page 1: ${JSON.stringify(backToFirst)}`);
 
   // ---------- Zero console errors ----------
   if (errors.length === 0) pass('zero JS console errors');
