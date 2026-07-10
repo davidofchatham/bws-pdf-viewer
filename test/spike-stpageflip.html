@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<!--
+  PROTOTYPE — THROWAWAY (wayfinder map #9, ticket #11). Do not ship.
+  Vendored lib: spike-page-flip.browser.js = StPageFlip 2.0.7 (2021-04-18).
+
+  Spike: mount StPageFlip as the transient animation layer of Arch (A), fed
+  canvas snapshots (loadFromImages), with a persistent "text layer" div placed
+  UNDER it to see whether the lib's DOM cooperates with our accessible layer.
+
+  Probes exposed on window:
+    __ready            -> lib constructed + pages loaded
+    __mode()           -> 'portrait' | 'landscape' (its single vs spread state)
+    __orientationFor(w)-> what orientation it picks at container width w (responsive)
+    __flip()           -> flipNext(), returns via promise-ish 'flip' event
+    __hasScrubHook()   -> does the instance expose renderFrame/progress/currentTime?
+    __textLayerAlive() -> is our persistent underlay text still in the DOM + hit-testable?
+-->
+<meta charset="utf-8">
+<title>SPIKE: StPageFlip flip overlay</title>
+<style>
+  html, body { margin: 0; background: #fff; }
+  #wrap { position: relative; width: 900px; height: 560px; }
+  /* our persistent accessible layer, UNDER the flip surface */
+  #textlayer {
+    position: absolute; inset: 0; z-index: 0;
+    font: 16px sans-serif; color: #111; padding: 12px;
+  }
+  #flip { position: absolute; inset: 0; z-index: 1; }
+</style>
+
+<div id="wrap">
+  <div id="textlayer"><span id="probe-span">persistent selectable text — page 1</span></div>
+  <div id="flip"></div>
+</div>
+
+<script src="./spike-page-flip.browser.js"></script>
+<script>
+  // Build two solid-color data-URL "page snapshots" to stand in for PDF.js canvases.
+  function pageURL(bg, label) {
+    const c = document.createElement('canvas'); c.width = 420; c.height = 560;
+    const x = c.getContext('2d');
+    x.fillStyle = bg; x.fillRect(0, 0, 420, 560);
+    x.fillStyle = '#222'; x.font = 'bold 180px sans-serif';
+    x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText(label, 210, 280);
+    return c.toDataURL();
+  }
+  const imgs = ['#f4e9d8','#dfeaf4','#e6f4df','#f4dfe9']
+    .map((bg, i) => pageURL(bg, String(i + 1)));
+
+  // St is the UMD global from the vendored bundle.
+  const pf = new St.PageFlip(document.getElementById('flip'), {
+    width: 420, height: 560,
+    size: 'stretch',
+    minWidth: 200, maxWidth: 1000, minHeight: 300, maxHeight: 700,
+    showCover: false,
+    usePortrait: true,          // allow it to collapse to single-page when narrow
+    mobileScrollSupport: false,
+  });
+
+  window.__ready = false;
+  pf.loadFromImages(imgs);
+  // 'init' fires after first render
+  pf.on('init', () => { window.__ready = true; });
+  pf.on('flip', (e) => { window.__lastFlip = e.data; });
+
+  window.__mode = () => pf.getOrientation ? pf.getOrientation() : (pf.render && pf.render.getOrientation && pf.render.getOrientation());
+  window.__flip = () => { pf.flipNext(); };
+
+  // Responsive: the lib recomputes orientation from container width on update().
+  // We can't truly resize here without layout, but we can read whether it CHOSE
+  // portrait at the current (narrow-ish stretch) sizing.
+  window.__orientationFor = (w) => {
+    document.getElementById('wrap').style.width = w + 'px';
+    pf.update(imgs);   // force re-measure
+    return window.__mode();
+  };
+
+  // Q4 scrub hook: does the public instance expose anything progress-parameterized?
+  window.__hasScrubHook = () => {
+    const inst = pf;
+    const keys = [];
+    for (const k in inst) keys.push(k);
+    const hookNames = ['renderFrame','setProgress','progress','currentTime','seek','scrubTo'];
+    const found = hookNames.filter(n => typeof inst[n] === 'function' || n in inst);
+    return { found, hasAny: found.length > 0 };
+  };
+
+  // Q3 a11y: after the lib mounts, is our underlay text still present + on top-enough
+  // to be hit-tested (i.e. did the lib's DOM/canvas swallow the accessible layer)?
+  window.__textLayerAlive = () => {
+    const span = document.getElementById('probe-span');
+    if (!span) return { present: false };
+    const r = span.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const topEl = document.elementFromPoint(cx, cy);
+    return {
+      present: true,
+      text: span.textContent,
+      // is the flip canvas painted OVER our text? (expected yes — that's the a11y problem)
+      coveredByFlip: !!(topEl && topEl.closest && topEl.closest('#flip')),
+      topTag: topEl ? topEl.tagName + (topEl.id ? '#' + topEl.id : '') : null,
+    };
+  };
+</script>

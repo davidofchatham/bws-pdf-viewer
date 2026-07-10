@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<!--
+  PROTOTYPE — THROWAWAY (wayfinder map #9, ticket #10). Do not ship.
+  Spike: View Transitions API as the transient flip overlay for Architecture (A).
+
+  Model: a "static layer" (#stage) holds the persistent native render (here: a
+  canvas painted to stand in for the PDF.js page). A page turn swaps the canvas
+  content inside a startViewTransition(); a rotateY keyframe on the per-page
+  ::view-transition pseudo plays the rigid fold. The browser owns snapshotting,
+  z-order and cleanup — the thing the spike is checking.
+
+  Exposed on window for the playwright probe:
+    __vtSupported   -> View Transitions available?
+    turn(dir)       -> perform a page turn, returns the transition
+    scrubAt(t)      -> pause every running animation at progress t in [0,1]
+    __snapshot()    -> getImageData of #stage's canvas (seam pixel probe)
+    __overlayCount()-> number of ::view-transition pseudo layers (cleanup probe)
+-->
+<meta charset="utf-8">
+<title>SPIKE: View Transitions flip overlay</title>
+<style>
+  html, body { margin: 0; background: #fff; }
+  #stage {
+    width: 400px; height: 520px; position: relative;
+    /* the persistent element that owns the snapshot pair */
+    view-transition-name: page;
+    transform-style: preserve-3d;
+  }
+  #stage canvas { display: block; width: 400px; height: 520px; }
+
+  /* The rigid fold: rotate the OUTGOING snapshot about the spine (left edge). */
+  ::view-transition-old(page) {
+    transform-origin: left center;
+    animation: foldOut 600ms ease-in both;
+  }
+  ::view-transition-new(page) {
+    transform-origin: left center;
+    animation: foldIn 600ms ease-out both;
+  }
+  @keyframes foldOut {
+    from { transform: perspective(1200px) rotateY(0deg);   opacity: 1; }
+    to   { transform: perspective(1200px) rotateY(-90deg);  opacity: 1; }
+  }
+  @keyframes foldIn {
+    from { transform: perspective(1200px) rotateY(90deg);  opacity: 1; }
+    to   { transform: perspective(1200px) rotateY(0deg);   opacity: 1; }
+  }
+</style>
+
+<div id="stage"><canvas id="page" width="400" height="520"></canvas></div>
+
+<script>
+  const ctx = document.getElementById('page').getContext('2d');
+
+  // Deterministic page paint: solid bg + big page number + a corner marker so
+  // t=0 / t=1 pixel probes have unambiguous content to compare.
+  const PAGES = [
+    { bg: '#f4e9d8', fg: '#7a3b12', n: '1' },
+    { bg: '#dfeaf4', fg: '#123b7a', n: '2' },
+    { bg: '#e6f4df', fg: '#2f7a12', n: '3' },
+  ];
+  let cur = 0;
+  function paint(i) {
+    const p = PAGES[i];
+    ctx.fillStyle = p.bg; ctx.fillRect(0, 0, 400, 520);
+    ctx.fillStyle = p.fg;
+    ctx.fillRect(0, 0, 12, 520);              // spine marker (left edge)
+    ctx.font = 'bold 240px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(p.n, 200, 260);
+  }
+  paint(cur);
+
+  window.__vtSupported = typeof document.startViewTransition === 'function';
+
+  // A page turn. With VT support: snapshot -> swap canvas underneath -> fold.
+  // Without: instant swap (the progressive-enhancement fallback path).
+  window.turn = function turn(dir = 1) {
+    const next = (cur + dir + PAGES.length) % PAGES.length;
+    const swap = () => { paint(next); cur = next; };
+    if (!window.__vtSupported) { swap(); return null; }        // fallback
+    const t = document.startViewTransition(swap);
+    return t;
+  };
+
+  // Pause every running animation at absolute progress t (WAAPI scrubbing).
+  // This is the renderFrame(t) claim: if these are real Animation objects we can
+  // set currentTime deterministically without touching rAF.
+  window.scrubAt = function scrubAt(t) {
+    const anims = document.getAnimations();
+    anims.forEach(a => {
+      a.pause();
+      const dur = (a.effect && a.effect.getTiming().duration) || 0;
+      a.currentTime = dur * t;
+    });
+    return anims.length;
+  };
+
+  window.__snapshot = function () {
+    const { data } = ctx.getImageData(0, 0, 400, 520);
+    return Array.from(data);
+  };
+  // Count live ::view-transition pseudo layers via getAnimations targets.
+  window.__overlayCount = function () {
+    return document.getAnimations().filter(a =>
+      a.effect && a.effect.pseudoElement &&
+      a.effect.pseudoElement.includes('view-transition')
+    ).length;
+  };
+</script>
