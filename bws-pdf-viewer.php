@@ -3,7 +3,7 @@
  * Plugin Name: BWS PDF Viewer
  * Plugin URI: https://github.com/davidofchatham/bws-pdf-viewer
  * Description: Embed PDFs via shortcode with support for flipbook effects, flow mode, and image fallback for mobile devices.
- * Version: 0.4.8
+ * Version: 0.5.0
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Charles (theproductiveprogrammer), David Mitchell (Bridge Web Solutions), and Claude AI
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('BWS_PDF_VIEWER_VERSION', '0.4.8');
+define('BWS_PDF_VIEWER_VERSION', '0.5.0');
 define('BWS_PDF_VIEWER_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('BWS_PDF_VIEWER_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('BWS_PDF_VIEWER_PLUGIN_BASENAME', plugin_basename(__FILE__));
@@ -64,9 +64,11 @@ class BWS_PDF_Viewer {
         'show_controls'           => true,          // show navigation controls toolbar
         'show_fullscreen'         => true,          // show fullscreen toggle button
         'show_print'              => true,          // show print button
+        'show_download'           => true,          // show download button
         'default_show_controls'   => true,          // admin default for show_controls
         'default_show_fullscreen' => true,          // admin default for show_fullscreen
         'default_show_print'      => true,          // admin default for show_print
+        'default_show_download'   => true,          // admin default for show_download
         'disabled_modes'          => array(),       // P3: site-wide disabled view modes
     );
 
@@ -253,6 +255,7 @@ class BWS_PDF_Viewer {
             'show_controls'    => isset($defaults['default_show_controls']) ? $defaults['default_show_controls'] : true,
             'show_fullscreen'  => isset($defaults['default_show_fullscreen']) ? $defaults['default_show_fullscreen'] : true,
             'show_print'       => isset($defaults['default_show_print']) ? $defaults['default_show_print'] : true,
+            'show_download'    => isset($defaults['default_show_download']) ? $defaults['default_show_download'] : true,
             'force_native'     => null, // 'true', 'false', or null for auto-detect
         ), $atts, 'bws_pdf');
 
@@ -295,6 +298,7 @@ class BWS_PDF_Viewer {
             'showControls'     => filter_var($atts['show_controls'], FILTER_VALIDATE_BOOLEAN),
             'showFullscreen'   => filter_var($atts['show_fullscreen'], FILTER_VALIDATE_BOOLEAN),
             'showPrint'        => filter_var($atts['show_print'], FILTER_VALIDATE_BOOLEAN),
+            'showDownload'     => filter_var($atts['show_download'], FILTER_VALIDATE_BOOLEAN),
             'forceNative'      => $atts['force_native'],
         );
 

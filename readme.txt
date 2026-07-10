@@ -3,7 +3,7 @@ Contributors:  Charles (theproductiveprogrammer), David Mitchell (Bridge Web Sol
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
 Tested up to: 7.0
-Stable tag: 0.4.8
+Stable tag: 0.5.0
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -23,6 +23,19 @@ Embed PDFs via shortcode with support for flipbook effects, flow mode, and
 image fallback for mobile devices. See README.md for instructions and details.
 
 == Changelog ==
+
+= 0.5.0 =
+* NEW: Toolbar buttons now use icons. Previous/Next keep their text label beside
+  the arrow; Fullscreen, Print, and the new buttons below are icon-only (with
+  accessible labels and hover tooltips).
+* NEW: First-page and last-page buttons flank Previous/Next in the flipbook
+  toolbar, jumping straight to the first or last page. They appear only where
+  page navigation is shown and disable at the corresponding edge.
+* NEW: A Download button (all viewer modes) saves the source PDF. Toggle it with
+  the show_download shortcode attribute or the "Show Download Button" admin
+  default (both on by default).
+* CHANGE: In document (continuous) mode the toolbar now sits ABOVE the pages;
+  in flipbook mode it stays below. This matches how each mode is read.
 
 = 0.4.8 =
 * FIX: A one-page PDF in flipbook mode now fills the viewer width instead of

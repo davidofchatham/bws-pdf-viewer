@@ -187,6 +187,14 @@ class BWS_PDF_Viewer_Admin {
             'bws_pdf_viewer_layout_section'
         );
 
+        add_settings_field(
+            'default_show_download',
+            __('Show Download Button', 'bws-pdf-viewer'),
+            array($this, 'render_show_download_field'),
+            'bws-pdf-viewer',
+            'bws_pdf_viewer_layout_section'
+        );
+
         // Margin
         add_settings_field(
             'margin',
@@ -268,6 +276,7 @@ class BWS_PDF_Viewer_Admin {
         $sanitized['default_show_controls']   = ! empty($input['default_show_controls']);
         $sanitized['default_show_fullscreen'] = ! empty($input['default_show_fullscreen']);
         $sanitized['default_show_print']      = ! empty($input['default_show_print']);
+        $sanitized['default_show_download']   = ! empty($input['default_show_download']);
 
         return $sanitized;
     }
@@ -523,6 +532,18 @@ class BWS_PDF_Viewer_Admin {
             <?php _e('Show the print button in the toolbar by default', 'bws-pdf-viewer'); ?>
         </label>
         <p class="description"><?php _e('Site-wide default for the show_print shortcode attribute. Individual shortcodes can override this with show_print="true" or show_print="false".', 'bws-pdf-viewer'); ?></p>
+        <?php
+    }
+
+    public function render_show_download_field() {
+        $options = get_option('bws_pdf_viewer_options', array());
+        $value = isset($options['default_show_download']) ? $options['default_show_download'] : true;
+        ?>
+        <label>
+            <input type="checkbox" name="bws_pdf_viewer_options[default_show_download]" value="1" <?php checked($value, true); ?>>
+            <?php _e('Show the download button in the toolbar by default', 'bws-pdf-viewer'); ?>
+        </label>
+        <p class="description"><?php _e('Site-wide default for the show_download shortcode attribute. Individual shortcodes can override this with show_download="true" or show_download="false".', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 

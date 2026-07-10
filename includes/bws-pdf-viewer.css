@@ -151,7 +151,9 @@
     --bws-input-fg:          #222222;
     --bws-input-border:      rgba(255, 255, 255, 0.28);
 
-    order: 99; /* keep the bar last visually even if DOM order shifts */
+    /* No CSS `order` override: the bar's dock position (above in document/flow mode,
+       below in flip/book mode) is set by real DOM order (V31/T032) so that DOM order
+       stays the reading + Tab order (V27). A CSS `order` here would desync them. */
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -231,10 +233,48 @@
     box-shadow: 0 0 0 4px rgba(78, 163, 224, 0.25);
 }
 
+/* Toolbar icons (V30) — inline SVG glyphs inherit the button text color via
+   `currentColor`, so a host theme/admin override of --bws-btn-fg recolors them too. */
+.bws-pdf-viewer-controls button .bws-pdf-icon {
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    vertical-align: middle;
+    color: currentColor;
+    flex: 0 0 auto;
+    pointer-events: none; /* clicks land on the button, never the glyph */
+}
+
+/* Icon + text buttons (Prev/Next): glyph sits beside the label with a small gap. */
+.bws-pdf-prev,
+.bws-pdf-next {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Icon-only buttons (First/Last/Fullscreen/Print/Download): square-ish, the 44×36
+   min target from the base rule still applies so they clear WCAG 2.2 §2.5.8. Center
+   the lone glyph. Their accessible name comes from aria-label + title (V30). */
+.bws-pdf-first,
+.bws-pdf-last,
+.bws-pdf-fullscreen,
+.bws-pdf-print,
+.bws-pdf-download {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+}
+
 /* High contrast mode — ensure buttons remain visible */
 @media (forced-colors: active) {
     .bws-pdf-viewer-controls button {
         border: 2px solid ButtonText;
+    }
+    /* Force glyph strokes/fills to a system color so they don't vanish. */
+    .bws-pdf-viewer-controls button .bws-pdf-icon {
+        color: ButtonText;
     }
 }
 

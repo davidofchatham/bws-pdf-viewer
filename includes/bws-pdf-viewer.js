@@ -37,7 +37,58 @@
             exitFullscreenLabel: i18n.exitFullscreenLabel || 'Exit fullscreen',
             print:               i18n.print               || 'Print',
             printLabel:          i18n.printLabel          || 'Print PDF',
+            download:            i18n.download            || 'Download',
+            downloadLabel:      i18n.downloadLabel        || 'Download PDF',
+            firstLabel:         i18n.firstLabel           || 'First page',
+            lastLabel:          i18n.lastLabel            || 'Last page',
         };
+    }
+
+    // -------------------------------------------------------------------------
+    // Toolbar icons (V30) — SVG glyphs adopted from PDF.js (pdfjs-dist/web/images,
+    // Apache-2.0), inlined as strings so no separate asset is enqueued or fetched
+    // cross-origin ([[portal-asset-origin-mismatch]]). The source `fill="black"` is
+    // replaced with `currentColor` so each glyph inherits the toolbar's text color
+    // (themes + meets AA contrast, V10); every SVG is aria-hidden + focusable=false
+    // so a screen reader announces the button's aria-label, not the graphic.
+    // prev/next/download/print/presentationMode are verbatim PDF.js paths; first/last
+    // are drawn here (horizontal ⇤/⇥ double-chevron-to-bar) because PDF.js only ships
+    // vertical-scroll first/last glyphs, wrong for a horizontal flipbook toolbar.
+    // -------------------------------------------------------------------------
+    const ICONS = {
+        // Horizontal chevrons for prev/next (toolbar is horizontal; PDF.js pageUp/
+        // pageDown glyphs are vertical). Drawn to match the PDF.js stroke weight.
+        prev: '<path d="M10.5 3.5L6 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+        next: '<path d="M5.5 3.5L10 8l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+        // ⇤ : bar on the left, chevron pointing into it.
+        first: '<path d="M3 3v10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 3.5L7.5 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+        // ⇥ : bar on the right, chevron pointing into it.
+        last: '<path d="M13 3v10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M4 3.5L8.5 8 4 12.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+        // PDF.js toolbarButton-download (verbatim paths, fill → currentColor).
+        download: '<path d="M9.79407 7.31811H7.86307C7.41807 7.31811 7.19407 7.85711 7.50907 8.17211L10.1911 10.8541C10.3861 11.0491 10.7031 11.0491 10.8981 10.8541L13.5801 8.17211C13.8951 7.85711 13.6721 7.31811 13.2261 7.31811H11.2941V4.38211H11.2961V3.13211H11.2941V2.30811H9.79407V3.13211H9.79107V4.38211H9.79507V7.31811H9.79407Z" fill="currentColor"/><path d="M14 3.13208H12.796V4.38208H14C14.345 4.38208 14.625 4.66208 14.625 5.00708V13.0071C14.625 13.3521 14.345 13.6321 14 13.6321H2C1.655 13.6321 1.375 13.3521 1.375 13.0071V3.00708C1.375 2.66208 1.655 2.38208 2 2.38208H5.643C5.82 2.38208 5.989 2.45808 6.108 2.58908L7.536 4.17508C7.654 4.30708 7.823 4.38208 8 4.38208H8.291V3.13208H8.278L7.036 1.75208C6.681 1.35808 6.173 1.13208 5.642 1.13208H2C0.966 1.13208 0.125 1.97308 0.125 3.00708V13.0071C0.125 14.0411 0.966 14.8821 2 14.8821H14C15.034 14.8821 15.875 14.0411 15.875 13.0071V5.00708C15.875 3.97308 15.034 3.13208 14 3.13208Z" fill="currentColor"/>',
+        // PDF.js toolbarButton-print (verbatim, fill → currentColor).
+        print: '<path d="M13 4H12V2C12 1.46957 11.7893 0.960859 11.4142 0.585786C11.0391 0.210714 10.5304 0 10 0L6 0C5.46957 0 4.96086 0.210714 4.58579 0.585786C4.21071 0.960859 4 1.46957 4 2V4H3C2.46957 4 1.96086 4.21071 1.58579 4.58579C1.21071 4.96086 1 5.46957 1 6V11C1 11.5304 1.21071 12.0391 1.58579 12.4142C1.96086 12.7893 2.46957 13 3 13H4V14C4 14.5304 4.21071 15.0391 4.58579 15.4142C4.96086 15.7893 5.46957 16 6 16H10C10.5304 16 11.0391 15.7893 11.4142 15.4142C11.7893 15.0391 12 14.5304 12 14V13H13C13.5304 13 14.0391 12.7893 14.4142 12.4142C14.7893 12.0391 15 11.5304 15 11V6C15 5.46957 14.7893 4.96086 14.4142 4.58579C14.0391 4.21071 13.5304 4 13 4V4ZM10.75 14.15L10.15 14.75H5.85L5.25 14.15V10H10.75V14.15ZM10.75 4H5.25V1.85L5.85 1.25H10.15L10.75 1.85V4V4ZM13 7.6L12.6 8H11.4L11 7.6V6.4L11.4 6H12.6L13 6.4V7.6Z" fill="currentColor"/>',
+        // PDF.js toolbarButton-presentationMode = our fullscreen glyph (verbatim).
+        fullscreen: '<path d="M1.5 3C1.5 2.72421 1.72421 2.5 2 2.5H14C14.2758 2.5 14.5 2.72421 14.5 3V11C14.5 11.2758 14.2758 11.5 14 11.5H2C1.72421 11.5 1.5 11.2758 1.5 11V3ZM2 1C0.895786 1 0 1.89579 0 3V11C0 12.1042 0.895786 13 2 13H2.64979L1.35052 15.2499L2.64949 16L4.38194 13H11.6391L13.3715 16L14.6705 15.2499L13.3712 13H14C15.1042 13 16 12.1042 16 11V3C16 1.89579 15.1042 1 14 1H2ZM5.79501 4.64401V9.35601C5.79501 9.85001 6.32901 10.159 6.75701 9.91401L10.88 7.55801C11.312 7.31201 11.312 6.68901 10.88 6.44201L6.75701 4.08601C6.32801 3.84101 5.79501 4.15001 5.79501 4.64401Z" fill="currentColor"/>',
+    };
+
+    /**
+     * Build an <svg> icon element for a button (V30). The SVG is aria-hidden and
+     * non-focusable so the screen reader reads the button's aria-label, not the
+     * graphic.
+     * @param {string} name  Key into ICONS.
+     * @returns {SVGElement}
+     */
+    function svgIcon(name) {
+        const wrap = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        wrap.setAttribute('viewBox', '0 0 16 16');
+        wrap.setAttribute('width', '16');
+        wrap.setAttribute('height', '16');
+        wrap.setAttribute('aria-hidden', 'true');
+        wrap.setAttribute('focusable', 'false');
+        wrap.classList.add('bws-pdf-icon');
+        wrap.innerHTML = ICONS[name] || '';
+        return wrap;
     }
 
     // -------------------------------------------------------------------------
@@ -399,8 +450,16 @@
         // --- Previous button ---
         const prevBtn = document.createElement('button');
         prevBtn.className = 'bws-pdf-prev';
-        prevBtn.textContent = '\u2190 ' + t.prev;
+        // Icon + text (V30): glyph first, then the visible label in a span so the
+        // icon and word sit side by side. aria-label still names the button for SR.
+        prevBtn.appendChild(svgIcon('prev'));
+        prevBtn.appendChild(document.createTextNode(' '));
+        var prevLabelSpan = document.createElement('span');
+        prevLabelSpan.className = 'bws-pdf-btn-text';
+        prevLabelSpan.textContent = t.prev;
+        prevBtn.appendChild(prevLabelSpan);
         prevBtn.setAttribute('aria-label', t.prevLabel);
+        prevBtn.setAttribute('title', t.prevLabel);
         prevBtn.setAttribute('type', 'button');
 
         prevBtn.addEventListener('click', function() {
@@ -436,8 +495,16 @@
         // --- Next button ---
         const nextBtn = document.createElement('button');
         nextBtn.className = 'bws-pdf-next';
-        nextBtn.textContent = t.next + ' \u2192';
+        // Icon + text (V30): visible label span, then glyph \u2014 mirror of prev so the
+        // arrow points outward on the trailing edge.
+        var nextLabelSpan = document.createElement('span');
+        nextLabelSpan.className = 'bws-pdf-btn-text';
+        nextLabelSpan.textContent = t.next;
+        nextBtn.appendChild(nextLabelSpan);
+        nextBtn.appendChild(document.createTextNode(' '));
+        nextBtn.appendChild(svgIcon('next'));
         nextBtn.setAttribute('aria-label', t.nextLabel);
+        nextBtn.setAttribute('title', t.nextLabel);
         nextBtn.setAttribute('type', 'button');
 
         nextBtn.addEventListener('click', function() {
@@ -447,6 +514,33 @@
                 const cur = Number(viewer.currentPage) || 1;
                 if (cur < viewer.page_count) viewer.goToPage(cur + 1);
             }
+        });
+
+        // --- First / Last page buttons (icon-only, V30/V6/V27) ---
+        // Part of the page-nav group: only assembled when showPageNav (flipbook
+        // multi-page). Jump straight to page 1 / last page via the viewer's goToPage
+        // (I.flip maps page→spread). Disable at the corresponding edge (First on
+        // page 1, Last on page_count) — updateCounter drives this alongside prev/next.
+        const firstBtn = document.createElement('button');
+        firstBtn.className = 'bws-pdf-first';
+        firstBtn.appendChild(svgIcon('first'));
+        firstBtn.setAttribute('aria-label', t.firstLabel);
+        firstBtn.setAttribute('title', t.firstLabel);
+        firstBtn.setAttribute('type', 'button');
+        firstBtn.addEventListener('click', function() {
+            const viewer = viewerData.viewer;
+            if (viewer && viewer.goToPage) viewer.goToPage(1);
+        });
+
+        const lastBtn = document.createElement('button');
+        lastBtn.className = 'bws-pdf-last';
+        lastBtn.appendChild(svgIcon('last'));
+        lastBtn.setAttribute('aria-label', t.lastLabel);
+        lastBtn.setAttribute('title', t.lastLabel);
+        lastBtn.setAttribute('type', 'button');
+        lastBtn.addEventListener('click', function() {
+            const viewer = viewerData.viewer;
+            if (viewer && viewer.goToPage) viewer.goToPage(viewer.page_count || 1);
         });
 
         // --- Page-jump commit state machine (data-model.md) ---
@@ -502,8 +596,10 @@
             const total   = (viewer && viewer.page_count) || 0;
             if (!editing) pageInput.value = current;
             pageCounter.textContent = t.of + ' ' + total;
-            prevBtn.disabled = current <= 1;
-            nextBtn.disabled = current >= total;
+            prevBtn.disabled  = current <= 1;
+            firstBtn.disabled = current <= 1;
+            nextBtn.disabled  = current >= total;
+            lastBtn.disabled  = current >= total;
             // Disabled state just changed; if the current tab stop is now on a
             // disabled control (e.g. Prev on page 1), hand tabindex 0 to an enabled
             // sibling so the toolbar stays reachable by Tab. Only re-anchor when no
@@ -587,8 +683,11 @@
                 // so a hardcoded "Fullscreen" would wrongly persist mid-fullscreen.
                 const startFs = (document.fullscreenElement === container ||
                                  document.webkitFullscreenElement === container);
-                fsBtn.textContent = startFs ? t.exitFullscreen : t.fullscreen;
+                // Icon-only (V30): no visible text; aria-label + title carry the name,
+                // both toggled with fullscreen state. The glyph is constant.
+                fsBtn.appendChild(svgIcon('fullscreen'));
                 fsBtn.setAttribute('aria-label', startFs ? t.exitFullscreenLabel : t.fullscreenLabel);
+                fsBtn.setAttribute('title', startFs ? t.exitFullscreenLabel : t.fullscreenLabel);
 
                 fsBtn.addEventListener('click', function() {
                     if (document.fullscreenElement || document.webkitFullscreenElement) {
@@ -601,8 +700,8 @@
                 // T016/T021: Update button label when fullscreen state changes
                 var onFsChange = function() {
                     const isFs = (document.fullscreenElement === container || document.webkitFullscreenElement === container);
-                    fsBtn.textContent      = isFs ? t.exitFullscreen : t.fullscreen;
                     fsBtn.setAttribute('aria-label', isFs ? t.exitFullscreenLabel : t.fullscreenLabel);
+                    fsBtn.setAttribute('title', isFs ? t.exitFullscreenLabel : t.fullscreenLabel);
                 };
                 document.addEventListener('fullscreenchange', onFsChange);
                 document.addEventListener('webkitfullscreenchange', onFsChange);
@@ -618,38 +717,86 @@
             }
         }
 
-        // --- Print button ---
+        // --- Print button (icon-only, V30) ---
         if (config.showPrint !== false) {
             const printBtn = document.createElement('button');
             printBtn.className = 'bws-pdf-print';
-            printBtn.textContent = t.print;
+            printBtn.appendChild(svgIcon('print'));
             printBtn.setAttribute('aria-label', t.printLabel);
+            printBtn.setAttribute('title', t.printLabel);
             printBtn.setAttribute('type', 'button');
             printBtn.addEventListener('click', function() { window.print(); });
             controlsDiv.appendChild(printBtn);
         }
 
-        // T015: Assemble in order: prev | page-nav (input + counter) | next [| fullscreen] [| print].
-        // fullscreen/print were appended above; prepend the leading three in reverse so the
-        // final order is prev, pageNav, next, fullscreen, print.
+        // --- Download button (icon-only, V30/V32) ---
+        // Present in ALL modes (download is meaningful even for a 1-page/continuous
+        // doc, unlike page-nav — V6). Downloads the already-resolved source URL;
+        // no cross-origin re-fetch. `download` attr requests a save rather than a
+        // navigation; cross-origin hosts may ignore the filename hint but the click
+        // still opens/saves the PDF (rel=noopener for the new-context fallback).
+        if (config.showDownload !== false && config.pdf) {
+            const dlBtn = document.createElement('button');
+            dlBtn.className = 'bws-pdf-download';
+            dlBtn.appendChild(svgIcon('download'));
+            dlBtn.setAttribute('aria-label', t.downloadLabel);
+            dlBtn.setAttribute('title', t.downloadLabel);
+            dlBtn.setAttribute('type', 'button');
+            dlBtn.addEventListener('click', function() {
+                const a = document.createElement('a');
+                a.href = config.pdf;
+                a.download = '';
+                a.rel = 'noopener';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+            controlsDiv.appendChild(dlBtn);
+        }
+
+        // T015/T030: Assemble page-nav group order: first | prev | page-nav | next | last,
+        // ahead of the trailing utility buttons (fullscreen/print/download appended above).
+        // Prepend in reverse so the final leading order is first, prev, pageNav, next, last.
         // V6: page-nav group only when navigation is meaningful (flipbook multi-page).
         if (showPageNav) {
+            controlsDiv.insertBefore(lastBtn, controlsDiv.firstChild);
             controlsDiv.insertBefore(nextBtn, controlsDiv.firstChild);
             controlsDiv.insertBefore(pageNav, controlsDiv.firstChild);
             controlsDiv.insertBefore(prevBtn, controlsDiv.firstChild);
+            controlsDiv.insertBefore(firstBtn, controlsDiv.firstChild);
         }
 
-        // Nothing to show (nav hidden + fullscreen/print both off/unsupported) —
+        // Nothing to show (nav hidden + fullscreen/print/download all off/unsupported) —
         // skip the empty bar rather than render a bare dark strip.
         if (!controlsDiv.firstChild) return null;
 
         // T018: roving tabindex — first control focusable, rest -1; arrows move focus.
         setupToolbarRovingFocus(controlsDiv);
 
-        container.appendChild(controlsDiv);
+        // T032/V31: dock by presentation mode. Document/flow (config.singlepage) puts
+        // the bar ABOVE the pages; flip/book puts it BELOW. Real DOM move (⊥ CSS order)
+        // so DOM order stays the reading + Tab order (V27).
+        dockToolbar(container, controlsDiv, config);
         updateCounter();
 
         return controlsDiv;
+    }
+
+    /**
+     * Dock the toolbar above (document/flow mode) or below (flip/book mode) the
+     * viewer pages, by moving the real DOM node (V31). Idempotent — used both on
+     * first build and when the fullscreen relayout rebuilds the toolbar (V22), so
+     * the dock is re-applied correctly after a rebuild.
+     * @param {HTMLElement} container
+     * @param {HTMLElement} controlsDiv
+     * @param {Object}      config
+     */
+    function dockToolbar(container, controlsDiv, config) {
+        if (config.singlepage) {
+            container.insertBefore(controlsDiv, container.firstChild);
+        } else {
+            container.appendChild(controlsDiv);
+        }
     }
 
     // -------------------------------------------------------------------------

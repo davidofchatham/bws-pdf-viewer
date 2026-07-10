@@ -60,7 +60,7 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 - **V5. Config precedence honored 3-tier.** defaults→admin option→shortcode; att wins per-key;
   admin default applies only when att absent. `show_controls` MUST follow this (see B6). Cites I.php.
 - **V6. Page nav context-dependent; optional controls togglable.** page-nav group (prev/next +
-  page-input + "of N" counter) rendered ONLY when navigation is meaningful = flipbook multi-page.
+  page-input + "of N" counter + first/last-page buttons) rendered ONLY when navigation is meaningful = flipbook multi-page.
   HIDDEN when meaningless: continuous/document mode (`config.singlepage` true — all pages stacked/
   scrolled) OR single-page file (`numPages()===1`, any mode). When shown, prev/next MAY disable at
   first/last page (edge state). Toolbar bar still renders for fullscreen/print unless `show_controls`
@@ -71,7 +71,7 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   browser find) + AnnotationLayerBuilder (links) + shared link service; internal links navigate,
   external new-tab. No hand-rolled layer positioning. Cites I.native.
 - **V8. Shortcode atts revisable, not frozen (pre-1.0).** Current set: `view_mode`,`layout`,
-  `book_layout`,`force_native`,`show_controls`,`show_fullscreen`,`show_print`,`width`,`height`
+  `book_layout`,`force_native`,`show_controls`,`show_fullscreen`,`show_print`,`show_download`,`width`,`height`
   (`singlepage` legacy alias for `document`). NONE is cemented — any may be renamed/removed/
   repurposed before 1.0 when justified. On change: sweep the portal's shortcodes, fix usages,
   changelog it (C7). Before a 1.0 freeze, review the WHOLE att surface for vestigial/misleading
@@ -176,7 +176,10 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   control — a disabled control (Prev on page 1) with `tabindex=0` is skipped by the browser,
   making the WHOLE toolbar unreachable by Tab until arrow nav moved the index (B19); re-anchor when
   disabled state changes (`updateCounter`), but ONLY while focus is outside the toolbar so a
-  keyboard user mid-nav is never yanked. (b) The container's click→`container.focus()` (for viewer
+  keyboard user mid-nav is never yanked. First/last-page buttons (V30, when shown per V6) join this
+  roving order in DOM sequence (first ⇤ | prev | page-nav | next | last ⇥) and obey the same
+  skip-disabled rule — First disables at page 1, Last at page_count. (b) The container's
+  click→`container.focus()` (for viewer
   keyboard paging) MUST skip clicks originating inside `.bws-pdf-viewer-controls`, else clicking the
   page-input instantly steals its focus and it can't be typed into (B20). (c) The page-input's
   Left/Right/Home/End exemption MUST be caret-aware — the input owns an arrow only while the caret
@@ -214,6 +217,32 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   only: document (native/image) modes scroll all pages (a height cap would clip content), and fullscreen
   already sizes to the screen box (V22). Cites I.wp,I.css,V22,V24 (see B24).
 
+- **V30. Toolbar buttons carry PDF.js icons; icon-only buttons stay named.** Toolbar controls
+  render an inline SVG glyph adopted from PDF.js (`pdfjs-dist/web/images/*`, Apache-2.0 — reuse, ⊥
+  hand-draw, C1/C2 spirit): prev/next, first/last, download, print, presentationMode(=fullscreen).
+  SVG inlined into the WP layer as a `currentColor`-filled string (⊥ enqueue as separate asset /
+  cross-origin fetch — [[portal-asset-origin-mismatch]]; ⊥ hardcoded `fill` — glyph MUST inherit
+  toolbar text color so it themes + meets AA contrast, V10). Each icon SVG MUST be
+  `aria-hidden="true"` + `focusable="false"` so the SR reads the button, not the glyph. Button text
+  policy: Prev/Next = icon **+ text** (primary, most-used); Fullscreen/Print/Download/First/Last =
+  **icon-only** and THEREFORE MUST carry BOTH an `aria-label` (SR name) AND a `title` (mouse tooltip)
+  — an icon-only control with no accessible name is a WCAG name-role-value fail. ≥24×24px target
+  (V10) holds: 16px glyph + padding. Cites I.controls,I.css,V10,C1.
+- **V31. Toolbar docks by presentation mode, via real DOM order.** Document/flow mode
+  (`config.singlepage===true` — continuous stack, [[viewer-mode-taxonomy]]) docks the toolbar
+  ABOVE the pages (`insertBefore(container.firstChild)`); flip/book/spread mode
+  (`singlepage===false`) docks it BELOW (`appendChild`, prior behavior). Position MUST move the real
+  DOM node, ⊥ CSS `order`/`column-reverse` — DOM order IS reading + Tab order (V27); a CSS-only flip
+  desyncs visual from SR/keyboard traversal. The V22 fullscreen relayout rebuilds the toolbar; the
+  rebuild MUST re-apply the mode-correct dock. Cites I.controls,I.css,V27.
+- **V32. Download control emits the source PDF; gated by its own flag.** Download button (icon-only,
+  V30) present in ALL modes (unlike page-nav — V6 — download is meaningful even for a 1-page/continuous
+  doc), triggers a download of `config.pdf` (URL already resolved by the shortcode handler; ⊥ re-fetch
+  cross-origin — reuse the loaded source). New shortcode att `show_download` (default true) follows
+  the full 3-tier precedence + admin plumbing of `show_print`/`show_fullscreen` (V5,V8): `$default_options`
+  → `shortcode_atts` → `$config` → `initViewer` → `addNavigationControls` gate, + an admin field
+  (I.admin). Adds `show_download` to the V8 att surface. Cites I.controls,I.php,I.admin,V5,V8,V30.
+
 - **V20. [deferred] Site-wide mode disable not built.** `disabled_modes` default exists in
   `bws-pdf-viewer.php` but no admin UI renders/sanitizes it; `view_mode` is single-select (pick
   one — neither document nor flipbook is individually disableable). If per-mode enable/disable
@@ -243,6 +272,10 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | T24 | x  | rename delivered bundle `flipbook-viewer.js`→`bws-viewer-engines.js` (name reflects all-3-engines, not flip-only) (B18) | V26,I.php,C8 |
 | T27 | x  | small-book flipbook fixes: 1-page fills width, 2-page = single `[p1\|p2]` spread w/ nav hidden, spread-count pagination (B22,B23) — coded + headless-verified (test/verify-b22.js, harness-b22.html, 10 checks) | V28,I.flip,I.wp,I.controls |
 | T28 | x  | flipbook auto-height honors ancestor `max-height` — `availableHeight` ancestor walk + cap-height/shrink-width keep aspect (B24) — coded WP-layer + headless-verified (test/verify-b24.js, harness-b24.html, 6 checks; B22 suite non-regressed) | V29,I.wp,I.css |
+| T29 | x  | adopt PDF.js SVG icons (inline `currentColor`) into toolbar: prev/next icon+text, fullscreen/print icon-only w/ aria-label+title, SVG aria-hidden+focusable=false; icon-button CSS (padding, ≥24×24, hover/focus) | V30,I.controls,I.css |
+| T30 | x  | first/last-page buttons (icon-only) in page-nav group, same showPageNav gate; join roving order (⇤first\|prev\|nav\|next\|last⇥), disable First@1 / Last@count; goToPage(1)/goToPage(page_count) — promotes IDEAS #4 | V30,V6,V27,I.controls,I.flip |
+| T31 | x  | download button (icon-only, all modes) + new `show_download` att (default true) 3-tier: `$default_options`→`shortcode_atts`→`$config`→`initViewer`→gate + admin field | V32,I.controls,I.php,I.admin |
+| T32 | x  | toolbar docks by mode via real DOM move: flow/`singlepage` ABOVE (insertBefore firstChild), flip BELOW (appendChild); re-apply on fullscreen rebuild (V22) | V31,I.controls,I.css |
 
 ## §B — bugs
 | id | date       | cause | fix |

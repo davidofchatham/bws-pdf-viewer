@@ -86,11 +86,13 @@ async function main() {
   if (tabStop && !tabStop.disabled) pass(`inv4b: tab stop is enabled (${tabStop.cls})`);
   else fail(`inv4b: tab stop is disabled or missing (${JSON.stringify(tabStop)}) — toolbar unreachable by Tab`);
 
-  // Assembly order: prev, page-nav (input), next, [fullscreen], [print]
-  const orderOk = roving.order[0] === 'bws-pdf-prev'
+  // Assembly order (T030/V27): first, prev, page-nav (input), next, last, [fullscreen], [print], [download]
+  const orderOk = roving.order[0] === 'bws-pdf-first'
+    && roving.order.indexOf('bws-pdf-prev') === 1
     && roving.order.includes('bws-pdf-page-input')
-    && roving.order.includes('bws-pdf-next');
-  if (orderOk) pass('inv1/order: prev -> page-input -> next -> ...');
+    && roving.order.includes('bws-pdf-next')
+    && roving.order.indexOf('bws-pdf-last') > roving.order.indexOf('bws-pdf-next');
+  if (orderOk) pass('inv1/order: first -> prev -> page-input -> next -> last -> ...');
   else fail('order wrong: ' + JSON.stringify(roving.order));
 
   // Arrow moves roving focus within the toolbar. Focus the Next button (prev is
