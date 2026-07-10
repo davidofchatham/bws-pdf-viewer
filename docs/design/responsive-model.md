@@ -85,21 +85,32 @@ spread would actually be readable** — evaluated as it would really render:
    for the dimension calc): `spreadHeight = perPageWidth × (h/w)`.
 3. **Apply the height clamp** (§3): if `spreadHeight` exceeds the box cap,
    the spread scales down to fit and `perPageWidth` shrinks proportionally.
-4. **Spread iff post-clamp `perPageWidth ≥ MIN_READABLE_PAGE_WIDTH`.**
+4. **Spread iff post-clamp effective zoom ≥ `MIN_EFFECTIVE_ZOOM`**, where
+   effective zoom = `perPageWidth / naturalPageWidth` (the PDF declares its
+   natural size; at PDF.js scale 1, natural width = page points × 96/72 CSS px).
 
-`MIN_READABLE_PAGE_WIDTH` is a tuned constant, starting range **350–420 CSS
-px**. Calibration: US Letter at 100% zoom ≈ 816 CSS px wide (8.5in × 96dpi),
-so 400px ≈ 49% zoom — around the floor where typical body text stays legible
-without pinching. Candidate **global admin option** (config fallout, §8).
+`MIN_EFFECTIVE_ZOOM` is a tuned constant, starting value **~50%** — "never
+auto-spread a page below half its intended size". This is a **minimum-DPI
+control** by another name (50% ≈ 48 CSS px/inch vs 96 at full size), and it is
+page-size-aware where a fixed px width is not: 400px of rendered width is 49%
+zoom on US Letter (fine) but 17% on a 24in wallchart (unreadable) and 69% on a
+6in booklet (over-strict). Candidate **global admin option** (§8).
 
-Worked examples (US Letter, 8.5×11in ≈ 816×1056 CSS px):
+Worked examples (US Letter, 8.5×11in ≈ 816×1056 CSS px natural; threshold
+50% = 408px per page):
 
-| Situation | Raw per-page | Height clamp | Effective | Verdict |
+| Situation | Raw per-page | Height clamp | Effective zoom | Verdict |
 |---|---|---|---|---|
-| 1200px content area on an ultrawide, 768px-tall viewport | 600px | spread h ≈ 776px > cap ≈ 642px → ×0.83 | ~497px | **spread** |
-| 400px sidebar, any screen | 200px | — | 200px | **single** |
-| 16:9 slides, 900px container | 450px | height never binds | 450px | **spread** |
-| 800px container, short landscape-phone viewport | 400px | cap crushes portrait spread | ~260px | **single** |
+| 1200px content area on an ultrawide, 768px-tall viewport | 600px | spread h ≈ 776px > cap ≈ 642px → ×0.83 | ~497px ≈ 61% | **spread** |
+| 400px sidebar, any screen | 200px | — | 25% | **single** |
+| 800px container, short landscape-phone viewport | 400px | cap crushes portrait spread | ~260px ≈ 32% | **single** |
+| 16:9 slides (13.3in ≈ 1280px natural), 900px container | 450px | height never binds | 35% | **single** |
+
+The slide row is the honest cost of the zoom framing: large-format documents
+are designed with large type and *are* readable below 50%, so a fixed min-zoom
+under-spreads them where a px floor over-spread wallcharts. Acknowledged
+trade-off — the validation pass (§9) decides whether the default moves or the
+rule learns document class.
 
 Properties:
 
@@ -112,19 +123,20 @@ Properties:
 - **Reserve inputs:** screen orientation and the container/viewport ratio are
   *not ruled out* — they return as explicit inputs if the readability
   heuristic underperforms in validation.
-- **Text-density-blind:** the constant is a proxy (a picture book reads at
-  250px; dense legal text is marginal at 500px). Per-document refinement
+- **Text-density-blind:** the constant is a proxy for font size (dense legal
+  text is marginal at 50%; a slide deck reads at 35%). Per-document refinement
   (e.g. sampling text-layer font sizes) is noted as future work, out of scope.
 - **Units:** all CSS px; DPR affects rasterization, never the decision.
-- **Stability:** hysteresis (switch up at ≥ threshold, back down only below
-  threshold − ~20px) on top of the existing 150ms debounce, so the
+- **Stability:** hysteresis (switch up at ≥ threshold, back down only ~2
+  zoom-points below it) on top of the existing 150ms debounce, so the
   arrangement doesn't flap at the boundary.
 - **Re-evaluated on:** init, container ResizeObserver fire, fullscreen
   relayout, orientation / `visualViewport` change (the cap input moves even
   when container width doesn't).
-- **`breakpoint` attr, when set, replaces the whole test** with a plain px
-  cutoff (spread iff container ≥ breakpoint) — the predictable,
-  document-independent author override. No auto-switching logic exists in
+- **The `breakpoint` attr is dropped entirely.** It only ever mattered inside
+  `auto`, and the author who wants a predictable arrangement already has the
+  real override: explicit `arrangement=single|spread`. The surface is one
+  arrangement attr + one min-zoom knob. No auto-switching logic exists in
   PDF.js at any reuse rung (reuse-menu §2); this rule is ours everywhere.
 
 ## 5. The height ↔ arrangement knot
@@ -168,9 +180,10 @@ assertion #5 in [viewer-convergence.md](viewer-convergence.md) § Testability.
 | Knob | Kind | Notes |
 |---|---|---|
 | containment (`flow`/`contain`) | shortcode attr (+ admin default) | naming rides renames #2/#3; default `contain` |
+| arrangement (`single`/`spread`/`auto`) | shortcode attr | explicit value is the author override; supersedes `layout` |
 | `height` | existing attr, redefined | contain-only box height; overrides viewport cap |
-| `breakpoint` | existing attr, new semantics | when set, replaces the readability test |
-| `MIN_READABLE_PAGE_WIDTH` | constant → candidate global admin option | start 350–420px, tune in validation |
+| `breakpoint` | existing attr — **dropped** | superseded by explicit `arrangement` + min-zoom |
+| `MIN_EFFECTIVE_ZOOM` | constant → candidate global admin option | start ~50%, tune in validation |
 | viewport cap % | constant (~90%) | attr only if a real need appears |
 | toolbar position | admin per-mode default + attr override | direction only; dock side undecided |
 
@@ -178,7 +191,9 @@ assertion #5 in [viewer-convergence.md](viewer-convergence.md) § Testability.
 
 - **Validate the readability heuristic** against real documents and
   containers; if it misfires, orientation and container/viewport ratio are
-  the queued reserve inputs (§4).
+  the queued reserve inputs (§4). Watch large-format big-type documents
+  (slide decks) specifically — the min-zoom framing under-spreads them (§4
+  worked examples); the fix may be a lower default or a document-class rule.
 - Dock side decision (§7) — lands with the convergence spec.
 - Jitter-guard tuning for `visualViewport` (URL-bar collapse) — mechanism
   detail, settle during implementation.
