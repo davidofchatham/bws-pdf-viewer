@@ -12,7 +12,7 @@ in progress) · `promoted` (moved to a GitHub Issue — link it) · `dropped`.
 | 2 | Rename "document" → "Continuous"? (open question) | Admin dropdown label is already "Continuous", but the stored `view_mode` value and shortcode attr are still `document`. Open question: should the value/attr itself be renamed to `continuous`? If yes, the deeper internal rename below likely rides along. Decide the naming before touching code. | parked |
 | 3 | Deeper internal rename (`singlepage` → continuous) | Rename internal JS `singlepage` config key, `singlePageViewer` fn, and `singlepageviewer.js` file across src/build/tests. Large churn (rebuild + retest), no end-user benefit beyond consistency. Depends on #2's outcome. | parked |
 | 4 | First / last page jump buttons | Add "⇤ First" / "Last ⇥" buttons to the toolbar page-nav group (flanking prev/next) that jump straight to page 1 / last page. Only where page-nav shows (flipbook multi-page — V6); use `viewer.goToPage(1)` / `goToPage(page_count)`. Fits roving-focus order + disabled-at-edge logic. Optional shortcode/admin gate like the other buttons. | **promoted** → SPEC T30 (2026-07-09), no separate GitHub issue (rides the toolbar-icons effort) |
-| 5 | Two-axis viewer-mode taxonomy | **Proposed, not locked.** Reframe the current flat mode list (`document` / `flipbook`) as two orthogonal axes: **presentation** (flow / contain / flip) × **arrangement** (single / spread). Subsumes ideas #1–#3. See [§ Two-axis mode taxonomy](#two-axis-mode-taxonomy-proposed) below. | exploring |
+| 5 | Two-axis viewer-mode taxonomy | **Proposed, not locked.** Reframe the current flat mode list (`document` / `flipbook`) as two orthogonal axes: **presentation** (flow / contain / flip) × **arrangement** (single / spread). Subsumes ideas #1–#3. See [§ Two-axis mode taxonomy](#two-axis-mode-taxonomy-proposed) below. **Refined 2026-07-09** by [design/viewer-convergence.md](design/viewer-convergence.md): flip reclassified as a *transition effect* (third axis), engines converge on native + animation overlay — answers the engine-convergence question in favor of convergence. | exploring |
 | 6 | Split engine bundle + rename UMD global | The delivered bundle was renamed `flipbook-viewer.js` → `bws-viewer-engines.js` (SPEC V26 / T24) so the filename stops implying flip-only — done. Two follow-ons remain **parked**: (a) **split** the single bundle into per-engine chunks (flip / native / image) lazy-loaded by mode, so mobile never ships the flipbook + native code it won't use — real payload win, rides the engine-convergence question and the double-bundle debt (issue #4); (b) **rename the UMD global** `flipbook` (still a lie — it's the multi-engine entry) to match, which means updating `library.name` in webpack + every `import * as flipbook` test usage. Both deferred; neither blocks the rename already shipped. | parked |
 | 7 | Zoom controls | Pinch/± zoom for the viewer. Was SPEC T14 — deferred out of the 002 toolbar spec. Explicitly held back AGAIN from the 2026-07-09 toolbar-icons effort (T29–T32): open question whether ± zoom even applies to document/continuous mode. Groundwork already present: flipbook `viewer.zoom(level)` EXISTS (`src/flipbookviewer.js:69`, stepped 0→1→3→0, animated pan) — just unwired to our toolbar; native/image have a plain `scale` multiplier but NO exposed `zoom()` method (would need one added, ~re-render at new scale). Resume as its own effort when picked up. | parked |
 | 8 | In-viewer search | Full-text find across the PDF (highlight + prev/next hits). Was SPEC T15. Enabled-by, not part-of, the PDF.js component adoption (native mode has the text layer). NOT a shortcode attr (`enable_search` was never wired — CLAUDE.md, and the dead search CSS was removed, B-review). Its own feature spec when built. | parked |
@@ -25,6 +25,13 @@ in progress) · `promoted` (moved to a GitHub Issue — link it) · `dropped`.
 **Status: proposed, not locked.** A direction to work toward, not a decision to
 implement now. Written down so the naming is settled before any rename churn
 (ideas #2 / #3) or new-mode work (idea #1) starts.
+
+> **2026-07-09 refinement:** [design/viewer-convergence.md](design/viewer-convergence.md)
+> supersedes parts of this section — `flip` moves off the presentation axis to a
+> new **transition** axis, and the engine-convergence open question below is
+> answered in favor of convergence (one native core + transient flip-animation
+> overlay). This section kept for the flow/contain/arrangement definitions,
+> which stand.
 
 ### The idea
 
