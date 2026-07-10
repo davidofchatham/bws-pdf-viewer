@@ -86,13 +86,18 @@ async function main() {
   if (tabStop && !tabStop.disabled) pass(`inv4b: tab stop is enabled (${tabStop.cls})`);
   else fail(`inv4b: tab stop is disabled or missing (${JSON.stringify(tabStop)}) — toolbar unreachable by Tab`);
 
-  // Assembly order (T030/V27): first, prev, page-nav (input), next, last, [fullscreen], [print], [download]
-  const orderOk = roving.order[0] === 'bws-pdf-first'
-    && roving.order.indexOf('bws-pdf-prev') === 1
-    && roving.order.includes('bws-pdf-page-input')
-    && roving.order.includes('bws-pdf-next')
-    && roving.order.indexOf('bws-pdf-last') > roving.order.indexOf('bws-pdf-next');
-  if (orderOk) pass('inv1/order: first -> prev -> page-input -> next -> last -> ...');
+  // Assembly order (T034/V27): grouped page-info · nav · utility. The counter is a
+  // standalone display (G1, a span — not a roving item). The nav group (G2) is
+  // first | prev | Jump-to input | next | last, with the input in the MIDDLE. Roving
+  // order over buttons+input = first, prev, page-input, next, last, then utility (G3).
+  const idx = (c) => roving.order.indexOf(c);
+  const orderOk = idx('bws-pdf-first') === 0
+    && idx('bws-pdf-prev') === 1
+    && idx('bws-pdf-page-input') === 2
+    && idx('bws-pdf-next') === 3
+    && idx('bws-pdf-last') === 4
+    && idx('bws-pdf-fullscreen') > idx('bws-pdf-last');
+  if (orderOk) pass('inv1/order: first/prev/[jump]/next/last -> utility');
   else fail('order wrong: ' + JSON.stringify(roving.order));
 
   // Arrow moves roving focus within the toolbar. Focus the Next button (prev is
@@ -115,9 +120,10 @@ async function main() {
   if (clickFocus === 'bws-pdf-page-input') pass('inv4c: clicked page-input retains focus');
   else fail(`inv4c: click stole focus off page-input (activeElement=${clickFocus})`);
 
-  // inv4d: the page-input must not TRAP arrow keys. With the caret at the right
-  // boundary (empty field), ArrowRight releases to the toolbar and moves focus to
-  // Next; at the left boundary ArrowLeft moves to Prev. Mid-text arrows still edit.
+  // inv4d: the page-input must not TRAP arrow keys. The Jump-to input sits between
+  // Prev and Next in the nav group, so at the right boundary (empty field) ArrowRight
+  // releases to Next; at the left boundary ArrowLeft releases to Prev. Mid-text
+  // arrows still edit.
   await page.evaluate(() => {
     const el = document.querySelector('#bws-pdf-flip .bws-pdf-page-input');
     el.focus(); el.value = ''; el.setSelectionRange(0, 0);

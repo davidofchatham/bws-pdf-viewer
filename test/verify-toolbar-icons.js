@@ -228,6 +228,43 @@ async function main() {
     pass('V27: First jumps back to page 1');
   else fail(`V27: First did not reach page 1: ${JSON.stringify(backToFirst)}`);
 
+  // ---------- T034: wrap-together subgroups (page-info · nav · utility) ----------
+  // Structure: G1 counter alone; G2 first|prev|Jump-to|next|last (input in middle);
+  // G3 fullscreen|print|download. At a narrow width the bar wraps BETWEEN groups and
+  // never mid-group — each group stays on one visual row.
+  const groupStruct = await page.evaluate(() => {
+    const bar = document.querySelector('#bws-pdf-flip .bws-pdf-viewer-controls');
+    const g = (cls) => Array.from(bar.querySelector('.' + cls)?.children || [])
+      .map((c) => c.className.split(' ')[0]);
+    return {
+      info: g('bws-pdf-controls-info'),
+      nav: g('bws-pdf-controls-nav'),
+      util: g('bws-pdf-controls-utility'),
+    };
+  });
+  const structOk = groupStruct.info.join() === 'bws-pdf-viewer-page-counter'
+    && groupStruct.nav.join() === 'bws-pdf-first,bws-pdf-prev,bws-pdf-page-input,bws-pdf-next,bws-pdf-last'
+    && groupStruct.util.join() === 'bws-pdf-fullscreen,bws-pdf-print,bws-pdf-download';
+  if (structOk) pass('T034: groups = [counter] [first,prev,jump,next,last] [fs,print,dl]');
+  else fail('T034: group structure wrong: ' + JSON.stringify(groupStruct));
+
+  // Force the container narrow → the bar must wrap, each group intact on its own row.
+  await page.evaluate(() => { document.getElementById('bws-pdf-flip').style.width = '380px'; });
+  await page.waitForTimeout(400);
+  const wrap = await page.evaluate(() => {
+    const bar = document.querySelector('#bws-pdf-flip .bws-pdf-viewer-controls');
+    const groups = Array.from(bar.querySelectorAll('.bws-pdf-controls-group'));
+    const rowOf = (g) => Math.round(g.getBoundingClientRect().top);
+    const intact = (g) => {
+      const tops = Array.from(g.children).map((k) => Math.round(k.getBoundingClientRect().top));
+      return Math.max(...tops) - Math.min(...tops) <= 3;
+    };
+    return { distinctRows: new Set(groups.map(rowOf)).size, allIntact: groups.every(intact) };
+  });
+  await page.evaluate(() => { document.getElementById('bws-pdf-flip').style.width = ''; });
+  if (wrap.allIntact && wrap.distinctRows === 3) pass('T034: narrow bar wraps between groups, each group intact (3 rows)');
+  else fail('T034: narrow wrap tore a group: ' + JSON.stringify(wrap));
+
   // ---------- Zero console errors ----------
   if (errors.length === 0) pass('zero JS console errors');
   else fail('JS errors: ' + JSON.stringify(errors));

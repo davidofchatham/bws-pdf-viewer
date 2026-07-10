@@ -42,6 +42,9 @@ image fallback for mobile devices. See README.md for instructions and details.
 * CHANGE: The page field is now a "Jump to…" box: type a page and press Enter to
   go there; it clears afterward rather than mirroring the current page. This
   removes the confusion where jumping to one page of a spread showed the other.
+* CHANGE: Toolbar controls are grouped (page number · navigation · actions) so a
+  narrow toolbar wraps between groups instead of splitting Previous/Next across
+  two rows. Tightened spacing around the page counter and Jump-to field.
 
 = 0.4.8 =
 * FIX: A one-page PDF in flipbook mode now fills the viewer width instead of

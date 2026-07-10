@@ -165,22 +165,40 @@
     width: 100%;
 }
 
-/* Page-jump group: input + "of N" counter sit together */
+/* Toolbar subgroups (T034): page-info · nav buttons · utility buttons. Each group
+   stays on ONE line (nowrap); the toolbar (flex-wrap:wrap) wraps BETWEEN groups so
+   a narrow bar never tears a group apart (e.g. Prev/Next split across two rows). */
+.bws-pdf-controls-group {
+    display: inline-flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Page-jump group: range counter + "Jump to" input sit together */
 .bws-pdf-viewer-page-nav {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     color: var(--bws-btn-fg);
     font-size: 14px;
 }
 
+/* Range counter ("N–M of T"): pad it so it doesn't crowd the Previous button on
+   its left or the Jump-to box on its right. whitespace:nowrap keeps the range on
+   one line. */
+.bws-pdf-viewer-page-counter {
+    padding: 0 6px;
+    white-space: nowrap;
+}
+
 .bws-pdf-page-input {
-    /* T022: min 24×24 target. Write-only "Jump to" field (V11/V33): wide enough to
-       show the "Jump to…" placeholder, left-aligned like a prompt rather than a
-       centred page number. */
-    width: 7em;
+    /* T022: min 24×24 target. Write-only "Jump to" field (V11/V33): sized to its
+       "Jump to…" placeholder, left-aligned like a prompt. Width holds the
+       placeholder without the box ballooning past it. */
+    width: 6.5em;
     min-height: 24px;
-    padding: 4px 8px;
+    padding: 5px 8px;
     text-align: left;
     border: 1px solid var(--bws-input-border);
     border-radius: 4px;
@@ -188,6 +206,7 @@
     color: var(--bws-input-fg);
     font-size: 14px;
     line-height: 1.4;
+    box-sizing: border-box;
 }
 
 .bws-pdf-page-input::placeholder {

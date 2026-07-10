@@ -81,6 +81,13 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   I.php,I.admin,C7.
 - **V9. One control-set impl, all modes.** Exactly one toolbar component (I.controls, in WP layer)
   serves flipbook + native; no duplicate control code. Cites I.controls, C1.
+- **V10a. Toolbar controls sit in wrap-together subgroups.** Controls are grouped into three
+  `.bws-pdf-controls-group` blocks — page-info (the standalone range counter), nav (first | prev |
+  Jump-to input | next | last, input in the MIDDLE), utility (fullscreen | print | download) — each
+  `flex-wrap:nowrap` internally while the toolbar wraps BETWEEN groups (T34). A narrow bar therefore
+  never tears a group apart (e.g. prev/next split across two rows). Groups follow DOM order = reading
+  order (V27); the counter is a display span (not a roving item), the input and buttons remain
+  roving-focusable in nav-group order. Cites I.controls,I.css,V27.
 - **V10. Toolbar integrated + accessible.** Rendered inside viewer container (overlay bar, not
   detached row); role=toolbar, labelled; every control keyboard-operable; visible focus; ≥24×24px
   targets; AA contrast all states. Cites I.controls,I.css.
@@ -297,6 +304,7 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 | T30 | x  | first/last-page buttons (icon-only) in page-nav group, same showPageNav gate; join roving order (⇤first\|prev\|nav\|next\|last⇥), disable First@1 / Last@count; goToPage(1)/goToPage(page_count) — promotes IDEAS #4 | V30,V6,V27,I.controls,I.flip |
 | T31 | x  | download button (icon-only, all modes) + new `show_download` att (default true) 3-tier: `$default_options`→`shortcode_atts`→`$config`→`initViewer`→gate + admin field | V32,I.controls,I.php,I.admin |
 | T33 | x  | spread-range counter (`N–M of T`, lone→`N of T`) + decouple field into write-only `Jump to…` input that clears on commit; internal currentPage stays rightmost (gating intact). Supersedes the stale `#bws-pdf-spread` assertions in test/verify-toolbar.js (they encoded a packing the code never had) + adds range coverage | V33,V11,V28,I.controls,I.wp,I.css |
+| T34 | x  | wrap-together toolbar subgroups: [counter] · [first\|prev\|Jump-to\|next\|last] · [fullscreen\|print\|download]; nowrap inside each group, bar wraps BETWEEN groups so a narrow bar never tears a group apart (prev/next split across rows). Removed the dead `.bws-pdf-viewer-page-nav` wrapper; counter gets breathing padding; Jump-to input sized to its placeholder | V10,I.controls,I.css |
 | T32 | x  | toolbar docks by mode via real DOM move: flow/`singlepage` ABOVE (insertBefore firstChild), flip BELOW (appendChild); re-apply on fullscreen rebuild (V22) | V31,I.controls,I.css |
 
 ## §B — bugs

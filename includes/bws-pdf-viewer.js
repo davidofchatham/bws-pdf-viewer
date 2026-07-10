@@ -473,14 +473,10 @@
             }
         });
 
-        // --- Page-nav group: range counter + write-only "Jump to" input (V11/V33) ---
-        // The counter (display-only) shows the spread's visible page RANGE; the input
-        // is a write-only jump target that clears after commit and never mirrors the
-        // current page. Counter first, then input, so the display reads left-to-right
-        // "2–3 of 6  [Jump to…]".
-        const pageNav = document.createElement('span');
-        pageNav.className = 'bws-pdf-viewer-page-nav';
-
+        // --- Page-info + jump input (V11/V33) ---
+        // The counter is a STANDALONE page-number display (G1, its own subgroup); the
+        // "Jump to" input is a nav control that lives WITH the nav buttons (G2). They
+        // are built here but placed into their groups at assembly time.
         // Display-only range counter ("N–M of T"). Not aria-live; announcements come
         // from the dedicated SR live region (toolbar-dom.md invariants 8 and 10).
         const pageCounter = document.createElement('span');
@@ -494,9 +490,6 @@
         pageInput.setAttribute('pattern', '[0-9]*');
         pageInput.setAttribute('aria-label', t.jumpToLabel);
         pageInput.setAttribute('placeholder', t.jumpToPlaceholder);
-
-        pageNav.appendChild(pageCounter);
-        pageNav.appendChild(pageInput);
 
         // --- Next button ---
         const nextBtn = document.createElement('button');
@@ -786,17 +779,39 @@
             controlsDiv.appendChild(dlBtn);
         }
 
-        // T015/T030: Assemble page-nav group order: first | prev | page-nav | next | last,
-        // ahead of the trailing utility buttons (fullscreen/print/download appended above).
-        // Prepend in reverse so the final leading order is first, prev, pageNav, next, last.
-        // V6: page-nav group only when navigation is meaningful (flipbook multi-page).
+        // T015/T030/T034: Assemble into three wrap-together subgroups so a narrow bar
+        // wraps BETWEEN groups, never mid-group (V10):
+        //   G1 page-info : range counter, standalone           (shown per V6)
+        //   G2 nav       : first | prev | Jump-to | next | last (shown per V6)
+        //   G3 utility   : fullscreen | print | download        (always, when present)
+        // The Jump-to input sits in the MIDDLE of the nav buttons (its classic spot).
+        // Each group is nowrap internally (CSS); controlsDiv wraps between them. The
+        // fullscreen/print/download buttons were appended to controlsDiv above — move
+        // them into G3 here. Roving focus + dock run AFTER this, over the final DOM.
+        const utilityGroup = document.createElement('div');
+        utilityGroup.className = 'bws-pdf-controls-group bws-pdf-controls-utility';
+        // Reparent whatever utility buttons were appended (in DOM order) into G3.
+        Array.prototype.slice.call(controlsDiv.children).forEach(function(el) {
+            utilityGroup.appendChild(el);
+        });
+
         if (showPageNav) {
-            controlsDiv.insertBefore(lastBtn, controlsDiv.firstChild);
-            controlsDiv.insertBefore(nextBtn, controlsDiv.firstChild);
-            controlsDiv.insertBefore(pageNav, controlsDiv.firstChild);
-            controlsDiv.insertBefore(prevBtn, controlsDiv.firstChild);
-            controlsDiv.insertBefore(firstBtn, controlsDiv.firstChild);
+            const infoGroup = document.createElement('div');
+            infoGroup.className = 'bws-pdf-controls-group bws-pdf-controls-info';
+            infoGroup.appendChild(pageCounter);
+
+            const navGroup = document.createElement('div');
+            navGroup.className = 'bws-pdf-controls-group bws-pdf-controls-nav';
+            navGroup.appendChild(firstBtn);
+            navGroup.appendChild(prevBtn);
+            navGroup.appendChild(pageInput);
+            navGroup.appendChild(nextBtn);
+            navGroup.appendChild(lastBtn);
+
+            controlsDiv.appendChild(infoGroup);
+            controlsDiv.appendChild(navGroup);
         }
+        if (utilityGroup.firstChild) controlsDiv.appendChild(utilityGroup);
 
         // Nothing to show (nav hidden + fullscreen/print/download all off/unsupported) —
         // skip the empty bar rather than render a bare dark strip.
