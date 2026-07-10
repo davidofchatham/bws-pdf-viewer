@@ -1,64 +1,38 @@
 # SPEC — BWS PDF Viewer (0.4.7, pre-1.0)
 
-Living ledger. 001-pdf-viewer (viewer core) + 002-integrated-viewer-toolbar (shared toolbar +
-PDF.js component adoption) both coded, tested, merged to master.
-Distilled from SpecKit tree now archived at `docs/history/speckit/`. `check` diffs code vs §V;
-`backprop` appends §B+§V on new bugs. Full rationale/user-stories live in archived SpecKit
-artifacts; this file holds durable goals, invariants, debt, bug ledger.
-§T is scoped to THIS spec's shipped/in-flight work; future & deferred items (zoom, in-viewer
-search, Gutenberg block, PDF.js double-bundle dedup, true single-page flipbook) live in
-`docs/IDEAS.md`, resumed individually as their own efforts.
+Durable behavioral contract. The §V invariants are what the code must hold; they
+outlive any single cycle. Goal + surface map moved to [CONTEXT.md](CONTEXT.md);
+cross-cutting decisions + rationale moved to [docs/adr/](docs/adr/). This file
+now carries the invariant ledger plus a stub of the current cycle's task/bug
+history — full cycle detail lives in git and `docs/history/speckit/`.
 
-## §G — goal
-WordPress plugin embed PDF inline. 3 render modes (flipbook animate / native PDF.js / image
-fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 AA, multi-domain.
+- `check` diffs code vs §V. `backprop` appends a bug row (§B stub below) + the
+  invariant it hardens (§V) on any new regression.
+- Invariants cite surfaces by short name (`I.native`, `I.wp`, …) — resolved in
+  [CONTEXT.md](CONTEXT.md) — and decisions as `ADR-000N` — in
+  [docs/adr/](docs/adr/).
+- Future / deferred items (zoom, in-viewer search, Gutenberg block, PDF.js
+  double-bundle dedup, true single-page flipbook) live in
+  [docs/IDEAS.md](docs/IDEAS.md), resumed individually as their own efforts.
 
-## §C — constraints
-- **C1.** Reuse-first: evolve working controls logic, no rewrite of proven behavior; own controls
-  forbidden where functionality already exists (V9, [[reuse-first-constraint]]).
-- **C2.** No full prebuilt PDF.js web viewer (viewer.html / iframe); use maintained *components*
-  only (TextLayerBuilder / AnnotationLayerBuilder / link service) (V7, V15).
-- **C3.** Container-width responsive via ResizeObserver, NOT viewport — multiple viewers per page
-  adapt independently (V3).
-- **C4.** PDF source URL through plugin URL-rewriting integration point; no hardcoded domain;
-  `plugin_dir_url()` for assets (multi-domain / BWS Portal).
-- **C5.** Config precedence 3-tier: `$default_options` → `get_option('bws_pdf_viewer_options')`
-  → shortcode atts; merged in `shortcode_handler()` (V5).
-- **C6.** PDF.js zero-config webpack: import `pdfjs-dist/webpack.mjs`, worker auto-chunked as
-  `pdf.worker.js`, no fake-worker warning.
-- **C7.** Shortcode atts change DELIBERATELY, not never (revised 2026-07-09 — supersedes the old
-  "frozen for live-site back-compat" rule, which cargo-culted a public-v1.0 discipline onto a
-  pre-1.0 internal tool: version <1.0, not on wordpress.org, sole consumer is the BWS portal whose
-  shortcodes we generate — no unknown third-party embeds to protect). Rename/remove/repurpose an
-  att when it earns its keep; on any change, sweep the portal's own shortcodes first, fix usages,
-  note it in the changelog. Additionally: EVERY existing att is up for revision — the current set is
-  NOT cemented; review the whole surface before a 1.0 freeze (V8). Cites I.php,I.admin.
-- **C8.** PDF.js internals bundled twice (pdf.js + bws-viewer-engines.js, +182KB) — known debt,
-  dedup deferred (issue #4, IDEAS #6a, [[pdfjs-bundle-dedup]]).
-
-## §I — surfaces
-- **I.index** = `src/index.js` — router: nativeMode→nativePageViewer, singlepage→singlePageViewer, else flipbookViewer.
-- **I.flip** = `src/flipbookviewer.js` — animated flipbook; spread layout; `goToPage`; HiDPI outputScale.
-- **I.native** = `src/nativepageviewer.js` — PDF.js 3-layer render; IntersectionObserver lazy; memory cleanup ~5-7 pages.
-- **I.single** = `src/singlepageviewer.js` — image-based mobile/fallback viewer.
-- **I.controls** = `includes/bws-pdf-viewer.js` (`addNavigationControls`/`setupToolbarRovingFocus`/`getStrings`) + `includes/bws-pdf-viewer.css` — shared toolbar, single impl, both modes. (Planned `src/controls.js` never built; toolbar shipped in WP layer.)
-- **I.wp** = `includes/bws-pdf-viewer.js` — device detect, mode select, `createBookWrapper`, responsive, keyboard nav.
-- **I.php** = `bws-pdf-viewer.php` — shortcode `[bws_pdf]`, `register_assets()`, config merge/precedence.
-- **I.admin** = `includes/admin.php` — Settings > BWS PDF Viewer; defaults + mode restrictions + sanitize.
-- **I.css** = `includes/bws-pdf-viewer.css` — toolbar overlay, text/annotation layer positioning.
+> **This file OWNS the §V behavioral contract + the current cycle's §T/§B
+> ledger.** It does NOT restate the goal/surface map (→ CONTEXT.md) or decision
+> rationale (→ docs/adr/); it cites them by short name. Anti-drift rules:
+> CLAUDE.md § Doc discipline.
 
 ## §V — invariants
+
 - **V1. Three modes, one router.** `src/index.js` selects nativePageViewer (opts.singlepage &&
   opts.nativeMode) / singlePageViewer (opts.singlepage) / flipbookViewer (else). Cites I.index.
 - **V2. Hybrid device detection is not tautological.** image ⇐ (touch AND width ≤1024) OR
   width ≤767; native otherwise. `isMobile` MUST combine touch AND width — not restate itself
   (see B1). `force_native` att overrides. Cites I.wp.
 - **V3. Container-width layout, not viewport.** ResizeObserver drives single-vs-double; ≥breakpoint
-  (768) → spread, < → single. Each instance independent. Cites I.wp.
+  (768) → spread, < → single. Each instance independent. Cites I.wp, ADR-0003.
 - **V4. Reduced-motion kills flip/slide.** `prefers-reduced-motion: reduce` ⇒ shouldAnimate=false;
   fade/instant only. Cites I.wp, I.flip.
 - **V5. Config precedence honored 3-tier.** defaults→admin option→shortcode; att wins per-key;
-  admin default applies only when att absent. `show_controls` MUST follow this (see B6). Cites I.php.
+  admin default applies only when att absent. `show_controls` MUST follow this (see B6). Cites I.php, ADR-0005.
 - **V6. Page nav context-dependent; optional controls togglable.** page-nav group (prev/next +
   page-input + "of N" counter + first/last-page buttons) rendered ONLY when navigation is meaningful = flipbook multi-page.
   HIDDEN when meaningless: continuous/document mode (`config.singlepage` true — all pages stacked/
@@ -69,18 +43,18 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   scroll-tracking count adds no value.) Cites I.controls,I.php.
 - **V7. Native mode uses maintained PDF.js layer builders.** canvas + TextLayerBuilder (selection +
   browser find) + AnnotationLayerBuilder (links) + shared link service; internal links navigate,
-  external new-tab. No hand-rolled layer positioning. Cites I.native.
+  external new-tab. No hand-rolled layer positioning. Cites I.native, ADR-0002.
 - **V8. Shortcode atts revisable, not frozen (pre-1.0).** Current set: `view_mode`,`layout`,
   `book_layout`,`force_native`,`show_controls`,`show_fullscreen`,`show_print`,`show_download`,`width`,`height`
   (`singlepage` legacy alias for `document`). NONE is cemented — any may be renamed/removed/
   repurposed before 1.0 when justified. On change: sweep the portal's shortcodes, fix usages,
-  changelog it (C7). Before a 1.0 freeze, review the WHOLE att surface for vestigial/misleading
+  changelog it (ADR-0007). Before a 1.0 freeze, review the WHOLE att surface for vestigial/misleading
   controls. Known vestigial: `layout` (auto/single/double) does nothing in the flipbook renderer
   (which only draws spreads — V24/B17) and is dead in document mode; KEPT for now as the anchor for
   the planned true single-page-flipbook feature (issue #1, IDEAS #5), NOT because it currently works. Cites
-  I.php,I.admin,C7.
+  I.php,I.admin,ADR-0007.
 - **V9. One control-set impl, all modes.** Exactly one toolbar component (I.controls, in WP layer)
-  serves flipbook + native; no duplicate control code. Cites I.controls, C1.
+  serves flipbook + native; no duplicate control code. Cites I.controls, ADR-0001.
 - **V10a. Toolbar controls sit in wrap-together subgroups.** Controls are grouped into three
   `.bws-pdf-controls-group` blocks — page-info (the standalone range counter), nav (first | prev |
   Jump-to input | next | last, input in the MIDDLE), utility (fullscreen | print | download) — each
@@ -106,7 +80,7 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   keep ~5-7 pages, tear down distant; no unbounded growth on 100+ page docs. Cites I.native.
 - **V14. Single concurrent render per page.** in-flight guard: no duplicate concurrent render of
   same page; loading flag set before await, cleared after (see B4,B5). Cites I.native.
-- **V15. No full PDF.js viewer / iframe.** components only. Cites I.native, C2.
+- **V15. No full PDF.js viewer / iframe.** components only. Cites I.native, ADR-0002.
 - **V16. Fullscreen hidden not disabled where unsupported.** e.g. iPhone Safari → button absent,
   not inert. Toggle updates announced label (enter/exit). Cites I.controls.
 - **V17. Event listeners cleaned on reinit.** responsive rebuild MUST NOT leak fullscreen/other
@@ -180,7 +154,7 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   (integration glue) & Mozilla `dist/pdf.js` (PDF.js lib) — 3 delivered JS, 3 concerns, no
   name overlap. UMD global still `flipbook` (legacy; rename = separate churn, IDEAS #6). On any
   future asset rename: sweep PHP enqueue + test harnesses + `scripts/package.mjs` + docs, rebuild
-  (webpack `clean:true` drops old file), changelog. Cites I.index,I.php,C8.
+  (webpack `clean:true` drops old file), changelog. Cites I.index,I.php,ADR-0008.
 
 - **V27. Toolbar roving-focus never strands focus.** The toolbar is ONE Tab stop (WAI-ARIA
   toolbar / roving tabindex): exactly one control has `tabindex=0`, the rest `-1`; arrows move
@@ -232,7 +206,7 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
 
 - **V30. Toolbar buttons carry PDF.js icons; icon-only buttons stay named.** Toolbar controls
   render an inline SVG glyph adopted from PDF.js (`pdfjs-dist/web/images/*`, Apache-2.0 — reuse, ⊥
-  hand-draw, C1/C2 spirit): prev/next, first/last, download, print, presentationMode(=fullscreen).
+  hand-draw, ADR-0001/ADR-0002 spirit): prev/next, first/last, download, print, presentationMode(=fullscreen).
   SVG inlined into the WP layer as a `currentColor`-filled string (⊥ enqueue as separate asset /
   cross-origin fetch — [[portal-asset-origin-mismatch]]; ⊥ hardcoded `fill` — glyph MUST inherit
   toolbar text color so it themes + meets AA contrast, V10). Each icon SVG MUST be
@@ -240,7 +214,7 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   policy: Prev/Next = icon **+ text** (primary, most-used); Fullscreen/Print/Download/First/Last =
   **icon-only** and THEREFORE MUST carry BOTH an `aria-label` (SR name) AND a `title` (mouse tooltip)
   — an icon-only control with no accessible name is a WCAG name-role-value fail. ≥24×24px target
-  (V10) holds: 16px glyph + padding. Cites I.controls,I.css,V10,C1.
+  (V10) holds: 16px glyph + padding. Cites I.controls,I.css,V10,ADR-0001.
 - **V31. Toolbar docks by presentation mode, via real DOM order.** Document/flow mode
   (`config.singlepage===true` — continuous stack, [[viewer-mode-taxonomy]]) docks the toolbar
   ABOVE the pages (`insertBefore(container.firstChild)`); flip/book/spread mode
@@ -276,61 +250,23 @@ fallback), device-adaptive, one shared integrated toolbar both modes, WCAG 2.2 A
   one — neither document nor flipbook is individually disableable). If per-mode enable/disable
   ships (T-future), admin MUST keep ≥1 of document/flipbook enabled. Cites I.admin.
 
-## §T — tasks
-| id  | st | task | cites |
-|-----|----|------|-------|
-| T1  | x  | 3-mode router + hybrid device detect | V1,V2,I.index,I.wp |
-| T2  | x  | flipbook spread + reduced-motion + HiDPI | V3,V4,I.flip |
-| T3  | x  | native PDF.js 3-layer + lazy + memory cap | V7,V13,I.native |
-| T4  | x  | image fallback viewer | V1,I.single |
-| T5  | x  | shortcode + 3-tier config precedence + admin settings | V5,V8,V20,I.php,I.admin |
-| T6  | x  | integrated shared toolbar both modes (002) | V9,V10,I.controls |
-| T7  | x  | page-field jump/clamp + sync + spread mapping | V11,V12,I.controls,I.flip |
-| T8  | x  | fullscreen hidden-not-disabled + state label | V16,I.controls |
-| T9  | x  | keyboard nav (arrows/PgUp-Dn/Space) + focus mgmt | V10,I.wp |
-| T10 | x  | URL-fail inline error + link | V19,I.wp |
-| T11 | x  | verification harness (test/verify-toolbar.js, harness-toolbar.html) — automated | V9,V11,V12,V27 |
-| T12 | x  | ESLint flat config + lint script | . |
-| T17 | x  | manual test pass 002 branch (real WP + browser): both modes, a11y/SR, back-compat atts | V9,V10,V11,V13 |
-| T18 | x  | PR 002-integrated-viewer-toolbar → master | . |
-| T19 | x  | context-aware page-nav hide (continuous mode / 1-page file) + toolbar restyle (#7,#8) — coded 75590fc, headless + manual verified | V6,V10,I.controls,I.css |
-| T20 | x  | center lone flipbook page (cover/trailing-odd) — fix show_pgs_1 (#5) — coded 7ca2a31, verified centered | V21,I.flip |
-| T21 | x  | relayout flipbook on fullscreenchange, document exempt (#6) — coded 760c384/cc54c8c, verified 4K | V22,I.wp,I.controls |
-| T22 | x  | empty-width viewer collapse fix + aspect-derived height + admin unset-preserving/placeholder all free-value fields (B16,B17) | V24,V25,I.wp,I.php,I.css,I.admin |
-| T24 | x  | rename delivered bundle `flipbook-viewer.js`→`bws-viewer-engines.js` (name reflects all-3-engines, not flip-only) (B18) | V26,I.php,C8 |
-| T27 | x  | small-book flipbook fixes: 1-page fills width, 2-page = single `[p1\|p2]` spread w/ nav hidden, spread-count pagination (B22,B23) — coded + headless-verified (test/verify-b22.js, harness-b22.html, 10 checks) | V28,I.flip,I.wp,I.controls |
-| T28 | x  | flipbook auto-height honors ancestor `max-height` — `availableHeight` ancestor walk + cap-height/shrink-width keep aspect (B24) — coded WP-layer + headless-verified (test/verify-b24.js, harness-b24.html, 6 checks; B22 suite non-regressed) | V29,I.wp,I.css |
-| T29 | x  | adopt PDF.js SVG icons (inline `currentColor`) into toolbar: prev/next icon+text, fullscreen/print icon-only w/ aria-label+title, SVG aria-hidden+focusable=false; icon-button CSS (padding, ≥24×24, hover/focus) | V30,I.controls,I.css |
-| T30 | x  | first/last-page buttons (icon-only) in page-nav group, same showPageNav gate; join roving order (⇤first\|prev\|nav\|next\|last⇥), disable First@1 / Last@count; goToPage(1)/goToPage(page_count) — promotes IDEAS #4 | V30,V6,V27,I.controls,I.flip |
-| T31 | x  | download button (icon-only, all modes) + new `show_download` att (default true) 3-tier: `$default_options`→`shortcode_atts`→`$config`→`initViewer`→gate + admin field | V32,I.controls,I.php,I.admin |
-| T33 | x  | spread-range counter (`N–M of T`, lone→`N of T`) + decouple field into write-only `Jump to…` input that clears on commit; internal currentPage stays rightmost (gating intact). Supersedes the stale `#bws-pdf-spread` assertions in test/verify-toolbar.js (they encoded a packing the code never had) + adds range coverage | V33,V11,V28,I.controls,I.wp,I.css |
-| T34 | x  | wrap-together toolbar subgroups: [counter] · [first\|prev\|Jump-to\|next\|last] · [fullscreen\|print\|download]; nowrap inside each group, bar wraps BETWEEN groups so a narrow bar never tears a group apart (prev/next split across rows). Removed the dead `.bws-pdf-viewer-page-nav` wrapper; counter gets breathing padding; Jump-to input sized to its placeholder | V10,I.controls,I.css |
-| T32 | x  | toolbar docks by mode via real DOM move: flow/`singlepage` ABOVE (insertBefore firstChild), flip BELOW (appendChild); re-apply on fullscreen rebuild (V22) | V31,I.controls,I.css |
+## §T — tasks (cycle stub)
 
-## §B — bugs
-| id | date       | cause | fix |
-|----|------------|-------|-----|
-| B1 | 2026-07-07 | `isMobile` detection tautology — restated itself, broke hybrid touch+width logic | V2 |
-| B2 | 2026-07-07 | fullscreen event listener leaked on responsive reinit (added, never removed) | V17 |
-| B3 | 2026-07-07 | responsive reinit fired in document mode (flipbook-only path) | V18 |
-| B4 | 2026-07-07 | duplicate concurrent page renders — no in-flight guard | V14 |
-| B5 | 2026-07-07 | in-flight guard incomplete — loading flag lifecycle not closed | V14 |
-| B6 | 2026-07-07 | `show_controls` precedence broke documented 3-tier model; unchecked state not persisted | V5 |
-| B7 | 2026-07-07 | next-button string concat instead of numeric add (page-jump math) | V12 |
-| B8 | 2026-07-07 | spread-layout goToPage + onSeen display-index↔page# mapping mismatch | V12 |
-| B9 | 2026-07-08 | flipbook lone page (cover/last-odd) drawn in its half-slot, off-center dead space — `show_pgs_1` always pins present page to page_l/page_r; regression vs 001 FR-002 | V21 |
-| B10 | 2026-07-08 | fullscreen expands container but canvas keeps pre-fullscreen px size, stuck top-left — layout computed once at init, `fullscreenchange` never relayouts | V22 |
-| B11 | 2026-07-08 | B9 fix incomplete — centered on `!pg` but traditional wrapper fills empty half with a blank page object (`num:0`), not null; cover still left-pinned. Fixed via `isRealPage` (`num!==0`) | V21 |
-| B12 | 2026-07-08 | B10 fix incomplete — fullscreen relayout used only width; `calculateDimensions` kept auto height (600) so canvas filled width but not height, black void below. Fixed: fullscreen height = offsetHeight − toolbarHeight | V22 |
-| B13 | 2026-07-08 | fullscreen canvas undersized on 4K — single rAF read offsetWidth before the fullscreen relayout committed (pre-fs width); no `:fullscreen` CSS so container didn't fill screen → black right of canvas + below toolbar. Fixed: `:fullscreen` CSS (100vw/vh, canvas margin:auto) + double-rAF measure | V22 |
-| B14 | 2026-07-08 | fullscreen button label stuck on "Fullscreen" in fullscreen — relayout rebuilds the toolbar mid-fs and no fresh `fullscreenchange` fires for the new button; hardcoded default persisted. Fixed: init label from current fs state | V22 |
-| B15 | 2026-07-09 | cleared admin color field stored as "" (old `sanitize_hex_color`), overrode the transparent default via merge, then read as a falsy grey fallback in index.js — page grey despite blank fields + transparent default. Fixed: sanitize omits empty (unset); `normalizeColor`; `color.bx` set; transparent-aware fills | V23 |
-| B16 | 2026-07-09 | empty admin width (field cleared → stored "" → overrode PHP `100%` default via merge) collapsed the viewer: PHP emitted broken `style="width: ;"` (flex container shrank to content) AND `calculateDimensions` did `parseInt("")===NaN` → library 800px fallback → narrow, left-pinned; auto height stuck at 600 further capped the spread below full width. Fixed 4-file: JS empty/auto/100%→container width + page-aspect-derived height (edge-to-edge) + fullscreen clamp; PHP omits inline style when width empty; CSS container `width:100%`+`align-items:center`; admin sanitize omits empty width/height/border/margin/breakpoint + renders blank+placeholder (no materialized default) | V24,V25 |
-| B17 | 2026-07-09 | `calculateDimensions` keyed `pagesAcross` off the `layout` string (auto→'single' below breakpoint → tall one-page canvas), but the flipbook library ALWAYS renders a 2-page spread (no single-page mode; layout string never reaches the renderer). Wide spread drawn into tall canvas → dead space. Diagnosed from live HTML: `canvas 1440×1851 style 720×925` at 720px container (< 768). Fixed: `pagesAcross` keys off `bookObj.numPages()===1`, so a multi-page book always gets a spread-aspect canvas. Surfaced that `layout` (auto/single/double) is vestigial in flipbook + dead in document mode → C7/V8 revised, T23 (#1) filed | V24,V8 |
-| B18 | 2026-07-09 | delivered viewer bundle named `flipbook-viewer.js` but bundles all 3 engines (flip+native+image via `src/index.js`) — misleading: reader greps "why is native in the flipbook file?", wastes time; native/image invisible in DevTools (no standalone file, all inside the one bundle). Hygiene rename, not runtime bug. Fixed: `dist/bws-viewer-engines.js` (webpack entry key + PHP enqueue + index.html + 3 test harnesses + 3 test JS imports + `scripts/package.mjs` + CLAUDE/README/MEMORY docs); UMD global left `flipbook` (IDEAS #6) | V26 |
-| B22 | 2026-07-09 | flipbook mis-rendered small books two ways. (a) 1-page book: library assumes a 2-page spread everywhere (`pg.width*2`, then `centeredHalf` halves), but the WP layer sized the box one page wide (V24, B17) → lone page drawn at HALF width with dead space beside it. (b) 2-page traditional book: cover offset applied at any page count → `[p1\|blank]`+`[p2\|filler]`, each page alone with an awkward flip. Also latent: the non-traditional wrapper returned the raw 1-based book to the 0-based library (slot 0 → page 0 → null), so a plain spread showed p1 lone. Fixed: `pagesAcross(ctx)` in the library (calcLayoutParameters + centeredHalf agree with the box); cover offset gated on `numPages()>=3`; wrapper always bridges `slot d → page d+1` for plain spreads | V28 |
-| B23 | 2026-07-09 | 2-page book let the user navigate to a phantom blank "page 2". Packing `[p1\|p2]` into one spread violated the library's slot==page assumption baked into `flip_forward`'s per-slot guard (`showNdx*2+1 >= numPages`), `goToPage`'s `floor(pageNum/2)`, the WP nav-visibility gate (`pageCount>1`), and `slotToPage` (`slot==page`) — all four thought a 2-page book had a second view. Fixed by making SPREAD count the source of truth: wrapper exposes `numSpreads()`/`slotToPage()`/`pageToSpread()` that know traditional-vs-plain packing; library guards + goToPage bound on `numSpreads(ctx)`; WP nav gate keys off `numSpreads()>1` (2-page → nav hidden); `slotToPage` delegates to the wrapper. `page_count` stays real-page count so the counter is correct | V28 |
-| B24 | 2026-07-09 | flipbook auto-height ignored an ancestor's `max-height`: `calculateDimensions` derived the canvas height purely from container width × page aspect (V24), so a portrait 1-page book (canvas as tall as the page) overflowed a wrapper/section with `max-height` set (`overflow:visible` → content just spilled past the box). Fixed WP-layer only (I.wp, no rebuild): new `availableHeight(container)` walks ancestors reading computed `max-height` (+ inline fixed height), resolving px/vh/% → smallest ceiling; the auto-height branch caps derived height to it (minus a toolbar reserve when controls shown) and SHRINKS width proportionally to keep the spread aspect, so the page still fills the canvas width (⊥ reintroduced side whitespace — B22 intact) and the narrower canvas centers via existing `align-items:center`. Flipbook + non-fullscreen only (document modes scroll → a cap would clip; fullscreen already sizes to the screen box). Gotcha found: computed `height` is ALWAYS a resolved px value even for auto-height boxes, so it can't signal an author cap — only `max-height` (and inline `style.height`) are read | V29 |
-| B19 | 2026-07-09 | toolbar unreachable by Tab on load — roving init put `tabindex=0` on the first DOM control (Prev), which is disabled on page 1; a disabled control with `tabindex=0` is skipped by the browser and every sibling was `-1`, so Tab never entered the toolbar until arrow/space nav moved the roving index onto an enabled control. Fixed: anchor `tabindex=0` on first ENABLED control; re-anchor in `updateCounter` on disabled-state change (only while focus outside toolbar); `focusAt` skips disabled. Guard: inv4b | V27 |
-| B20 | 2026-07-09 | clicking the page-jump input lost focus instantly (couldn't click-and-type) — container's click handler called `container.focus()` on EVERY click incl. toolbar clicks, which bubbled up and stole focus off the just-clicked input. Fixed: skip the container refocus when the click originates inside `.bws-pdf-viewer-controls`. Guard: inv4c | V27 |
-| B21 | 2026-07-09 | page-input trapped arrow keys — roving handler exempted the input from Left/Right/Home/End UNCONDITIONALLY, so once focus reached it those keys could never move back to Prev/Next. Fixed: caret-aware exemption — input owns an arrow only while the caret can still move that way; at the text boundary it falls through to toolbar nav. Guard: inv4d | V27 |
+001-pdf-viewer (viewer core) + 002-integrated-viewer-toolbar (shared toolbar +
+PDF.js component adoption) — **all coded, tested, merged to master.** The full
+task table (T1–T34) is retired; every task shipped and its behavior is pinned by
+the §V invariant it cites. Detail: git history + `docs/history/speckit/`.
+
+Next cycle's tasks append below this line.
+
+## §B — bugs (cycle stub)
+
+B1–B24 (2026-07-07 → 2026-07-09) — **all fixed**, each folded into the §V
+invariant that now guards against its return (bug rows cite `V…`; invariants
+cite `see B…`). The standalone bug table is retired; the regressions live on as
+the invariants that prevent them. New regressions append below via `backprop`:
+one row (cause + fix) + the §V invariant hardened.
+
+| id | date | cause | fix (invariant) |
+|----|------|-------|-----------------|
+| _(next regression here)_ | | | |
