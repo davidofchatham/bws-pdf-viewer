@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<!--
+  PROTOTYPE — THROWAWAY (wayfinder map #9, ticket #17). Do not ship.
+
+  Spike: is `single + flip` a RE-PARAMETERIZATION of the existing spread warp,
+  or does it need new animation code?
+
+  The warp under test is `show_flip_1()` in src/flipbookviewer.js (lines ~488-648)
+  — the Canvas-2D quadratic-curve page sweep. Its forward-flip branch
+  (showNdx < flipNdx, lines 510-566) turns the LEFT half-page, pivoting on the
+  spread spine (layout.mid), revealing the incoming right page in a half-spread
+  reveal clip.
+
+  This harness transcribes that exact geometry into a single loc-parameterized
+  fn `drawTurningPage(ctx, loc, frac)` — each block tagged with its source line —
+  then drives it with TWO loc parameterizations:
+
+    SPREAD (baseline)  loc.left=mid, loc.width=W/2, reveal clip=half-spread
+                       → reproduces today's spine-pivoted spread flip.
+    SINGLE (hypothesis) loc.left=page trailing edge, loc.width=W (full page),
+                       reveal clip=full single-page rect
+                       → the ticket's "pivot on the page's own trailing edge".
+
+  If SINGLE produces a convincing curl with the SAME fn, single+flip is a
+  re-parameterization. If it tears / self-overlaps / needs new geometry, that's
+  the finding.
+
+  Exposed for the playwright probe:
+    __render(mode, frac)  -> paint spread|single at flipFrac, return nothing
+    __snapshot()          -> getImageData of the whole canvas (Array)
+    __probe(mode, frac)   -> {opaqueFrac, revealFrac, tornCols} geometry metrics
+    __dims                -> canvas dims + layout constants
+-->
+<meta charset="utf-8">
+<title>SPIKE: single-page flip re-parameterization (#17)</title>
+<style>
+  html, body { margin: 0; background: #888; }
+  #wrap { display: flex; gap: 16px; padding: 16px; }
+  figure { margin: 0; }
+  figcaption { font: 12px sans-serif; color: #fff; text-align: center; margin-top: 4px; }
+  canvas { display: block; background: #fff; }
+</style>
+
+<div id="wrap">
+  <figure><canvas id="cv-spread" width="440" height="320"></canvas><figcaption>SPREAD baseline (spine pivot)</figcaption></figure>
+  <figure><canvas id="cv-single" width="440" height="320"></canvas><figcaption>SINGLE hypothesis (edge pivot)</figcaption></figure>
+</div>
+
+<script>
+'use strict';
+
+// ---- layout constants (stand in for calcLayout(ctx) output) ----------------
+// A full "spread box": two half-pages side by side. mid = spine.
+const BOX = { left: 20, top: 20, width: 400, height: 280 };
+BOX.mid = BOX.left + BOX.width / 2;            // spine x (layout.mid)
+const HALF = BOX.width / 2;                     // one half-page width
+
+// Deterministic page paint so the pixel probe has unambiguous content.
+// left/right pages of the outgoing view + the incoming page revealed under it.
+function pageImg(bg, fg, label) {
+  const c = document.createElement('canvas');
+  c.width = 200; c.height = 280;
+  const g = c.getContext('2d');
+  g.fillStyle = bg; g.fillRect(0, 0, 200, 280);
+  g.fillStyle = fg;
+  g.font = 'bold 140px sans-serif';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(label, 100, 140);
+  g.strokeStyle = fg; g.lineWidth = 4; g.strokeRect(2, 2, 196, 276);
+  return { img: c, num: 1 };
+}
+const P_OUT   = pageImg('#f4e9d8', '#7a3b12', 'A');   // the page being turned
+const P_UNDER = pageImg('#dfeaf4', '#123b7a', 'B');   // incoming page revealed under it
+
+// =============================================================================
+// drawTurningPage — the warp, transcribed verbatim from show_flip_1()'s
+// forward branch (src/flipbookviewer.js lines 510-566), made PURELY
+// loc-parameterized. `loc` carries {left, top, width, height} of the turning
+// page at rest; `frac` in [0,1]; the fn draws the curved sweep + shadows.
+// Nothing here reads BOX.mid or HALF — that is the whole point: the pivot is
+// loc.left, the sweep width is loc.width. Whatever caller passes decides
+// spine-pivot vs edge-pivot.
+// =============================================================================
+function drawTurningPage(ctx, page, locRest, frac) {
+  const strength = 0.5 - Math.abs(0.5 - frac);          // src:476
+
+  const loc = Object.assign({}, locRest);
+  loc.left += (1 - frac) * loc.width;                   // src:511  sweep the pivot inward
+  loc.width = loc.width * 1;                             // (src:512 was /2 for half-page; caller already sized loc.width)
+  const width = loc.width * frac;                        // src:513
+
+  const oheight = loc.height;                            // src:515
+  const otop = loc.top;                                  // src:516
+  loc.height *= (1 + strength * 0.1);                    // src:517  vertical bulge
+  loc.top -= (loc.height - oheight) / 2;                 // src:518
+
+  ctx.save();
+  const region = new Path2D();                           // src:521-542  the quad-curved page outline
+  region.moveTo(loc.left, otop);
+  region.lineTo(loc.left, otop + oheight);
+  let controlpt = { x: loc.left + width / 2, y: loc.top + loc.height };
+  let endpt     = { x: loc.left + width,     y: otop + oheight };
+  region.quadraticCurveTo(controlpt.x, controlpt.y, endpt.x, endpt.y);
+  region.lineTo(endpt.x, otop);
+  controlpt = { x: loc.left + width, y: loc.top };
+  endpt     = { x: loc.left,         y: otop };
+  region.quadraticCurveTo(controlpt.x, controlpt.y, endpt.x, endpt.y);
+  ctx.clip(region);
+  ctx.drawImage(page.img, loc.left, loc.top, loc.width, loc.height);   // src:544
+  ctx.restore();
+
+  ctx.save();                                            // src:548-566  shadows
+  const shadowsz = (loc.width / 2) * Math.max(Math.min(strength, 0.5), 0);
+  ctx.strokeStyle = 'rgba(0,0,0,' + (0.1 * strength) + ')';
+  ctx.lineWidth = 30 * strength;
+  ctx.beginPath();
+  ctx.moveTo(loc.left, otop);
+  ctx.lineTo(loc.left, otop + oheight);
+  ctx.stroke();
+  const grad = ctx.createLinearGradient(loc.left + width, otop, loc.left + width + shadowsz, otop);
+  grad.addColorStop(0, 'rgba(0,0,0,' + (0.3 * strength) + ')');
+  grad.addColorStop(0.8, 'rgba(0,0,0,0.0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(loc.left + width, otop, width + shadowsz, oheight);
+  ctx.restore();
+
+  return { pivotX: locRest.left, sweepWidth: locRest.width };
+}
+
+// ---- the two callers --------------------------------------------------------
+// SPREAD: today's forward flip. Turning page = left half. Pivot = spine (mid).
+// Reveal = incoming right page clipped to the growing gap at the spine (src:493-508).
+function renderSpread(ctx, frac) {
+  ctx.clearRect(0, 0, 440, 320);
+  // rest: draw the (already turned to) incoming state under everything — the
+  // right page of the new spread sits at [mid, HALF]. src:493-508 reveal clip.
+  const show  = BOX.mid + (1 - frac) * HALF;             // src:496
+  const rw    = HALF * frac;                             // src:497
+  ctx.save();
+  const reg = new Path2D();
+  reg.rect(show, BOX.top - 5, rw, BOX.height + 10);      // src:501
+  ctx.clip(reg);
+  ctx.drawImage(P_UNDER.img, BOX.mid, BOX.top, HALF, BOX.height);   // src:504
+  ctx.restore();
+  // turning page: the LEFT half, pivoting on the spine.
+  const locRest = { left: BOX.left, top: BOX.top, width: HALF, height: BOX.height };
+  // src:510 sets loc.left = BOX.left then sweeps; but the source pivots the
+  // half about layout.mid via loc.left += (1-frac)*width starting at BOX.left.
+  return drawTurningPage(ctx, P_OUT, locRest, frac);
+}
+
+// SINGLE: the hypothesis. Turning page = the FULL page. Pivot = its own
+// trailing (right) edge. Reveal = the full single-page rect underneath.
+function renderSingle(ctx, frac) {
+  ctx.clearRect(0, 0, 440, 320);
+  // full-page rest rect, centered in the box
+  const PW = BOX.width;                                  // full page width (loc.width = full, not /2)
+  const pageLeft = BOX.left;
+  // reveal clip = the VACATED region on the left that page A has swept AWAY from.
+  // Edge-pivot single: A's left edge starts at pageLeft and moves right by
+  // (1-frac)*PW → so the gap [pageLeft, A.left] is where B shows. This is the
+  // single-page analogue of the spread's spine-side reveal, just anchored to the
+  // page's own edge instead of the spine. (Reveal clip is the full-page rect
+  // masked to the vacated slice — the widen-to-full the ticket calls for.)
+  const gapW = (1 - frac) * PW;                          // width A has vacated
+  ctx.save();
+  const reg = new Path2D();
+  reg.rect(pageLeft, BOX.top - 5, gapW, BOX.height + 10);
+  ctx.clip(reg);
+  ctx.drawImage(P_UNDER.img, pageLeft, BOX.top, PW, BOX.height);
+  ctx.restore();
+  // turning page: full width, pivot on its own left edge sweeping to the right
+  // edge — same drawTurningPage, loc.width = full page.
+  const locRest = { left: pageLeft, top: BOX.top, width: PW, height: BOX.height };
+  return drawTurningPage(ctx, P_OUT, locRest, frac);
+}
+
+const CV = { spread: document.getElementById('cv-spread'), single: document.getElementById('cv-single') };
+
+window.__render = function (mode, frac) {
+  const ctx = CV[mode].getContext('2d');
+  if (mode === 'spread') renderSpread(ctx, frac);
+  else renderSingle(ctx, frac);
+};
+
+window.__snapshot = function (mode) {
+  const ctx = CV[mode].getContext('2d');
+  return Array.from(ctx.getImageData(0, 0, 440, 320).data);
+};
+
+window.__dims = { w: 440, h: 320, BOX, HALF };
+
+// Geometry probe: scan the canvas for
+//  - opaqueFrac : fraction of the page-band rows that are non-white (page present)
+//  - tornCols   : count of vertical columns where the top-of-page pixel is white
+//                 but a lower pixel is non-white with a GAP of white between them
+//                 (a torn/self-overlapping warp leaves holes) — the tear signal.
+window.__probe = function (mode, frac) {
+  window.__render(mode, frac);
+  const ctx = CV[mode].getContext('2d');
+  const W = 440, H = 320;
+  const d = ctx.getImageData(0, 0, W, H).data;
+  const isInk = (x, y) => {
+    const i = (y * W + x) * 4;
+    // non-white and opaque
+    return d[i + 3] > 200 && (d[i] < 245 || d[i + 1] < 245 || d[i + 2] < 245);
+  };
+  let opaque = 0, band = 0;
+  let tornCols = 0;
+  const y0 = BOX.top + 4, y1 = BOX.top + BOX.height - 4;
+  for (let x = BOX.left; x < BOX.left + BOX.width; x++) {
+    let firstInk = -1, lastInk = -1, gapAfterInk = false, tear = false;
+    for (let y = y0; y < y1; y++) {
+      band++;
+      const ink = isInk(x, y);
+      if (ink) { opaque++; if (firstInk < 0) firstInk = y; lastInk = y; if (gapAfterInk) tear = true; }
+      else if (firstInk >= 0) gapAfterInk = true;
+    }
+    if (tear) tornCols++;
+  }
+  return { opaqueFrac: opaque / band, tornCols };
+};
+</script>
