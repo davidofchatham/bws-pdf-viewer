@@ -214,6 +214,17 @@ existing harness/verify pattern, with baseline PNG artifacts as today.
 6. **Portal context.** All of this must hold in the portal-system cross-origin
    asset setup (`bws_pdf_viewer_plugin_url` filter) — no new origin-bound
    assumptions in the overlay.
+7. **Flip-engine provenance (gates IDEAS #12).** If the warp survives as a
+   *separable* engine (option 4 porting source, now shown feasible incl.
+   single-page — spike #17), its home should be a **clean fork** of
+   `theproductiveprogrammer/flipbook-viewer`, not today's stranded embedded copy
+   in `src/flipbookviewer.js` (paste-and-edit, no upstream link — our lone-page /
+   transparent-bg / HiDPI fixes can't flow either way). MIT, so an upstream PR of
+   single-flip is clean *if* upstream is alive (no release since our original
+   fork — pulse unknown). But if convergence **absorbs** the warp into the native
+   core, there is no standalone lib left to fork and IDEAS #12 is moot. So the
+   keep-as-lib-vs-absorb decision here **decides** whether the fork happens —
+   resolve them together, don't fork first.
 
 ## Relationship to existing docs
 
