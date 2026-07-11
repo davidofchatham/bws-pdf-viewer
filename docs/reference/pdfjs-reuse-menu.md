@@ -347,6 +347,22 @@ over the resting native page(s), matching at t=0 and t=1
   Doable — rects are still just `getBoundingClientRect()` — but the seam
   invariants (t=0/t=1 pixel match, `viewer-convergence.md` testability list)
   now depend on PDF.js's internal timing instead of our explicit state.
+- **Spread gutter is fully controllable (rung (d)).** The demo's gap between
+  spread pages is pure CSS: `--page-border: 9px solid transparent` +
+  `--page-margin` (`pdf_viewer.css:6135-6136`) and
+  `margin-inline: var(--spreadHorizontalWrapped-margin-LR)` = −3.5px on spread
+  pages (css:6304, var css:6137) — net ≈ 11px between canvases; no JS computes
+  it. Knobs: `removePageBorders: true` constructor option
+  (`pdf_viewer.mjs:8043`; drops borders, spread `margin-inline: 5px`, and the
+  `page-width` preset adjusts its padding to match, mjs:8945, 9062), or zero it
+  outright by overriding `--page-border: 0` +
+  `--spreadHorizontalWrapped-margin-LR: 0` in the CSS subset we ship anyway —
+  set the option *and* the vars together so preset zoom doesn't over-reserve.
+  The warp assumes pages meet at the spine (`layout.mid`), so a rung-(d)
+  resting state should run a zero spine gap (or the overlay snapshot must
+  include the gutter). Trap: the 9px border sits inside `.page`'s box, so
+  `pageView.div.getBoundingClientRect()` ≠ canvas rect — the overlay must
+  measure the canvas/`canvasWrapper`, not the page div.
 - **HiDPI alignment.** Both cores rasterize at `devicePixelRatio`: flip core
   `outputScale` (`flipbookviewer.js:7`), native mode
   (`nativepageviewer.js:294`), and PDF.js `OutputScale.pixelRatio`
