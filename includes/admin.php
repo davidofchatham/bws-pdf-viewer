@@ -471,10 +471,10 @@ class BWS_PDF_Viewer_Admin {
         }
         ?>
         <select name="bws_pdf_viewer_options[view_mode]">
-            <option value="document" <?php selected($value, 'document'); ?>><?php _e('Continuous (recommended for accessibility)', 'bws-pdf-viewer'); ?></option>
+            <option value="document" <?php selected($value, 'document'); ?>><?php _e('Continuous (scrolling pages)', 'bws-pdf-viewer'); ?></option>
             <option value="flipbook" <?php selected($value, 'flipbook'); ?>><?php _e('Flipbook (animated page flips)', 'bws-pdf-viewer'); ?></option>
         </select>
-        <p class="description"><?php _e('Viewer mode. Continuous scrolls through pages and is more accessible with better screen reader support. Flipbook shows animated page turns.', 'bws-pdf-viewer'); ?></p>
+        <p class="description"><?php _e('Viewer mode. Continuous scrolls through pages; Flipbook shows animated page turns. Accessibility (selectable text, screen-reader support) comes from the native PDF render path, which both modes use where the device supports it; on low-memory devices that fall back to the image render path, neither mode exposes a text layer.', 'bws-pdf-viewer'); ?></p>
         <?php
     }
 
