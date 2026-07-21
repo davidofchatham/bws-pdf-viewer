@@ -99,6 +99,10 @@ render the canvas at higher resolution for Retina. See `outputScale` in
 
 ## Development Workflow
 
+`dist/` is generated and untracked — a fresh clone has none. Run `npm ci &&
+npm run start` before the plugin will render (local dev installs symlink the
+repo root, so they read `dist/` off disk). Releases build their own via CI.
+
 1. Edit `src/` files.
 2. `npm run test` → dev server at http://localhost:8080; test with pages in `/test`.
 3. `npm run start` for a production build.

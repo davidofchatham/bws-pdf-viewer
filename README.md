@@ -200,7 +200,8 @@ npm run start  # Production build
 npm run test   # Development server
 ```
 
-Files are built to `/dist` directory.
+Files are built to `/dist`, which is generated and not tracked in git — a fresh
+clone has none until you run the build above.
 
 ## Acknowledgements
 

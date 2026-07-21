@@ -3,9 +3,10 @@
 _tmp/
 build/
 node_modules/
-dist/*
-!dist/bws-viewer-engines.js
-!dist/pdf.js
-!dist/pdf.js.map
-!dist/pdf.worker.js
-!dist/pdf.worker.js.LICENSE.txt
+# dist/ is generated (webpack) and NOT tracked. It was committed historically so
+# the plugin could be installed by cloning into wp-content/plugins; releases now
+# ship a built zip from CI (.github/workflows/release.yml → scripts/package.mjs),
+# so the tracked copy only went stale and added rebuild diff noise. Local dev
+# installs symlink the repo root, which reads dist/ off disk — run
+# `npm ci && npm run start` after a fresh clone to populate it.
+dist/
