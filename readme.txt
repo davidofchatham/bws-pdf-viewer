@@ -3,7 +3,7 @@ Contributors:  Charles (theproductiveprogrammer), David Mitchell (Bridge Web Sol
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
 Tested up to: 7.0
-Stable tag: 0.5.0
+Stable tag: 0.5.1
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -23,6 +23,15 @@ Embed PDFs via shortcode with support for flipbook effects, flow mode, and
 image fallback for mobile devices. See README.md for instructions and details.
 
 == Changelog ==
+
+= 0.5.1 =
+* FIX: The release ZIP omitted three Plugin Update Checker files it actually
+  needs (vendor/Parsedown.php, vendor/ParsedownModern.php,
+  vendor/PucReadmeParser.php), so every update check on an installed site died
+  with `Class "Parsedown" not found`. Packaging only — no code or behavior
+  change. Sites running 0.5.0 must reinstall manually: the broken update check
+  is the same mechanism that would have delivered this fix, so 0.5.1 will never
+  be offered to them automatically.
 
 = 0.5.0 =
 * NEW: Toolbar buttons now use icons. Previous/Next keep their text label beside

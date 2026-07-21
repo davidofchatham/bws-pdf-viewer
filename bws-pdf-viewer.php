@@ -3,7 +3,7 @@
  * Plugin Name: BWS PDF Viewer
  * Plugin URI: https://github.com/davidofchatham/bws-pdf-viewer
  * Description: Embed PDFs via shortcode with support for flipbook effects, flow mode, and image fallback for mobile devices.
- * Version: 0.5.0
+ * Version: 0.5.1
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * Author: Charles (theproductiveprogrammer), David Mitchell (Bridge Web Solutions), and Claude AI

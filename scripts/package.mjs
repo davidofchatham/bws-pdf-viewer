@@ -38,12 +38,28 @@ const include = [
   'dist/bws-viewer-engines.js',
   'dist/pdf.js',
   'dist/pdf.worker.js',
-  // Plugin Update Checker — only the runtime subset. The library's vendor/,
-  // css/, js/, languages/, README.md and composer.json are dev/demo cruft the
-  // plugin never loads; load-v5p7.php + Puc/ is all the update checker needs.
-  // license.txt ships to honor its MIT terms.
+  // Plugin Update Checker — only the runtime subset. The library's css/, js/,
+  // languages/, README.md and composer.json are dev/demo cruft the plugin never
+  // loads; load-v5p7.php + Puc/ + the two vendor/ classes below are all the
+  // update checker needs. license.txt ships to honor its MIT terms.
   'libs/plugin-update-checker/load-v5p7.php',
   'libs/plugin-update-checker/license.txt',
+  // vendor/ is NOT optional despite the name — PUC's autoloader maps these two
+  // classes into it (Puc/v5p7/Autoloader.php staticMap) and live update-check
+  // code instantiates them: Vcs/Api.php `new PucReadmeParser()` (reached because
+  // we ship readme.txt) and Vcs/GitHubApi.php `Parsedown::instance()` (reached
+  // because our releases have non-empty bodies). requestUpdate() is a thin
+  // wrapper over requestInfo(), so this is the ROUTINE cron update check, not
+  // just the "View details" modal. The autoloader file_exists-guards its
+  // include, so omitting these does not fatal at include time — it fatals later
+  // with `Class "Parsedown" not found`. Invisible in the dev checkout, fatal in
+  // every installed site. Do not "trim" these as unused.
+  'libs/plugin-update-checker/vendor/PucReadmeParser.php',
+  // Parsedown.php is only a shim: it unconditionally `require`s ParsedownModern.php
+  // (no file_exists guard), so shipping one without the other trades the missing-class
+  // fatal for a missing-include fatal. They ship together or not at all.
+  'libs/plugin-update-checker/vendor/Parsedown.php',
+  'libs/plugin-update-checker/vendor/ParsedownModern.php',
 ];
 
 // Optional extras shipped only if present. A directory (e.g. languages/) is walked.
