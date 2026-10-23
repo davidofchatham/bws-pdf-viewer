@@ -363,7 +363,7 @@ function bws_pdf_viewer_setup_update_checker() {
     );
 
     // Use GitHub Releases (not branch tips) and the attached versioned ZIP asset.
-    $update_checker->getVcsApi()->enableReleaseAssets('/bws-pdf-viewer-[\d.]+\.zip/');
+    $update_checker->getVcsApi()->enableReleaseAssets('/bws-pdf-viewer-[\d.]+\.zip/', \YahnisElsts\PluginUpdateChecker\v5p7\Vcs\Api::REQUIRE_RELEASE_ASSETS);
 }
 
 // Start the plugin
