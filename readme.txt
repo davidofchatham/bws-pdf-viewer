@@ -3,7 +3,7 @@ Contributors:  Charles (theproductiveprogrammer), David Mitchell (Bridge Web Sol
 Tags: pdf, flipbook, page-flip, pdf-viewer, animation, accessibility, wcag, screen-reader
 Requires at least: 6.0
 Tested up to: 7.0
-Stable tag: 0.5.1
+Stable tag: 0.5.2
 Requires PHP: 7.4
 License: MIT
 License URI: https://opensource.org/licenses/MIT
@@ -23,6 +23,14 @@ Embed PDFs via shortcode with support for flipbook effects, flow mode, and
 image fallback for mobile devices. See README.md for instructions and details.
 
 == Changelog ==
+
+= 0.5.2 =
+* FIX: The Print button now prints the PDF itself. It used to open the browser's
+  print dialog for the entire web page, so the PDF was squeezed onto page one and
+  the site footer printed after it. Works when the PDF is hosted on a different
+  domain than the page.
+* FIX: Script cache-busting used a stale version constant (0.5.0), so browsers
+  could keep serving an old copy of the viewer script after an update.
 
 = 0.5.1 =
 * FIX: The release ZIP omitted three Plugin Update Checker files it actually
