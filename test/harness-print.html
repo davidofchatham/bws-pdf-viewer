@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Print harness — V34</title>
+<link rel="stylesheet" href="/includes/bws-pdf-viewer.css">
+</head>
+<body style="width: 1100px; margin: 0 auto; font-family: sans-serif;">
+  <h1>V34: print emits the PDF (PDF host is a different origin than this page)</h1>
+
+  <!-- PDF is served from :8124 (cross-origin, CORS on) by test/verify-print.js -->
+  <div id="bws-pdf-flip" class="bws-pdf-viewer-container" style="width: 100%;"
+    data-config='{"pdf":"http://127.0.0.1:8124/test/fp.pdf","viewMode":"flipbook","singlepage":false,"layout":"double","bookLayout":"traditional","width":"100%","height":"auto","backgroundColor":"#353535","boxColor":"#353535","boxBorder":0,"margin":0.5,"marginTop":null,"marginLeft":null,"breakpoint":768,"enableAnimations":false,"showControls":true,"showFullscreen":true,"showPrint":true,"forceNative":null}'>
+    <div class="bws-pdf-viewer-loading"><span>Loading PDF…</span></div>
+  </div>
+
+  <div id="bws-pdf-doc" class="bws-pdf-viewer-container" style="width: 100%;"
+    data-config='{"pdf":"http://127.0.0.1:8124/test/fp.pdf","viewMode":"document","singlepage":true,"layout":"single","bookLayout":"spread","width":"100%","height":"auto","backgroundColor":"#353535","boxColor":"#353535","boxBorder":0,"margin":0.5,"marginTop":null,"marginLeft":null,"breakpoint":768,"enableAnimations":true,"showControls":true,"showFullscreen":true,"showPrint":true,"forceNative":true}'>
+    <div class="bws-pdf-viewer-loading"><span>Loading PDF…</span></div>
+  </div>
+
+  <p>Host-page footer text that must NEVER appear in a printout.</p>
+
+  <script src="/dist/pdf.js"></script>
+  <script src="/dist/bws-viewer-engines.js"></script>
+  <script src="/includes/bws-pdf-viewer.js"></script>
+</body>
+</html>

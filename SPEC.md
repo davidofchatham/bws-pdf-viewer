@@ -245,6 +245,19 @@ history — full cycle detail lives in git and `docs/history/speckit/`.
   lets the counter lag the spread — deliberately NOT followed. Document/continuous mode has no
   page-nav (V6) so no range. Cites I.controls,I.wp,V6,V11,V28.
 
+- **V34. Print emits the PDF, never the host page.** The Print button (V30) MUST print the document
+  itself, ⊥ `window.print()` — that prints the whole theme page around a canvas-only viewer (see B25).
+  Source = `wrapper.pdf.getData()`, the bytes PDF.js already fetched: wrapped in a `blob:` URL it is
+  same-origin with the page even when the PDF host is not (the portal case), so a hidden `aria-hidden`
+  iframe on that URL is scriptable and `contentWindow.print()` hands off to the browser's native PDF
+  viewer (vector, all pages, real paper size). ⊥ iframe on the raw `config.pdf` (cross-origin →
+  `SecurityError`), ⊥ server proxy (open-proxy/SSRF surface), ⊥ canvas re-render. Fallback ladder, each
+  rung only if the one above throws: iframe print → open the blob in a new tab → open `config.pdf` in
+  a new tab (`getData` unavailable/rejected). The blob + iframe are freed after a long delay (Chrome's
+  PDF plugin fires no dependable `afterprint`), except when the blob went to a tab. Known gap: a
+  browser whose `print()` silently no-ops without throwing (mobile Safari) gets no fallback. Cites
+  I.controls,I.wp,V30,B25.
+
 - **V20. [deferred] Site-wide mode disable not built.** `disabled_modes` default exists in
   `bws-pdf-viewer.php` but no admin UI renders/sanitizes it; `view_mode` is single-select (pick
   one — neither document nor flipbook is individually disableable). If per-mode enable/disable
@@ -269,4 +282,5 @@ one row (cause + fix) + the §V invariant hardened.
 
 | id | date | cause | fix (invariant) |
 |----|------|-------|-----------------|
+| B25 | 2026-10-30 | Print button called `window.print()` → dialog printed the whole host page (PDF squished onto page 1, theme footer on page 2); viewer is canvas-only, PDF host is cross-origin so an iframe on `config.pdf` is unscriptable | V34: print the `getData()` blob via same-origin hidden iframe, tab fallbacks |
 | _(next regression here)_ | | | |

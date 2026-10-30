@@ -421,6 +421,43 @@
     // -------------------------------------------------------------------------
 
     /**
+     * Print the PDF itself, never the host page (V34, B25).
+     *
+     * @param {Object} pdf  PDF.js document (wrapper.pdf)
+     * @param {string} url  Source URL, opened in a tab if in-page printing fails
+     */
+    function printPdf(pdf, url) {
+        const openTab = function(href) { window.open(href, '_blank', 'noopener'); };
+        if (!pdf || typeof pdf.getData !== 'function') { return openTab(url); }
+
+        pdf.getData().then(function(bytes) {
+            const blobUrl = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+            const frame = document.createElement('iframe');
+            frame.setAttribute('aria-hidden', 'true');
+            frame.tabIndex = -1;
+            frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;';
+            // No dependable afterprint (V34): free after a generous delay.
+            const cleanup = setTimeout(function() {
+                frame.remove();
+                URL.revokeObjectURL(blobUrl);
+            }, 120000);
+            frame.addEventListener('load', function() {
+                try {
+                    frame.contentWindow.focus();
+                    frame.contentWindow.print();
+                } catch {
+                    // The tab owns the blob now: keep it alive (reload/save), drop the frame.
+                    clearTimeout(cleanup);
+                    frame.remove();
+                    openTab(blobUrl);
+                }
+            });
+            frame.src = blobUrl;
+            document.body.appendChild(frame);
+        }).catch(function() { openTab(url); });
+    }
+
+    /**
      * Build and append the navigation controls bar to the viewer container.
      * Called after successful initialisation and after each responsive reinit.
      *
@@ -750,7 +787,7 @@
             printBtn.setAttribute('aria-label', t.printLabel);
             printBtn.setAttribute('title', t.printLabel);
             printBtn.setAttribute('type', 'button');
-            printBtn.addEventListener('click', function() { window.print(); });
+            printBtn.addEventListener('click', function() { printPdf(wrapper && wrapper.pdf, config.pdf); });
             controlsDiv.appendChild(printBtn);
         }
 

@@ -24,6 +24,13 @@ const browserGlobals = {
   Path2D: 'readonly',
   KeyboardEvent: 'readonly',
   AbortSignal: 'readonly',
+  URL: 'readonly',
+  Blob: 'readonly',
+  location: 'readonly',
+  fetch: 'readonly',
+  TextDecoder: 'readonly',
+  DOMException: 'readonly',
+  HTMLIFrameElement: 'readonly',
 };
 
 const nodeGlobals = {
