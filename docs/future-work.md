@@ -89,7 +89,7 @@ Blocked by: code:convergence spec ratified (`viewer-convergence/01` resolved)  �
 
 #### FW-14 — Viewer convergence: one accessible core, flip as transition effect
 
-Converge the three engines onto a persistent native core with a transient flip-animation overlay, with a progressive-enhancement escape hatch to instant swap. Local wayfinder effort; the destination is a ratified ADR plus SPEC V-invariants, then implementation.
+Converge the three engines onto a persistent native core with a transient flip-animation overlay, with a progressive-enhancement escape hatch to instant swap. Local wayfinder effort; the destination is amended `docs/architecture.md` invariants plus a Rejected list for the alternatives that lost, then implementation.
 
 Detail home: `.scratch/viewer-convergence/map.md`; committed design docs `docs/design/viewer-convergence.md`, `docs/design/responsive-model.md`, `docs/reference/pdfjs-reuse-menu.md`
 
@@ -127,7 +127,7 @@ Two follow-ons to the `bws-viewer-engines.js` rename: (a) split the single bundl
 
 Detail home: `.scratch/plans/ideas.md` §FW-6
 
-Progress: The bundle rename (SPEC V26) shipped. Split and UMD rename not started.
+Progress: The bundle rename (V26) shipped. Split and UMD rename not started.
 
 Blocked by: decision:whether per-engine chunking survives convergence (one core, one bundle)  •  Interacts with: FW-12, FW-13, FW-14
 
@@ -145,9 +145,9 @@ Blocked by: —  •  Interacts with: FW-6, FW-14
 
 #### FW-13 — Dedup PDF.js internals bundled twice
 
-`dist/bws-viewer-engines.js` bundles a second copy of PDF.js display internals alongside `dist/pdf.js` (about +182KB). Functional, wasted wire bytes only. ADR-0008 accepts it for now; the convergence design resolves it as a side effect.
+`dist/bws-viewer-engines.js` bundles a second copy of PDF.js display internals alongside `dist/pdf.js` (about +182KB). Functional, wasted wire bytes only. It is accepted debt for now; the convergence design resolves it as a side effect.
 
-Detail home: `docs/adr/0008-pdfjs-double-bundle-debt.md`; `.scratch/plans/pdfjs-double-bundle.md` (the three dedup options)
+Detail home: `.scratch/plans/pdfjs-double-bundle.md` (the three dedup options)
 
 Progress: Not started. Migrated here from GitHub #4 on 2026-11-02.
 
@@ -183,7 +183,7 @@ The visible counter shows a spread's page range (`5–6 of 12`) but `announcePag
 
 Detail home: `.scratch/plans/ideas.md` §FW-10
 
-Progress: Not started. Deliberately out of scope for SPEC V33, which covers the visible counter only.
+Progress: Not started. Deliberately out of scope for V33, which covers the visible counter only.
 
 Blocked by: —  •  Interacts with: —
 
@@ -197,7 +197,7 @@ Detail home: `.scratch/plans/ideas.md` §FW-9
 
 Progress: Not started.
 
-Blocked by: decision:when the SPEC V8 shortcode attr surface is frozen  •  Interacts with: —
+Blocked by: decision:when the V8 shortcode attr surface is frozen  •  Interacts with: —
 
 ## Closed / retired
 
@@ -205,7 +205,7 @@ Append-only ledger. Ids are **permanent**: a retired `FW-N` is never reused or r
 
 | ID | Item | Outcome | Landed / detail home |
 |---|---|---|---|
-| FW-4 | First / last page jump buttons | Shipped in the toolbar-icons effort (SPEC T30, 2026-07-09); no separate GitHub issue. | `SPEC.md` V6 |
+| FW-4 | First / last page jump buttons | Shipped in the toolbar-icons effort (T30, 2026-07-09); no separate GitHub issue. | `docs/architecture.md` V6 |
 
 ## Maintenance
 

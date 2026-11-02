@@ -11,15 +11,15 @@
 > (`node_modules/pdfjs-dist/package.json`). All `pdf_viewer.mjs` /
 > `pdf_viewer.css` line numbers are into that installed version.
 >
-> Prior art this reassesses: [ADR-0002](../adr/0002-no-full-pdfjs-viewer.md)
+> Prior art this reassesses: [V15](../architecture.md)
 > rejected the full prebuilt `viewer.html` app (chrome/toolbar/theming clash,
-> update-surface coupling) and fixed us at "components only". **ADR-0002 is not
+> update-surface coupling) and fixed us at "components only". **V15's rejection is not
 > a fixed decision** — like ADR-0003 it predates the convergence reframe and is
 > open to reassessment under this map; every rung here, including the full app,
-> is weighed on current evidence, not by ADR fiat. Everything between
+> is weighed on current evidence, not by fiat. Everything between
 > "builders" and "full app" was never evaluated — that dial is exactly what
 > this doc charts, under the reuse-first rule of
-> [ADR-0001](../adr/0001-reuse-first.md). Target architecture the menu
+> [V9](../architecture.md). Target architecture the menu
 > must serve: [viewer-convergence.md](../design/viewer-convergence.md)
 > (persistent accessible native core + transient flip overlay, Architecture A).
 
@@ -169,7 +169,7 @@ What it costs:
 - **Loss of control.** It owns current-page tracking, scroll position, and page
   DOM order; our toolbar becomes a client of its EventBus rather than of our
   viewer object; `createBookWrapper`'s slot/spread mapping
-  (`includes/bws-pdf-viewer.js:1245`, SPEC V28) duplicates its spread logic.
+  (`includes/bws-pdf-viewer.js:1245`, V28) duplicates its spread logic.
 - **Bundle.** Most of the 313 KB module graph survives tree-shaking once
   `PDFViewer` is imported (viewer + page view + queue + find + l10n; the
   embedded English l10n blob alone, `pdf_viewer.mjs:3873`, is ~25 KB).
@@ -181,12 +181,12 @@ What it costs:
 
 The whole Mozilla app: toolbar, sidebar, dialogs, keyboard map, l10n. On
 current evidence it stays unattractive on its own merits — direct clash with
-our WCAG-2.2-AA shared toolbar (SPEC V9, ADR-0001 "exactly one toolbar") and
+our WCAG-2.2-AA shared toolbar (V9, "exactly one toolbar") and
 our theming; iframe/asset coupling breaks the portal cross-origin setup
-([[portal-asset-origin-mismatch]]); everything the app adds beyond rung (d) is
-UI we currently own by contract. ADR-0002 recorded the same call, but that ADR
-is reassessable, not binding — if #14 finds the toolbar/portal constraints have
-moved, this rung is choosable and ADR-0002 gets superseded. Listed with full
+(V35); everything the app adds beyond rung (d) is
+UI we currently own by contract. V15 records the same call, but it is
+reassessable, not binding — if #14 finds the toolbar/portal constraints have
+moved, this rung is choosable and V15's Rejected entry is rewritten. Listed with full
 costs so that call is on evidence, not fiat.
 
 ---
@@ -232,7 +232,7 @@ SpreadMode.NONE` from our observer.
 
 ## 3. Continuous AND flipbook as distinct modes
 
-Both are required products (SPEC V1 modes; convergence keeps both as
+Both are required products (V1 modes; convergence keeps both as
 containment/arrangement/transition combinations). Can one native core serve
 both?
 
@@ -387,7 +387,7 @@ over the resting native page(s), matching at t=0 and t=1
 | (b) + `PDFPageView` | Zoom `update()` lifecycle, CSS-zoom w/ deferred raster, canvas pixel caps + detailView, layer z-order, struct-tree, `--scale-factor` handled | `pdf_viewer.css` subset; tens of KB; page-level only — doc orchestration stays ours | Manual loop, but per page = one `update({scale})` | Easy — `.div`/`.viewport`/`.scale` exposed; snapshot only at FINISHED |
 | (c) `PDFSinglePageViewer` | Rung-(d) internals, 1-up forced | scroll/spread setters are no-ops → **no spreads ever** | As (d) | As (d) |
 | (d) `PDFViewer` + scroll/spreadMode | Rendering queue + eviction buffer, preset zoom (`page-width` etc.), spread DOM, find controller, full link service | Absolutely-positioned container contract (throws otherwise), owns scroll/DOM/CSS vars, ~most of 313 KB graph, wrapper logic (V28) duplicated | 2 lines from our ResizeObserver (`currentScaleValue` reassign + `update()`); **no auto spread↔single anywhere** | **Hardest** — DOM rebuilt on page change, global `--scale-factor`, debounced re-raster |
-| (e) full `viewer.html` app | Everything, incl. UI | Toolbar/theming clash (V9), portal coupling — weakest on current evidence (ADR-0002 agrees but is revisable) | App-level (its own resize handler) | Volatile — app owns all chrome/scroll |
+| (e) full `viewer.html` app | Everything, incl. UI | Toolbar/theming clash (V9), portal coupling — weakest on current evidence (V15 agrees but is revisable) | App-level (its own resize handler) | Volatile — app owns all chrome/scroll |
 
 ## What this does NOT decide
 
@@ -395,6 +395,6 @@ This is the menu, not the meal. Ticket **#14** (engine pick) still has to
 choose: which rung the converged native core sits on, whether the flip overlay
 is fed by our warp or a View-Transitions fold (spikes #10/#11/#17 inform that
 half), and how the containment/arrangement axes map onto whichever rung wins.
-ADR-0002 is not a constraint on that choice — it is a prior decision #14 may
-reaffirm, refine, or supersede; any rung above (a) gets a new ADR recording
-the pick when #14 decides.
+V15 is not a constraint on that choice — it is a prior decision #14 may
+reaffirm, refine, or supersede; any rung above (a) gets V15 and V7 amended
+with the pick when #14 decides.

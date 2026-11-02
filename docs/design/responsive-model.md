@@ -175,7 +175,7 @@ assertion #5 in [viewer-convergence.md](viewer-convergence.md) § Testability.
   superseded. Direction: a **global per-mode default (admin) + per-embed
   attribute override** (§8). Decision deferred to the convergence spec ticket.
 
-## 8. Config fallout (candidates — V8 revisable, ADR-0007; NOT locked)
+## 8. Config fallout (candidates — V8 revisable; NOT locked)
 
 | Knob | Kind | Notes |
 |---|---|---|
