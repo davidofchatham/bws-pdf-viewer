@@ -107,7 +107,7 @@ Detail home: `docs/design/adr-0003-supersede-draft.md`, `docs/design/responsive-
 
 Progress: Not started.
 
-Blocked by: row:FW-14  •  Interacts with: FW-14
+Blocked by: code:the arrangement-axis design has shipped (V3 and V24 rewritten)  •  Interacts with: FW-14
 
 ### Naming and packaging
 

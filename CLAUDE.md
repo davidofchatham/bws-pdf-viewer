@@ -4,69 +4,45 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-BWS PDF Viewer is a WordPress plugin that embeds a PDF inline with three render
-modes (animated flipbook / native PDF.js / image fallback), device-adaptive,
-one shared toolbar, WCAG 2.2 AA, multi-domain. It wraps a tiny flipbook library
-(18KB) plus PDF.js components in a full WordPress integration.
+BWS PDF Viewer is a WordPress plugin that embeds a PDF inline with three render modes (animated flipbook / native PDF.js / image fallback), device-adaptive, one shared toolbar, WCAG 2.2 AA, multi-domain. It wraps a tiny flipbook library (18KB) plus PDF.js components in a full WordPress integration.
 
 ## Where the docs live (read the owner, don't restate it)
 
-This file is **how-to + onboarding only**. The durable facts live elsewhere,
-each with ONE owner — read the owner, link to it, never copy its content here:
+This file is **how-to + onboarding only**. The durable facts live elsewhere, each with ONE owner — read the owner, link to it, never copy its content here:
 
 | You need… | Owner | Never duplicate it in… |
 |-----------|-------|------------------------|
 | Goal, file map (`I.*`), behavioral contract the code MUST hold (`V*`), the alternatives that lost (`Rejected:`) | [docs/architecture.md](docs/architecture.md) | CLAUDE.md, GLOSSARY.md |
 | Vocabulary (terms, and the names that lost) | [GLOSSARY.md](GLOSSARY.md) | CLAUDE.md, docs/architecture.md |
-| Where each kind of decision lives; the retired `ADR-*` redirect map | [docs/agents/domain.md](docs/agents/domain.md), [docs/adr/README.md](docs/adr/README.md) | CLAUDE.md |
+| Where each kind of decision lives, the ADR bar, the retired `ADR-*` redirect map | [docs/adr/README.md](docs/adr/README.md) | CLAUDE.md, docs/agents/domain.md |
 | Public usage: install, shortcode examples, filter-hook cookbook, requirements | [README.md](README.md) | CLAUDE.md |
 | Non-bug work index (enhancements, open questions, wayfinder efforts) | [docs/future-work.md](docs/future-work.md) | GitHub Issues |
 | The tracker split (GitHub vs `.scratch/` vs `future-work.md`), id forms, publication | [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md) | other docs (CLAUDE.md keeps only the spec-lifecycle pointer) |
 
-The **authoritative shortcode att list** (names, defaults, sanitizers) is
-`$default_options` / `shortcode_atts()` in `bws-pdf-viewer.php` — V8 tracks
-the live surface, README documents the not-obvious-from-name behavior; neither
-re-lists the defaults.
+The **authoritative shortcode att list** (names, defaults, sanitizers) is `$default_options` / `shortcode_atts()` in `bws-pdf-viewer.php` — V8 tracks the live surface, README documents the not-obvious-from-name behavior; neither re-lists the defaults.
 
-**Drift rule:** if a fact already has an owner above, this file (and any other)
-POINTS to it — one sentence + link — instead of restating it. On any conflict,
-the owner wins; fix the owner, not the copy. See [§ Doc discipline](#doc-discipline)
-below.
+**Drift rule:** if a fact already has an owner above, this file (and any other) POINTS to it — one sentence + link — instead of restating it. On any conflict, the owner wins; fix the owner, not the copy. See [§ Doc discipline](#doc-discipline) below.
 
 ## Build Commands
 
-`npm run start` (production build → `/dist`) · `npm run test` (dev server, live
-reload) · `npm run clean` (wipe `/dist`). Public build/install steps: README
-§ Development / § Installation.
+`npm run start` (production build → `/dist`) · `npm run test` (dev server, live reload) · `npm run clean` (wipe `/dist`). Public build/install steps: README § Development / § Installation.
 
 ## Architecture at a glance
 
-Full file map + what each file owns: [docs/architecture.md](docs/architecture.md) § File map.
-The three render modes, device detection, PDF.js layers, book layouts,
-container-responsiveness, and accessibility are all specified as invariants in
-the same file (V1–V4, V7, V13, V21, V28, …) — read those for the
-contract, not a prose paraphrase.
+Full file map + what each file owns: [docs/architecture.md](docs/architecture.md) § File map. The three render modes, device detection, PDF.js layers, book layouts, container-responsiveness, and accessibility are all specified as invariants in the same file (V1–V4, V7, V13, V21, V28, …) — read those for the contract, not a prose paraphrase.
 
 Delivered JS artifacts (3 files, 3 concerns — V26):
-- `dist/bws-viewer-engines.js` — UMD bundle of all 3 render engines (flip +
-  native + image), routed by `src/index.js`. Name says `-engines`, NOT flip,
-  because it is not flip-only. UMD global is still `flipbook` (legacy).
-- `dist/pdf.js` + `dist/pdf.worker.js` — Mozilla PDF.js lib + auto-chunked
-  worker (webpack zero-config — see the comment at the `pdfjs-dist/webpack.mjs` entry in `webpack.config.js`).
-- `includes/bws-pdf-viewer.js` — WordPress integration glue (device detect,
-  mode select, `createBookWrapper`, responsive, keyboard nav, shared toolbar).
+- `dist/bws-viewer-engines.js` — UMD bundle of all 3 render engines (flip + native + image), routed by `src/index.js`. Name says `-engines`, NOT flip, because it is not flip-only. UMD global is still `flipbook` (legacy).
+- `dist/pdf.js` + `dist/pdf.worker.js` — Mozilla PDF.js lib + auto-chunked worker (webpack zero-config — see the comment at the `pdfjs-dist/webpack.mjs` entry in `webpack.config.js`).
+- `includes/bws-pdf-viewer.js` — WordPress integration glue (device detect, mode select, `createBookWrapper`, responsive, keyboard nav, shared toolbar).
 
 ### Data Flow
 
 1. User adds shortcode: `[bws_pdf]https://example.com/doc.pdf[/bws_pdf]`
-2. PHP `BWS_PDF_Viewer::shortcode_handler` outputs a container div with a
-   `data-config` attribute (config merged 3-tier — V5).
-3. `includes/bws-pdf-viewer.js` reads config, detects device, picks native vs
-   image, calls `loadPDF()`.
-4. PDF.js loads the document; `createBookWrapper()` exposes the book interface
-   (`numPages()`/`numSpreads()`/`slotToPage()`/`getPage()` — V28).
-5. Router in `src/index.js` selects the viewer (V1); the viewer renders to
-   the container.
+2. PHP `BWS_PDF_Viewer::shortcode_handler` outputs a container div with a `data-config` attribute (config merged 3-tier — V5).
+3. `includes/bws-pdf-viewer.js` reads config, detects device, picks native vs image, calls `loadPDF()`.
+4. PDF.js loads the document; `createBookWrapper()` exposes the book interface (`numPages()`/`numSpreads()`/`slotToPage()`/`getPage()` — V28).
+5. Router in `src/index.js` selects the viewer (V1); the viewer renders to the container.
 
 ## Important Notes
 
@@ -77,8 +53,7 @@ WordPress enqueues in this order (`BWS_PDF_Viewer::register_assets()`):
 2. `bws-pdf-viewer-lib` (`bws-viewer-engines.js`)
 3. `bws-pdf-viewer-wp` (WordPress integration)
 
-The worker (`pdf.worker.js`) is auto-loaded by `pdf.js` via webpack's dynamic
-import — no separate registration (`webpack.config.js` explains why).
+The worker (`pdf.worker.js`) is auto-loaded by `pdf.js` via webpack's dynamic import — no separate registration (`webpack.config.js` explains why).
 
 ### @tpp/htm-x Import Usage
 
@@ -88,46 +63,32 @@ import { getH } from '@tpp/htm-x';  // DOM lookup by ID (ONLY in src/index.js)
 ```
 
 - `h('div.classname')` creates DOM elements.
-- `getH('element-id')` gets an existing element. It is NOT a factory —
-  `const h = getH()` fails with "getH is not a function".
+- `getH('element-id')` gets an existing element. It is NOT a factory — `const h = getH()` fails with "getH is not a function".
 
 ### HiDPI Support
 
-Both the core library and the WP integration read `window.devicePixelRatio` and
-render the canvas at higher resolution for Retina. See `outputScale` in
-`src/flipbookviewer.js` and `includes/bws-pdf-viewer.js`.
+Both the core library and the WP integration read `window.devicePixelRatio` and render the canvas at higher resolution for Retina. See `outputScale` in `src/flipbookviewer.js` and `includes/bws-pdf-viewer.js`.
 
 ## Development Workflow
 
-`dist/` is generated and untracked — a fresh clone has none. Run `npm ci &&
-npm run start` before the plugin will render (local dev installs symlink the
-repo root, so they read `dist/` off disk). Releases build their own via CI.
+`dist/` is generated and untracked — a fresh clone has none. Run `npm ci && npm run start` before the plugin will render (local dev installs symlink the repo root, so they read `dist/` off disk). Releases build their own via CI.
 
 1. Edit `src/` files.
 2. `npm run test` → dev server at http://localhost:8080; test with pages in `/test`.
 3. `npm run start` for a production build.
-4. Upload changed built files to the WordPress plugin dir:
-   `dist/bws-viewer-engines.js`, `dist/pdf.js`, `dist/pdf.worker.js` (if changed),
-   `includes/bws-pdf-viewer.js`, `includes/bws-pdf-viewer.css`,
-   `bws-pdf-viewer.php` (each if changed).
-5. Hard refresh (Ctrl+F5) — browser/WordPress cache old scripts otherwise; bump
-   the version in `bws-pdf-viewer.php` for cache busting.
+4. Upload changed built files to the WordPress plugin dir: `dist/bws-viewer-engines.js`, `dist/pdf.js`, `dist/pdf.worker.js` (if changed), `includes/bws-pdf-viewer.js`, `includes/bws-pdf-viewer.css`, `bws-pdf-viewer.php` (each if changed).
+5. Hard refresh (Ctrl+F5) — browser/WordPress cache old scripts otherwise; bump the version in `bws-pdf-viewer.php` for cache busting.
 6. Test the WordPress integration.
 
 ## Troubleshooting
 
-- **"Setting up fake worker" warning** → webpack not on the zero-config path;
-  see the comment at the `pdfjs-dist/webpack.mjs` entry in `webpack.config.js`.
-- **"getH is not a function"** → wrong `@tpp/htm-x` import; use `h` to create,
-  `getH` only to look up (above).
-- **Browser shows old JS after upload** → hard refresh (Ctrl+F5), DevTools →
-  Network → Disable cache, and bump the plugin version for cache busting.
+- **"Setting up fake worker" warning** → webpack not on the zero-config path; see the comment at the `pdfjs-dist/webpack.mjs` entry in `webpack.config.js`.
+- **"getH is not a function"** → wrong `@tpp/htm-x` import; use `h` to create, `getH` only to look up (above).
+- **Browser shows old JS after upload** → hard refresh (Ctrl+F5), DevTools → Network → Disable cache, and bump the plugin version for cache busting.
 
 ## Extending the Plugin
 
-Shortcode attributes: V8 is the live surface (revisable pre-1.0 — see Working rules);
-README has usage examples; `$default_options` / `shortcode_atts()` in
-`bws-pdf-viewer.php` is authoritative for names/defaults/sanitizers.
+Shortcode attributes: V8 is the live surface (revisable pre-1.0 — see Working rules); README has usage examples; `$default_options` / `shortcode_atts()` in `bws-pdf-viewer.php` is authoritative for names/defaults/sanitizers.
 
 ### Adding a new shortcode parameter
 
@@ -152,30 +113,18 @@ See `test/book-imgs.js` for an image-based example.
 
 ## Working rules
 
-- **Reuse first.** Evolve working control logic in place; don't rewrite proven behavior. Building our own control is forbidden where the library or PDF.js already provides the functionality; extend the existing seam first (`createBookWrapper`, `addNavigationControls`). Update upstream dependencies to latest before building on them. The rewrite rejection sits on V9.
-- **Shortcode atts are revisable pre-1.0.** On any rename, removal or repurpose: sweep the consuming sites' generated shortcodes first, fix the usages, and changelog it. V8 holds the live att surface and the known vestigial ones.
+- **Reuse first.** No own control where the library or PDF.js already provides it (V9). Update upstream dependencies to latest before building on them.
+- **Shortcode atts are revisable pre-1.0.** The rule and the sweep-and-changelog steps are V8.
 
 ## Doc discipline
 
 Keep the doc set from drifting. When you touch code or docs:
 
-1. **One fact, one owner.** Every durable fact belongs to exactly one file (the
-   table under [§ Where the docs live](#where-the-docs-live-read-the-owner-dont-restate-it)).
-   Everyone else links to the owner. If you catch yourself pasting a config
-   block, an att list, or an invariant into a second file — stop, link instead.
-2. **Change the owner, sweep the pointers.** When a fact changes, edit its owner
-   file, then grep for stale pointers/copies and update or delete them. A
-   pointer may name a term (`V28`, `FW-13`) but MUST NOT restate its body.
-3. **New durable fact → route it.** Decision/rationale → the `Rejected:` list
-   under the invariant it justifies, a glossary `Rejected:` line, or PHPDoc on
-   the enforcing class (a new ADR only if all six rules in `docs/adr/README.md`
-   hold). Behavioral guarantee → new `V*` in `docs/architecture.md`.
-   Domain term → GLOSSARY.md; surface → the architecture file map. How-to → here. Enhancement or open question → a new `FW-N` item in `docs/future-work.md`.
-4. **On any conflict, the owner wins.** This file is narrative and may lag;
-   architecture/glossary are the source of truth. Reconcile toward the owner.
-5. **Recalled memory can be stale.** A `[[memory-slug]]` or MEMORY.md line
-   reflects what was true when written; verify the named file/flag/att still
-   exists before acting on it.
+1. **One fact, one owner.** Every durable fact belongs to exactly one file (the table under [§ Where the docs live](#where-the-docs-live-read-the-owner-dont-restate-it)). Everyone else links to the owner. If you catch yourself pasting a config block, an att list, or an invariant into a second file — stop, link instead.
+2. **Change the owner, sweep the pointers.** When a fact changes, edit its owner file, then grep for stale pointers/copies and update or delete them. A pointer may name a term (`V28`, `FW-13`) but MUST NOT restate its body.
+3. **New durable fact → route it.** Decision/rationale → the `Rejected:` list under the invariant it justifies, a glossary `Rejected:` line, or PHPDoc on the enforcing class (a new ADR only if all six rules in `docs/adr/README.md` hold). Behavioral guarantee → new `V*` in `docs/architecture.md`. Domain term → GLOSSARY.md; surface → the architecture file map. How-to → here. Enhancement or open question → a new `FW-N` item in `docs/future-work.md`.
+4. **On any conflict, the owner wins.** This file is narrative and may lag; architecture/glossary are the source of truth. Reconcile toward the owner.
+5. **Recalled memory can be stale.** A `[[memory-slug]]` or MEMORY.md line reflects what was true when written; verify the named file/flag/att still exists before acting on it.
 
 ## Spec lifecycle and tracked prose
 

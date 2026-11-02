@@ -26,18 +26,9 @@ If any of these files don't exist, **proceed silently**. Don't flag their absenc
 
 ## Where a decision lives
 
-Cite the anchor, never a spec coordinate: an invariant by its id (`V28`), a term by its glossary entry. The decision and its rejected alternative sit there too.
+Cite the anchor, never a spec coordinate: an invariant by its id (`V28`), a term by its glossary entry. The table of where each kind of decision lives, and the six-rule bar an ADR must clear, are in `docs/adr/README.md`.
 
-- A naming decision is a glossary entry with a `Rejected:` line.
-- An invariant's rationale and the alternatives that lost go in a `Rejected:` list under that `V*`.
-- A per-class invariant goes in PHPDoc on the enforcing class.
-- A process decision goes in `CLAUDE.md` or `docs/agents/`.
-- A proposal not yet accepted is an `FW-N` item in `docs/future-work.md`.
-- A removal or behavior change goes in the changelog.
-
-## ADRs are rare: do not mint one in ordinary work
-
-An ADR is written only when all six hold: hard to reverse, surprising without context, a real trade-off, not decided this session, already shipped, and not vocabulary. Process decisions never qualify. The full bar is in `docs/adr/README.md`. Do not offer an ADR for a rejected candidate or a settled choice; add a `Rejected:` entry on the anchor instead.
+**Do not mint an ADR in ordinary work, and do not offer one for a rejected candidate or a settled choice**: add a `Rejected:` entry on the anchor instead.
 
 ## Use the glossary's vocabulary
 

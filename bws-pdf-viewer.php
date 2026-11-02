@@ -142,13 +142,13 @@ class BWS_PDF_Viewer {
      * Register scripts and styles
      *
      * Plugin base URL is filterable via 'bws_pdf_viewer_plugin_url' to support
-     * multi-domain deployments (e.g. BWS Portal System). Every asset URL is built
-     * from it, never from a hardcoded domain: architecture V35 holds the contract
-     * and the failure it prevents.
+     * multi-domain deployments (e.g. BWS Portal System).
      */
     public function register_assets() {
         // Allow external plugins (e.g. BWS Portal System) to rewrite the plugin base URL.
-        // The returned URL MUST end with a trailing slash.
+        // The returned URL MUST end with a trailing slash. Every asset URL is built
+        // from it, never from a hardcoded domain: docs/architecture.md V35 holds the
+        // contract and the failure it prevents.
         $plugin_url = apply_filters('bws_pdf_viewer_plugin_url', BWS_PDF_VIEWER_PLUGIN_URL);
 
         // PDF.js library with automatic worker setup (webpack.mjs zero-config approach)

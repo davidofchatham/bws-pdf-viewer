@@ -4,6 +4,8 @@ The architecture home: the goal, the file map, and the invariants the code must 
 
 > **This file OWNS the goal, the file map and the invariants.** Other docs link here; they must not restate these. Anti-drift rules: [CLAUDE.md](../CLAUDE.md) § Doc discipline.
 
+`B…` and `T…` ids cited in the invariants and in code are historical: bug and task ids from ledgers that no longer exist, resolvable through git history. A current regression is a GitHub issue; a task is a `.scratch/` ticket.
+
 ## Goal
 
 WordPress plugin that embeds a PDF inline. Three render modes — flipbook
