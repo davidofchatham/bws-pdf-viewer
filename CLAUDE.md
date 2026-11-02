@@ -16,16 +16,15 @@ each with ONE owner — read the owner, link to it, never copy its content here:
 
 | You need… | Owner | Never duplicate it in… |
 |-----------|-------|------------------------|
-| Goal, file/surface map (`I.*`), glossary | [CONTEXT.md](CONTEXT.md) | CLAUDE.md, SPEC.md |
-| Behavioral contract the code MUST hold (`V*`) | [SPEC.md](SPEC.md) §V | CLAUDE.md, CONTEXT.md |
-| Cross-cutting decisions + rationale (`ADR-*`) | [docs/adr/](docs/adr/) | CLAUDE.md, SPEC.md |
-| Current cycle's tasks / bug ledger | [SPEC.md](SPEC.md) §T/§B | anywhere |
+| Goal, file map (`I.*`), behavioral contract the code MUST hold (`V*`), the alternatives that lost (`Rejected:`) | [docs/architecture.md](docs/architecture.md) | CLAUDE.md, GLOSSARY.md |
+| Vocabulary (terms, and the names that lost) | [GLOSSARY.md](GLOSSARY.md) | CLAUDE.md, docs/architecture.md |
+| Where each kind of decision lives; the retired `ADR-*` redirect map | [docs/agents/domain.md](docs/agents/domain.md), [docs/adr/README.md](docs/adr/README.md) | CLAUDE.md |
 | Public usage: install, shortcode examples, filter-hook cookbook, requirements | [README.md](README.md) | CLAUDE.md |
 | Non-bug work index (enhancements, open questions, wayfinder efforts) | [docs/future-work.md](docs/future-work.md) | GitHub Issues |
 | The tracker split (GitHub vs `.scratch/` vs `future-work.md`), id forms, publication | [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md) | other docs (CLAUDE.md keeps only the spec-lifecycle pointer) |
 
 The **authoritative shortcode att list** (names, defaults, sanitizers) is
-`$default_options` / `shortcode_atts()` in `bws-pdf-viewer.php` — SPEC V8 tracks
+`$default_options` / `shortcode_atts()` in `bws-pdf-viewer.php` — V8 tracks
 the live surface, README documents the not-obvious-from-name behavior; neither
 re-lists the defaults.
 
@@ -42,18 +41,18 @@ reload) · `npm run clean` (wipe `/dist`). Public build/install steps: README
 
 ## Architecture at a glance
 
-Full surface map + what each file owns: [CONTEXT.md](CONTEXT.md) § Surfaces.
+Full file map + what each file owns: [docs/architecture.md](docs/architecture.md) § File map.
 The three render modes, device detection, PDF.js layers, book layouts,
 container-responsiveness, and accessibility are all specified as invariants in
-[SPEC.md](SPEC.md) §V (V1–V4, V7, V13, V21, V28, …) — read those for the
+the same file (V1–V4, V7, V13, V21, V28, …) — read those for the
 contract, not a prose paraphrase.
 
-Delivered JS artifacts (3 files, 3 concerns — SPEC V26):
+Delivered JS artifacts (3 files, 3 concerns — V26):
 - `dist/bws-viewer-engines.js` — UMD bundle of all 3 render engines (flip +
   native + image), routed by `src/index.js`. Name says `-engines`, NOT flip,
   because it is not flip-only. UMD global is still `flipbook` (legacy).
 - `dist/pdf.js` + `dist/pdf.worker.js` — Mozilla PDF.js lib + auto-chunked
-  worker (webpack zero-config — ADR-0006).
+  worker (webpack zero-config — see the comment at the `pdfjs-dist/webpack.mjs` entry in `webpack.config.js`).
 - `includes/bws-pdf-viewer.js` — WordPress integration glue (device detect,
   mode select, `createBookWrapper`, responsive, keyboard nav, shared toolbar).
 
@@ -61,12 +60,12 @@ Delivered JS artifacts (3 files, 3 concerns — SPEC V26):
 
 1. User adds shortcode: `[bws_pdf]https://example.com/doc.pdf[/bws_pdf]`
 2. PHP `BWS_PDF_Viewer::shortcode_handler` outputs a container div with a
-   `data-config` attribute (config merged 3-tier — ADR-0005).
+   `data-config` attribute (config merged 3-tier — V5).
 3. `includes/bws-pdf-viewer.js` reads config, detects device, picks native vs
    image, calls `loadPDF()`.
 4. PDF.js loads the document; `createBookWrapper()` exposes the book interface
-   (`numPages()`/`numSpreads()`/`slotToPage()`/`getPage()` — SPEC V28).
-5. Router in `src/index.js` selects the viewer (SPEC V1); the viewer renders to
+   (`numPages()`/`numSpreads()`/`slotToPage()`/`getPage()` — V28).
+5. Router in `src/index.js` selects the viewer (V1); the viewer renders to
    the container.
 
 ## Important Notes
@@ -79,7 +78,7 @@ WordPress enqueues in this order (`BWS_PDF_Viewer::register_assets()`):
 3. `bws-pdf-viewer-wp` (WordPress integration)
 
 The worker (`pdf.worker.js`) is auto-loaded by `pdf.js` via webpack's dynamic
-import — no separate registration (ADR-0006).
+import — no separate registration (`webpack.config.js` explains why).
 
 ### @tpp/htm-x Import Usage
 
@@ -118,7 +117,7 @@ repo root, so they read `dist/` off disk). Releases build their own via CI.
 ## Troubleshooting
 
 - **"Setting up fake worker" warning** → webpack not on the zero-config path;
-  see ADR-0006 ([docs/adr/0006-pdfjs-zero-config-webpack.md](docs/adr/0006-pdfjs-zero-config-webpack.md)).
+  see the comment at the `pdfjs-dist/webpack.mjs` entry in `webpack.config.js`.
 - **"getH is not a function"** → wrong `@tpp/htm-x` import; use `h` to create,
   `getH` only to look up (above).
 - **Browser shows old JS after upload** → hard refresh (Ctrl+F5), DevTools →
@@ -126,20 +125,20 @@ repo root, so they read `dist/` off disk). Releases build their own via CI.
 
 ## Extending the Plugin
 
-Shortcode attributes: SPEC V8 is the live surface (revisable pre-1.0 — ADR-0007);
+Shortcode attributes: V8 is the live surface (revisable pre-1.0 — see Working rules);
 README has usage examples; `$default_options` / `shortcode_atts()` in
 `bws-pdf-viewer.php` is authoritative for names/defaults/sanitizers.
 
 ### Adding a new shortcode parameter
 
-Thread it through all five layers (matches the 3-tier precedence — ADR-0005):
+Thread it through all five layers (matches the 3-tier precedence — V5):
 1. `$default_options` in `BWS_PDF_Viewer`
 2. `shortcode_atts()` in `shortcode_handler()`
 3. the `$config` array in the handler
 4. `initViewer()` in `includes/bws-pdf-viewer.js`
 5. an admin field in `includes/admin.php`
 
-Then update the SPEC V8 att surface.
+Then update the V8 att surface.
 
 ### Supporting Non-PDF Sources
 
@@ -151,6 +150,11 @@ The core library takes any book source via the book interface:
 
 See `test/book-imgs.js` for an image-based example.
 
+## Working rules
+
+- **Reuse first.** Evolve working control logic in place; don't rewrite proven behavior. Building our own control is forbidden where the library or PDF.js already provides the functionality; extend the existing seam first (`createBookWrapper`, `addNavigationControls`). Update upstream dependencies to latest before building on them. The rewrite rejection sits on V9.
+- **Shortcode atts are revisable pre-1.0.** On any rename, removal or repurpose: sweep the consuming sites' generated shortcodes first, fix the usages, and changelog it. V8 holds the live att surface and the known vestigial ones.
+
 ## Doc discipline
 
 Keep the doc set from drifting. When you touch code or docs:
@@ -161,19 +165,21 @@ Keep the doc set from drifting. When you touch code or docs:
    block, an att list, or an invariant into a second file — stop, link instead.
 2. **Change the owner, sweep the pointers.** When a fact changes, edit its owner
    file, then grep for stale pointers/copies and update or delete them. A
-   pointer may name a term (`ADR-0006`, `V28`) but MUST NOT restate its body.
-3. **New durable fact → route it.** Decision/rationale → new ADR (bump the
-   `docs/adr/README.md` index). Behavioral guarantee → new `V*` in SPEC §V.
-   Domain term / surface → CONTEXT.md. How-to → here. Enhancement or open question → a new `FW-N` item in `docs/future-work.md`.
+   pointer may name a term (`V28`, `FW-13`) but MUST NOT restate its body.
+3. **New durable fact → route it.** Decision/rationale → the `Rejected:` list
+   under the invariant it justifies, a glossary `Rejected:` line, or PHPDoc on
+   the enforcing class (a new ADR only if all six rules in `docs/adr/README.md`
+   hold). Behavioral guarantee → new `V*` in `docs/architecture.md`.
+   Domain term → GLOSSARY.md; surface → the architecture file map. How-to → here. Enhancement or open question → a new `FW-N` item in `docs/future-work.md`.
 4. **On any conflict, the owner wins.** This file is narrative and may lag;
-   CONTEXT/ADR/SPEC are the source of truth. Reconcile toward the owner.
+   architecture/glossary are the source of truth. Reconcile toward the owner.
 5. **Recalled memory can be stale.** A `[[memory-slug]]` or MEMORY.md line
    reflects what was true when written; verify the named file/flag/att still
    exists before acting on it.
 
 ## Spec lifecycle and tracked prose
 
-Specs and tickets are private working files (`.scratch/<slug>/`); they die at merge. At merge a finished spec is lifted into `docs/design-history/` (moved, not copied; the PR body is the second record), and its load-bearing parts migrate out: invariants → SPEC §V, decisions → ADRs, delta → `readme.txt` changelog, cause → commit body. An unbuilt plan is never lifted. Full rules: `docs/agents/issue-tracker.md` § Publication.
+Specs and tickets are private working files (`.scratch/<slug>/`); they die at merge. At merge a finished spec is lifted into `docs/design-history/` (moved, not copied; the PR body is the second record), and its load-bearing parts migrate out: invariants and decisions → `docs/architecture.md`, delta → `readme.txt` changelog, cause → commit body. An unbuilt plan is never lifted. Full rules: `docs/agents/issue-tracker.md` § Publication.
 
 Tracked prose is scanned. `scripts/check-private-citations.sh` fails any committed file other than `docs/future-work.md` that cites a literal `.scratch/` or `.claude/` path (cite the `FW-N` id instead); `scripts/check-tracked-pii.sh` fails local paths, emails and unlisted domains. Both run in CI (`.github/workflows/committed-content-guards.yml`) and are proven by `scripts/self-test-guards.sh`. The repo is public.
 
@@ -189,4 +195,4 @@ Canonical five-role vocabulary (`needs-triage` / `needs-info` / `ready-for-agent
 
 ### Domain docs
 
-Single-context: `CONTEXT.md` + `docs/adr/` at repo root. See `docs/agents/domain.md`.
+Single-context: `GLOSSARY.md` + `docs/architecture.md`; decisions live with what they justify, not in an ADR directory. See `docs/agents/domain.md`.
