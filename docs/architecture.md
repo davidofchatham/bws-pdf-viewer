@@ -1,26 +1,34 @@
-# SPEC — BWS PDF Viewer (0.4.7, pre-1.0)
+# Architecture — BWS PDF Viewer
 
-Durable behavioral contract. The §V invariants are what the code must hold; they
-outlive any single cycle. Goal + surface map moved to [CONTEXT.md](CONTEXT.md);
-cross-cutting decisions + rationale moved to [docs/adr/](docs/adr/). This file
-now carries the invariant ledger plus a stub of the current cycle's task/bug
-history — full cycle detail lives in git and `docs/history/speckit/`.
+The architecture home: the goal, the file map, and the invariants the code must hold, each with the alternatives that lost (`Rejected:`) under the invariant they justify. Cite an invariant by id (`V28`) in code and docs; cite a surface by its `I.*` label. Terms live in [GLOSSARY.md](../GLOSSARY.md); non-bug work lives in [future-work.md](future-work.md); where every other kind of decision lives is in [agents/domain.md](agents/domain.md).
 
-- `check` diffs code vs §V. `backprop` appends a bug row (§B stub below) + the
-  invariant it hardens (§V) on any new regression.
-- Invariants cite surfaces by short name (`I.native`, `I.wp`, …) — resolved in
-  [CONTEXT.md](CONTEXT.md) — and decisions as `ADR-000N` — in
-  [docs/adr/](docs/adr/).
-- Future / deferred items (zoom, in-viewer search, Gutenberg block, PDF.js
-  double-bundle dedup, true single-page flipbook) are tracked in
-  [docs/future-work.md](docs/future-work.md) (FW-7, FW-8, FW-9, FW-13, FW-5), resumed individually as their own efforts.
+> **This file OWNS the goal, the file map and the invariants.** Other docs link here; they must not restate these. Anti-drift rules: [CLAUDE.md](../CLAUDE.md) § Doc discipline.
 
-> **This file OWNS the §V behavioral contract + the current cycle's §T/§B
-> ledger.** It does NOT restate the goal/surface map (→ CONTEXT.md) or decision
-> rationale (→ docs/adr/); it cites them by short name. Anti-drift rules:
-> CLAUDE.md § Doc discipline.
+## Goal
 
-## §V — invariants
+WordPress plugin that embeds a PDF inline. Three render modes — flipbook
+(animated page-turn) / native (PDF.js) / image (fallback) — device-adaptive,
+one shared integrated toolbar across modes, WCAG 2.2 AA, multi-domain
+(BWS portal).
+
+## File map
+
+The delivered/edited files and what each owns. Invariants cite these
+by short name (`I.native`, `I.wp`, …).
+
+| ref | file | owns |
+|-----|------|------|
+| **I.index**    | `src/index.js` | router: `nativeMode`→nativePageViewer, `singlepage`→singlePageViewer, else flipbookViewer |
+| **I.flip**     | `src/flipbookviewer.js` | animated flipbook; spread layout; `goToPage`; HiDPI outputScale |
+| **I.native**   | `src/nativepageviewer.js` | PDF.js 3-layer render; IntersectionObserver lazy-load; memory cleanup ~5–7 pages |
+| **I.single**   | `src/singlepageviewer.js` | image-based mobile / fallback viewer |
+| **I.controls** | `includes/bws-pdf-viewer.js` (`addNavigationControls` / `setupToolbarRovingFocus` / `getStrings`) + `includes/bws-pdf-viewer.css` | shared toolbar, single impl, both modes. (Planned `src/controls.js` never built; toolbar shipped in the WP layer.) |
+| **I.wp**       | `includes/bws-pdf-viewer.js` | device detect, mode select, `createBookWrapper`, responsive, keyboard nav |
+| **I.php**      | `bws-pdf-viewer.php` | shortcode `[bws_pdf]`, `register_assets()`, config merge / precedence |
+| **I.admin**    | `includes/admin.php` | Settings > BWS PDF Viewer; defaults + mode restrictions + sanitize |
+| **I.css**      | `includes/bws-pdf-viewer.css` | toolbar overlay, text/annotation layer positioning |
+
+## Invariants
 
 - **V1. Three modes, one router.** `src/index.js` selects nativePageViewer (opts.singlepage &&
   opts.nativeMode) / singlePageViewer (opts.singlepage) / flipbookViewer (else). Cites I.index.
@@ -32,7 +40,7 @@ history — full cycle detail lives in git and `docs/history/speckit/`.
 - **V4. Reduced-motion kills flip/slide.** `prefers-reduced-motion: reduce` ⇒ shouldAnimate=false;
   fade/instant only. Cites I.wp, I.flip.
 - **V5. Config precedence honored 3-tier.** defaults→admin option→shortcode; att wins per-key;
-  admin default applies only when att absent. `show_controls` MUST follow this (see B6). Cites I.php, ADR-0005.
+  admin default applies only when att absent. `show_controls` MUST follow this (see B6). Merged in `shortcode_handler()`. Cites I.php.
 - **V6. Page nav context-dependent; optional controls togglable.** page-nav group (prev/next +
   page-input + "of N" counter + first/last-page buttons) rendered ONLY when navigation is meaningful = flipbook multi-page.
   HIDDEN when meaningless: continuous/document mode (`config.singlepage` true — all pages stacked/
@@ -43,18 +51,23 @@ history — full cycle detail lives in git and `docs/history/speckit/`.
   scroll-tracking count adds no value.) Cites I.controls,I.php.
 - **V7. Native mode uses maintained PDF.js layer builders.** canvas + TextLayerBuilder (selection +
   browser find) + AnnotationLayerBuilder (links) + shared link service; internal links navigate,
-  external new-tab. No hand-rolled layer positioning. Cites I.native, ADR-0002.
+  external new-tab. No hand-rolled layer positioning. Cites I.native, V15.
 - **V8. Shortcode atts revisable, not frozen (pre-1.0).** Current set: `view_mode`,`layout`,
   `book_layout`,`force_native`,`show_controls`,`show_fullscreen`,`show_print`,`show_download`,`width`,`height`
   (`singlepage` legacy alias for `document`). NONE is cemented — any may be renamed/removed/
   repurposed before 1.0 when justified. On change: sweep the portal's shortcodes, fix usages,
-  changelog it (ADR-0007). Before a 1.0 freeze, review the WHOLE att surface for vestigial/misleading
+  changelog it. Before a 1.0 freeze, review the WHOLE att surface for vestigial/misleading
   controls. Known vestigial: `layout` (auto/single/double) does nothing in the flipbook renderer
   (which only draws spreads — V24/B17) and is dead in document mode; KEPT for now as the anchor for
   the planned true single-page-flipbook feature (issue #1, FW-5), NOT because it currently works. Cites
-  I.php,I.admin,ADR-0007.
+  I.php,I.admin.
+  _Rejected:_ freezing atts for back-compat. That carried a public-1.0 discipline onto a pre-1.0
+  internal tool with no unknown third-party embeds; the one consumer's shortcodes are generated by us.
 - **V9. One control-set impl, all modes.** Exactly one toolbar component (I.controls, in WP layer)
-  serves flipbook + native; no duplicate control code. Cites I.controls, ADR-0001.
+  serves flipbook + native; no duplicate control code. Cites I.controls.
+  _Rejected:_ rewriting working control logic, or building our own control where the library or
+  PDF.js already provides one. It burns effort and reintroduces solved bugs; extend the existing
+  seam (`createBookWrapper`, `addNavigationControls`) instead.
 - **V10a. Toolbar controls sit in wrap-together subgroups.** Controls are grouped into three
   `.bws-pdf-controls-group` blocks — page-info (the standalone range counter), nav (first | prev |
   Jump-to input | next | last, input in the MIDDLE), utility (fullscreen | print | download) — each
@@ -80,7 +93,11 @@ history — full cycle detail lives in git and `docs/history/speckit/`.
   keep ~5-7 pages, tear down distant; no unbounded growth on 100+ page docs. Cites I.native.
 - **V14. Single concurrent render per page.** in-flight guard: no duplicate concurrent render of
   same page; loading flag set before await, cleared after (see B4,B5). Cites I.native.
-- **V15. No full PDF.js viewer / iframe.** components only. Cites I.native, ADR-0002.
+- **V15. No full PDF.js viewer / iframe.** components only. Cites I.native.
+  _Rejected:_ embedding PDF.js's prebuilt `viewer.html` (directly or in an iframe). It drags in the
+  whole chrome, styling and update surface, fights our own toolbar, theming and container-responsive
+  layout, and couples us to a UI we don't control. Reassessed against the convergence work in
+  [reference/pdfjs-reuse-menu.md](reference/pdfjs-reuse-menu.md); not a fixed decision.
 - **V16. Fullscreen hidden not disabled where unsupported.** e.g. iPhone Safari → button absent,
   not inert. Toggle updates announced label (enter/exit). Cites I.controls.
 - **V17. Event listeners cleaned on reinit.** responsive rebuild MUST NOT leak fullscreen/other
@@ -154,7 +171,7 @@ history — full cycle detail lives in git and `docs/history/speckit/`.
   (integration glue) & Mozilla `dist/pdf.js` (PDF.js lib) — 3 delivered JS, 3 concerns, no
   name overlap. UMD global still `flipbook` (legacy; rename = separate churn, FW-6). On any
   future asset rename: sweep PHP enqueue + test harnesses + `scripts/package.mjs` + docs, rebuild
-  (webpack `clean:true` drops old file), changelog. Cites I.index,I.php,ADR-0008.
+  (webpack `clean:true` drops old file), changelog. Cites I.index,I.php (the PDF.js double-bundle is tracked as FW-13).
 
 - **V27. Toolbar roving-focus never strands focus.** The toolbar is ONE Tab stop (WAI-ARIA
   toolbar / roving tabindex): exactly one control has `tabindex=0`, the rest `-1`; arrows move
@@ -206,17 +223,17 @@ history — full cycle detail lives in git and `docs/history/speckit/`.
 
 - **V30. Toolbar buttons carry PDF.js icons; icon-only buttons stay named.** Toolbar controls
   render an inline SVG glyph adopted from PDF.js (`pdfjs-dist/web/images/*`, Apache-2.0 — reuse, ⊥
-  hand-draw, ADR-0001/ADR-0002 spirit): prev/next, first/last, download, print, presentationMode(=fullscreen).
+  hand-draw, V9/V15 spirit): prev/next, first/last, download, print, presentationMode(=fullscreen).
   SVG inlined into the WP layer as a `currentColor`-filled string (⊥ enqueue as separate asset /
-  cross-origin fetch — [[portal-asset-origin-mismatch]]; ⊥ hardcoded `fill` — glyph MUST inherit
+  cross-origin fetch — V35; ⊥ hardcoded `fill` — glyph MUST inherit
   toolbar text color so it themes + meets AA contrast, V10). Each icon SVG MUST be
   `aria-hidden="true"` + `focusable="false"` so the SR reads the button, not the glyph. Button text
   policy: Prev/Next = icon **+ text** (primary, most-used); Fullscreen/Print/Download/First/Last =
   **icon-only** and THEREFORE MUST carry BOTH an `aria-label` (SR name) AND a `title` (mouse tooltip)
   — an icon-only control with no accessible name is a WCAG name-role-value fail. ≥24×24px target
-  (V10) holds: 16px glyph + padding. Cites I.controls,I.css,V10,ADR-0001.
+  (V10) holds: 16px glyph + padding. Cites I.controls,I.css,V9,V10.
 - **V31. Toolbar docks by presentation mode, via real DOM order.** Document/flow mode
-  (`config.singlepage===true` — continuous stack, [[viewer-mode-taxonomy]]) docks the toolbar
+  (`config.singlepage===true` — continuous stack) docks the toolbar
   ABOVE the pages (`insertBefore(container.firstChild)`); flip/book/spread mode
   (`singlepage===false`) docks it BELOW (`appendChild`, prior behavior). Position MUST move the real
   DOM node, ⊥ CSS `order`/`column-reverse` — DOM order IS reading + Tab order (V27); a CSS-only flip
@@ -246,7 +263,7 @@ history — full cycle detail lives in git and `docs/history/speckit/`.
   page-nav (V6) so no range. Cites I.controls,I.wp,V6,V11,V28.
 
 - **V34. Print emits the PDF, never the host page.** The Print button (V30) MUST print the document
-  itself, ⊥ `window.print()` — that prints the whole theme page around a canvas-only viewer (see B25).
+  itself, ⊥ `window.print()` — that prints the whole theme page around a canvas-only viewer (B25, 2026-10-30: the dialog printed the host page, the PDF squeezed onto page 1).
   Source = `wrapper.pdf.getData()`, the bytes PDF.js already fetched: wrapped in a `blob:` URL it is
   same-origin with the page even when the PDF host is not (the portal case), so a hidden `aria-hidden`
   iframe on that URL is scriptable and `contentWindow.print()` hands off to the browser's native PDF
@@ -258,29 +275,15 @@ history — full cycle detail lives in git and `docs/history/speckit/`.
   browser whose `print()` silently no-ops without throwing (mobile Safari) gets no fallback. Cites
   I.controls,I.wp,V30,B25.
 
+- **V35. Source and asset URLs track the current domain.** The plugin runs on several domains, and a
+  host may rewrite `the_content` to another origin. The PDF source goes through the plugin's
+  URL-rewriting integration point; every enqueued asset URL is built with `plugin_dir_url()`. Where a
+  host rewrites content but not enqueued assets, the `bws_pdf_viewer_plugin_url` filter lets it align
+  the asset origin. Cites I.php.
+  _Rejected:_ hardcoding any domain. The failure it prevents is a cross-origin `SecurityError`
+  loading `pdf.worker.js` when content was rewritten to another origin and assets were not.
+
 - **V20. [deferred] Site-wide mode disable not built.** `disabled_modes` default exists in
   `bws-pdf-viewer.php` but no admin UI renders/sanitizes it; `view_mode` is single-select (pick
   one — neither document nor flipbook is individually disableable). If per-mode enable/disable
   ships (T-future), admin MUST keep ≥1 of document/flipbook enabled. Cites I.admin.
-
-## §T — tasks (cycle stub)
-
-001-pdf-viewer (viewer core) + 002-integrated-viewer-toolbar (shared toolbar +
-PDF.js component adoption) — **all coded, tested, merged to master.** The full
-task table (T1–T34) is retired; every task shipped and its behavior is pinned by
-the §V invariant it cites. Detail: git history + `docs/history/speckit/`.
-
-Next cycle's tasks append below this line.
-
-## §B — bugs (cycle stub)
-
-B1–B24 (2026-07-07 → 2026-07-09) — **all fixed**, each folded into the §V
-invariant that now guards against its return (bug rows cite `V…`; invariants
-cite `see B…`). The standalone bug table is retired; the regressions live on as
-the invariants that prevent them. New regressions append below via `backprop`:
-one row (cause + fix) + the §V invariant hardened.
-
-| id | date | cause | fix (invariant) |
-|----|------|-------|-----------------|
-| B25 | 2026-10-30 | Print button called `window.print()` → dialog printed the whole host page (PDF squished onto page 1, theme footer on page 2); viewer is canvas-only, PDF host is cross-origin so an iframe on `config.pdf` is unscriptable | V34: print the `getData()` blob via same-origin hidden iframe, tab fallbacks |
-| _(next regression here)_ | | | |
