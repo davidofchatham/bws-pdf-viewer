@@ -95,9 +95,19 @@ Detail home: `.scratch/viewer-convergence/map.md`; committed design docs `docs/d
 
 Progress: Engine pick (own Canvas-2D warp), native-core rung (builders plus `PDFPageView`) and responsive model decided in GitHub tickets #10 to #15 and #18, all closed. Open local tickets: `viewer-convergence/01` (ratify the spec), `viewer-convergence/02` (seam test suite spec).
 
-Open: the ADRs and V-invariants; N-up arrangement; image-fallback fate; toolbar dock side.
+Open: the invariant amendments; N-up arrangement; image-fallback fate; toolbar dock side.
 
-Blocked by: —  •  Interacts with: FW-1, FW-2, FW-5, FW-6, FW-7, FW-8, FW-11, FW-12, FW-13
+Blocked by: —  •  Interacts with: FW-1, FW-2, FW-5, FW-6, FW-7, FW-8, FW-11, FW-12, FW-13, FW-15
+
+#### FW-15 — Retire ADR-0003 into the invariants
+
+`docs/adr/0003-container-width-responsive.md` is the one ADR left in the repo, kept only because the arrangement-axis design replaces it. When that design ships, fold what still holds into V3 and V24 with a Rejected entry for the alternative that lost, delete the file and the draft, and mark it retired in `docs/adr/README.md`. If the replacement itself clears the six-rule bar there, it becomes the ADR instead.
+
+Detail home: `docs/design/adr-0003-supersede-draft.md`, `docs/design/responsive-model.md`
+
+Progress: Not started.
+
+Blocked by: row:FW-14  •  Interacts with: FW-14
 
 ### Naming and packaging
 
