@@ -142,10 +142,10 @@ class BWS_PDF_Viewer {
      * Register scripts and styles
      *
      * Plugin base URL is filterable via 'bws_pdf_viewer_plugin_url' to support
-     * multi-domain deployments (e.g. BWS Portal System).
+     * multi-domain deployments.
      */
     public function register_assets() {
-        // Allow external plugins (e.g. BWS Portal System) to rewrite the plugin base URL.
+        // Allow external plugins (e.g. a multi-domain plugin) to rewrite the plugin base URL.
         // The returned URL MUST end with a trailing slash. Every asset URL is built
         // from it, never from a hardcoded domain: docs/architecture.md V35 holds the
         // contract and the failure it prevents.
@@ -220,7 +220,7 @@ class BWS_PDF_Viewer {
      *
      * The PDF source URL is the shortcode content (between opening and closing tags).
      * It is passed through the 'bws_pdf_viewer_pdf_url' filter before sanitisation,
-     * allowing external plugins (e.g. BWS Portal System) to rewrite it for multi-domain use.
+     * allowing external plugins (e.g. a multi-domain plugin) to rewrite it.
      *
      * Config merges defaults, then the admin option, then shortcode atts; a later tier
      * wins per key and an admin default applies only when the att is absent

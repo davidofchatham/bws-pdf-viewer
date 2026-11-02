@@ -215,7 +215,7 @@ image fallback for mobile devices. See README.md for instructions and details.
 = 3.0.0 =
 * MAJOR UPDATE: Rebranded as general-purpose accessible PDF viewer
 * BREAKING CHANGE: Default view mode changed to 'singlepage' (more accessible)
-* NEW: Portal System integration for multi-domain WordPress setups
+* NEW: Multi-domain plugin integration
 * NEW: Enhanced WCAG 2.1 AA accessibility compliance
 * NEW: Screen reader announcements for page changes
 * NEW: Complete keyboard navigation (Home/End keys)
@@ -244,7 +244,7 @@ image fallback for mobile devices. See README.md for instructions and details.
 Pre-release (pre-1.0). Not for production. Shortcode attributes and defaults may change between versions without a migration path — re-test before updating.
 
 = 3.0.0 =
-Major accessibility update! Default view mode is now 'singlepage' for better WCAG compliance. Existing settings are preserved. New Portal System integration for multi-domain sites. Enhanced screen reader support and keyboard navigation.
+Major accessibility update! Default view mode is now 'singlepage' for better WCAG compliance. Existing settings are preserved. New multi-domain plugin integration. Enhanced screen reader support and keyboard navigation.
 
 = 2.0.0 =
 Major update transforming the library into a full WordPress plugin with admin interface, accessibility features, and container-based responsive layouts.

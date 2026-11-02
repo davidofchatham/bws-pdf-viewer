@@ -40,7 +40,7 @@ Verify each item before proceeding. Document any exceptions in the Complexity Tr
       wired for container-based responsiveness. Mobile breakpoint corrected: 1024px → 767px.
       Flip/slide animations disabled under reduced-motion; fades permitted. Loading indicator
       to be added as part of toolbar controls implementation.
-- [x] **III. Interoperability** — Existing direct `bws_portal_*` function calls replaced with
+- [x] **III. Interoperability** — Existing direct `example_*` function calls replaced with
       `apply_filters('bws_pdf_viewer_pdf_url', $url)` and
       `apply_filters('bws_pdf_viewer_plugin_url', $url)` hooks. No hardcoded domain names.
       Worker URL handled via zero-config webpack approach (manual override to be removed).

@@ -300,7 +300,7 @@ fallback experience is screen-reader accessible.
 
 - The PDF source is provided as a URL; the viewer receives and renders it client-side.
 - The PDF source URL MUST be exposed through the plugin's URL rewriting integration point
-  (alongside script and asset URLs) to support multi-domain deployments via BWS Portal System.
+  (alongside script and asset URLs) to support multi-domain deployments via an external plugin.
   The actual rewriting logic is an infrastructure concern external to this plugin.
 - Password-protected PDFs are out of scope for this release.
 - Page navigation controls (prev/next buttons and page counter) are always visible and

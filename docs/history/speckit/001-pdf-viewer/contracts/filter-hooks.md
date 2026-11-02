@@ -2,7 +2,7 @@
 
 **Version**: 1.0.0
 **Defined in**: `bws-pdf-viewer.php`
-**Purpose**: Allow external plugins (e.g. BWS Portal System) to rewrite URLs without
+**Purpose**: Allow external plugins (e.g. a multi-domain plugin) to rewrite URLs without
 modifying this plugin's source code.
 
 ---
@@ -35,8 +35,8 @@ and JSON encoding into the page's `data-config` attribute.
 ### Usage
 
 ```php
-// BWS Portal System registers:
-add_filter( 'bws_pdf_viewer_pdf_url', 'bws_portal_modify_url' );
+// A multi-domain plugin registers:
+add_filter( 'bws_pdf_viewer_pdf_url', 'example_modify_url' );
 
 // Custom rewriter (example):
 add_filter( 'bws_pdf_viewer_pdf_url', function( string $url ): string {
@@ -86,8 +86,8 @@ is available as a fallback for worker URL resolution.
 ### Usage
 
 ```php
-// BWS Portal System registers:
-add_filter( 'bws_pdf_viewer_plugin_url', 'bws_portal_modify_url' );
+// A multi-domain plugin registers:
+add_filter( 'bws_pdf_viewer_plugin_url', 'example_modify_url' );
 
 // Custom base URL (example):
 add_filter( 'bws_pdf_viewer_plugin_url', function( string $url ): string {

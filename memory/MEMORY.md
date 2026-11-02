@@ -13,7 +13,7 @@ Committed: `75a650d` (v3.1.0 implementation), `3db38fd` (verification harness).
 **Next scope (not yet tasked):**
 - US4 (P3): admin settings page — global default mode, mode disable, default controls
 - US5 (P2): mobile image-preview fallback on viewer init failure
-- End-to-end test with bws-portal-system via `bws_pdf_viewer_pdf_url` / `bws_pdf_viewer_plugin_url` filters
+- End-to-end test with a multi-domain plugin via `bws_pdf_viewer_pdf_url` / `bws_pdf_viewer_plugin_url` filters
 - Cosmetic: narrow flipbook letterboxes page in tall dark box (dimension calc); traditional cover renders left-of-spread with blank right — confirm intended
 
 Files changed: `bws-pdf-viewer.php` (v3.1.0), `includes/bws-pdf-viewer.js` (full rewrite), `includes/bws-pdf-viewer.css`, `dist/` (rebuilt).
@@ -40,7 +40,7 @@ Files changed: `bws-pdf-viewer.php` (v3.1.0), `includes/bws-pdf-viewer.js` (full
 ## Key Principles Summary
 - Accessibility: WCAG 2.2 AA mandatory — keyboard nav, focus indicators, aria-labels, text layer searchable
 - UX: First page ≤2s on 10Mbps; ResizeObserver for layout; mobile breakpoint ≤767px (max-width:767px); flip/slide animations off with reduced-motion, fades permitted
-- Interoperability: browser floor inherited from bundled PDF.js (v6: Chrome 125+, Safari 18+/iOS 18+, Firefox ESR); no hardcoded URLs; viewer engine URLs dynamically resolved; multi-domain URL rewriting MUST be supported (via BWS Portal System or internal)
+- Interoperability: browser floor inherited from bundled PDF.js (v6: Chrome 125+, Safari 18+/iOS 18+, Firefox ESR); no hardcoded URLs; viewer engine URLs dynamically resolved; multi-domain URL rewriting MUST be supported (via an external plugin or internal)
 - Code Quality: ESLint zero errors; no hardcoded URLs/secrets; abstraction by developer confirmation
 - Testing: Manual — dev server + WordPress install; all three viewer modes; desktop + Safari iOS 18+
 

@@ -211,8 +211,8 @@ existing harness/verify pattern, with baseline PNG artifacts as today.
 5. **Mobile image fallback.** Does the converged core keep an image-engine
    fallback for low-memory devices, and does flip apply there too (snapshots
    are rasters anyway, so plausibly yes)?
-6. **Portal context.** All of this must hold in the portal-system cross-origin
-   asset setup (`bws_pdf_viewer_plugin_url` filter) — no new origin-bound
+6. **Multi-domain context.** All of this must hold when assets are served from a different
+   origin than the page (`bws_pdf_viewer_plugin_url` filter) — no new origin-bound
    assumptions in the overlay.
 7. **Flip-engine provenance (gates FW-12).** If the warp survives as a
    *separable* engine (option 4 porting source, now shown feasible incl.

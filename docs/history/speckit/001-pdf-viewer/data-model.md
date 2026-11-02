@@ -131,7 +131,7 @@ HTML-entity-escaped by `esc_attr(wp_json_encode($config))`.
 
 ## WordPress Filter Hooks
 
-Integration points for URL rewriting by BWS Portal System or other plugins.
+Integration points for URL rewriting by a multi-domain plugin or other plugins.
 
 ### `bws_pdf_viewer_pdf_url`
 
@@ -141,8 +141,8 @@ Filters the PDF source URL before it is JSON-encoded into the page.
 // Registration (in bws-pdf-viewer.php, after URL validation):
 $pdf_url = apply_filters('bws_pdf_viewer_pdf_url', $pdf_url);
 
-// BWS Portal System hooks in:
-add_filter('bws_pdf_viewer_pdf_url', 'bws_portal_modify_url');
+// A multi-domain plugin hooks in:
+add_filter('bws_pdf_viewer_pdf_url', 'example_modify_url');
 ```
 
 - **Parameter**: `string $url` — the validated PDF source URL
@@ -157,8 +157,8 @@ Filters the plugin base URL used when registering all plugin scripts and styles.
 // Registration (in bws-pdf-viewer.php):
 $plugin_url = apply_filters('bws_pdf_viewer_plugin_url', BWS_PDF_VIEWER_PLUGIN_URL);
 
-// BWS Portal System hooks in:
-add_filter('bws_pdf_viewer_plugin_url', 'bws_portal_modify_url');
+// A multi-domain plugin hooks in:
+add_filter('bws_pdf_viewer_plugin_url', 'example_modify_url');
 ```
 
 - **Parameter**: `string $url` — `plugin_dir_url(__FILE__)`, trailing slash included

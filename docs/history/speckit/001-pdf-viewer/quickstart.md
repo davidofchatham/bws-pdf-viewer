@@ -166,9 +166,9 @@ Run checks 3 and 4 above in each:
 - [ ] Safari iOS 14 (real device or Xcode Simulator) — confirm single-page layout, no fullscreen button crash
 - [ ] Edge (latest, desktop)
 
-### 9. URL rewriting (BWS Portal System, if available)
+### 9. URL rewriting (multi-domain plugin, if available)
 
-- [ ] With BWS Portal System active and `bws_pdf_viewer_pdf_url` filter registered:
+- [ ] With a multi-domain plugin active and `bws_pdf_viewer_pdf_url` filter registered:
       PDF request uses the rewritten URL in browser network tab
 - [ ] All plugin assets (JS, CSS) load from the rewritten plugin base URL
 - [ ] Console: no 404s for assets; no hardcoded domain references

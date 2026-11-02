@@ -37,16 +37,16 @@ flipbook mode would be needed.
 
 **Rationale**:
 - Idiomatic WordPress plugin-to-plugin integration; no coupling between plugins
-- BWS Portal System adds `add_filter()` callbacks without modifying this plugin's source
-- Replaces tightly-coupled direct calls to `bws_portal_get_domain_context()` /
-  `bws_portal_modify_url()` which break when BWS Portal System is absent
-- Easier to test (add a test filter without installing Portal System)
+- A multi-domain plugin adds `add_filter()` callbacks without modifying this plugin's source
+- Replaces tightly-coupled direct calls to `example_get_domain_context()` /
+  `example_modify_url()` which break when the multi-domain plugin is absent
+- Easier to test (add a test filter without installing the multi-domain plugin)
 
 **Current code to replace** (in `bws-pdf-viewer.php`, lines 185–211):
 ```php
 // REMOVE: direct portal coupling block
 if (filter_var($atts['enable_portal_integration'], FILTER_VALIDATE_BOOLEAN) &&
-    function_exists('bws_portal_get_domain_context') && ...) { ... }
+    function_exists('example_get_domain_context') && ...) { ... }
 
 // REPLACE WITH:
 $pdf_url = apply_filters('bws_pdf_viewer_pdf_url', $pdf_url);
@@ -61,8 +61,8 @@ wp_register_script('bws-pdfjs-lib', $plugin_url . 'dist/pdf.js', ...);
 
 **Alternatives considered**:
 - Configuration function (`bws_pdf_register_url_transformer`): more complex API, harder
-  to document for BWS Portal System integration.
-- Data-attribute post-processing: fragile, requires full HTML parsing by portal system.
+  to document for multi-domain plugin integration.
+- Data-attribute post-processing: fragile, requires full HTML parsing by a multi-domain plugin.
 
 ---
 
@@ -160,7 +160,7 @@ rely on the zero-config webpack approach (`GlobalWorkerOptions.workerPort`)
 - The zero-config approach sets `GlobalWorkerOptions.workerPort` via MessageChannel — no
   path string needed
 
-**Note on multi-domain**: If the worker URL needs rewriting (for BWS Portal System cross-domain
+**Note on multi-domain**: If the worker URL needs rewriting (for the multi-domain plugin's cross-domain
 delivery), pass `bwsPdfViewerData.pluginUrl` (already rewritten server-side via the
 `bws_pdf_viewer_plugin_url` filter) and use it as the `workerSrc` fallback only when
 `workerPort` is not set. This avoids breaking the zero-config path.
@@ -214,8 +214,8 @@ need a guard for single-page books.
 **Decision**: Remove `enable_portal_integration` attribute from the shortcode API and
 `$default_options`
 
-**Rationale**: With filter hooks, the portal integration is always active when BWS Portal
-System registers its filter. A per-shortcode boolean is redundant and confusing. Pre-deployment
+**Rationale**: With filter hooks, the multi-domain integration is always active when a multi-domain
+plugin registers its filter. A per-shortcode boolean is redundant and confusing. Pre-deployment
 breaking change — acceptable per constitution. Remove from `shortcode_atts()` call and
 `$default_options` array.
 
