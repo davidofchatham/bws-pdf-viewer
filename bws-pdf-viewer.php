@@ -146,7 +146,9 @@ class BWS_PDF_Viewer {
      */
     public function register_assets() {
         // Allow external plugins (e.g. BWS Portal System) to rewrite the plugin base URL.
-        // The returned URL MUST end with a trailing slash.
+        // The returned URL MUST end with a trailing slash. Every asset URL is built
+        // from it, never from a hardcoded domain: docs/architecture.md V35 holds the
+        // contract and the failure it prevents.
         $plugin_url = apply_filters('bws_pdf_viewer_plugin_url', BWS_PDF_VIEWER_PLUGIN_URL);
 
         // PDF.js library with automatic worker setup (webpack.mjs zero-config approach)
@@ -219,6 +221,10 @@ class BWS_PDF_Viewer {
      * The PDF source URL is the shortcode content (between opening and closing tags).
      * It is passed through the 'bws_pdf_viewer_pdf_url' filter before sanitisation,
      * allowing external plugins (e.g. BWS Portal System) to rewrite it for multi-domain use.
+     *
+     * Config merges defaults, then the admin option, then shortcode atts; a later tier
+     * wins per key and an admin default applies only when the att is absent
+     * (architecture V5; the five-layer path for a new att is in CLAUDE.md).
      */
     public function shortcode_handler($atts, $content = null) {
         // Get PDF URL from wrapped content

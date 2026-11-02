@@ -56,7 +56,7 @@ A bare integer is ambiguous between all three. A citation of another repo's id n
 - A lifted file is frozen, except that an INCORRECT identifier (a renamed version, a wrong SHA, a dead issue number, a moved path) is repaired in place. A STALE claim is not: a design the code has since moved past was true when written.
 - Never lift an unbuilt plan.
 - The PR body is the second record, not a substitute: it holds the review conversation and what changed under challenge. Where there is a PR, write both.
-- Load-bearing parts migrate out at ship: invariants → SPEC §V, decisions → `docs/adr/`, delta → `readme.txt` changelog, cause → commit body.
+- Load-bearing parts migrate out at ship: invariants and decisions → `docs/architecture.md`, delta → `readme.txt` changelog, cause → commit body.
 - Code cites anchors (`V*`, `ADR-*`), never spec coordinates.
 
 ## PRs as a request surface

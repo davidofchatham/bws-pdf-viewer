@@ -1,6 +1,6 @@
 # ADR-0003 — Container-width responsive via ResizeObserver, not viewport
 
-**Status:** accepted
+**Status:** accepted — pending retirement into the invariants when the arrangement-axis design ships (FW-15)
 **Cites:** I.wp · relates to invariant V3
 
 ## Context

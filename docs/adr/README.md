@@ -1,25 +1,40 @@
 # Architecture Decision Records
 
-Cross-cutting decisions for BWS PDF Viewer and the rationale behind them.
-These were extracted from SPEC.md §C (constraints) so the durable *why* has a
-stable home independent of the per-cycle task/bug ledger.
+An ADR is the exception here. A decision lives with the thing it justifies:
 
-Invariants in [../../SPEC.md](../../SPEC.md) cite these as `ADR-000N`; the file
-map + glossary live in [../../CONTEXT.md](../../CONTEXT.md).
+| Decision about | Home |
+|---|---|
+| A term, and why it beat the names that lost | the entry in [GLOSSARY.md](../../GLOSSARY.md), as a `Rejected:` line |
+| An invariant, and why it is the rule | the `V*` in [docs/architecture.md](../architecture.md), as a `Rejected:` list |
+| A per-class enforced invariant | PHPDoc on the enforcing class |
+| A proposal not yet accepted | an `FW-N` item in [docs/future-work.md](../future-work.md) |
+| A process decision | [CLAUDE.md](../../CLAUDE.md) and `docs/agents/`; `git log` on them is the record |
+| A removal or a behavior change | the changelog entry |
 
-> **This directory OWNS cross-cutting decisions + their rationale.** SPEC/CLAUDE
-> cite an ADR by number; they must not restate its body. New decision → new
-> numbered ADR + a row here. Anti-drift rules: CLAUDE.md § Doc discipline.
-> An ADR is superseded, never silently edited away — mark status + link the
-> successor (see ADR-0007, which supersedes the old frozen-atts rule).
+An ADR is written only when all six hold:
 
-| ADR | title | status |
-|-----|-------|--------|
-| [0001](0001-reuse-first.md) | Reuse-first: evolve working controls, no rewrite | accepted |
-| [0002](0002-no-full-pdfjs-viewer.md) | No prebuilt PDF.js web viewer; components only | accepted |
-| [0003](0003-container-width-responsive.md) | Container-width responsive via ResizeObserver, not viewport | accepted |
-| [0004](0004-plugin-url-rewriting.md) | PDF source + assets through plugin URL rewriting (multi-domain) | accepted |
-| [0005](0005-config-precedence.md) | Three-tier config precedence | accepted |
-| [0006](0006-pdfjs-zero-config-webpack.md) | PDF.js zero-config webpack integration | accepted |
-| [0007](0007-shortcode-atts-revisable.md) | Shortcode attrs revisable pre-1.0, not frozen | accepted (2026-07-09, supersedes frozen rule) |
-| [0008](0008-pdfjs-double-bundle-debt.md) | PDF.js internals double-bundled — accepted debt | accepted (deferred) |
+1. **Hard to reverse.** Changing your mind costs real work (a storage shape, a wire format), not a naming or layout preference.
+2. **Surprising without context.** A reader asks "why this way?", not "what is this called?"
+3. **A real trade-off.** You can name the alternative that lost and why.
+4. **Not same-session.** The decision has survived at least one attempt to reopen it.
+5. **Shipped.** No `proposed` ADRs; unbuilt intent is an `FW-N` item.
+6. **Never vocabulary.** A naming decision is a glossary entry.
+
+Process decisions never qualify. A repo with no stored data a user cannot be migrated off should expect to write none.
+
+Numbers are permanent: a retired number is never reused, and the gap says it was tried and retired. Code and docs cite the invariant (`V28`), not an ADR number.
+
+## Redirect map
+
+The eight ADRs were extracted from the old spec in one commit and none was ever tested against the bar above. None cleared it.
+
+| ADR | Outcome | Now lives at |
+|-----|---------|--------------|
+| 0001 Reuse-first | retired | `Rejected:` under V9; the working rule in [CLAUDE.md](../../CLAUDE.md) § Working rules |
+| 0002 No full PDF.js viewer | retired | `Rejected:` under V15 |
+| [0003](0003-container-width-responsive.md) Container-width responsive | accepted, pending retirement | retires with the arrangement-axis design (FW-15); V3 and V24 meanwhile |
+| 0004 Plugin URL rewriting | retired | V35, and PHPDoc on `register_assets()` |
+| 0005 Three-tier config precedence | retired | V5, and PHPDoc on `shortcode_handler()` |
+| 0006 PDF.js zero-config webpack | retired | the comment at the `pdfjs-dist/webpack.mjs` entry in `webpack.config.js` |
+| 0007 Shortcode atts revisable pre-1.0 | retired | `Rejected:` under V8; the working rule in [CLAUDE.md](../../CLAUDE.md) § Working rules |
+| 0008 PDF.js double-bundled | retired | accepted debt, tracked as FW-13 |

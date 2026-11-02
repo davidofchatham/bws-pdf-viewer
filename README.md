@@ -12,7 +12,7 @@ A WordPress plugin that embeds PDFs as an animated flipbook or a scrollable vert
 <!-- This file is the PUBLIC / end-user doc: install, usage, shortcode examples,
      filter-hook cookbook, requirements. It OWNS those. It does NOT restate the
      authoritative att defaults (→ bws-pdf-viewer.php), the behavioral contract
-     (→ SPEC.md §V), or decision rationale (→ docs/adr/). Anti-drift rules:
+     (→ docs/architecture.md), or decision rationale (→ the Rejected lists there). Anti-drift rules:
      CLAUDE.md § Doc discipline. -->
 
 

@@ -89,15 +89,25 @@ Blocked by: code:convergence spec ratified (`viewer-convergence/01` resolved)  �
 
 #### FW-14 — Viewer convergence: one accessible core, flip as transition effect
 
-Converge the three engines onto a persistent native core with a transient flip-animation overlay, with a progressive-enhancement escape hatch to instant swap. Local wayfinder effort; the destination is a ratified ADR plus SPEC V-invariants, then implementation.
+Converge the three engines onto a persistent native core with a transient flip-animation overlay, with a progressive-enhancement escape hatch to instant swap. Local wayfinder effort; the destination is amended `docs/architecture.md` invariants plus a Rejected list for the alternatives that lost, then implementation.
 
 Detail home: `.scratch/viewer-convergence/map.md`; committed design docs `docs/design/viewer-convergence.md`, `docs/design/responsive-model.md`, `docs/reference/pdfjs-reuse-menu.md`
 
 Progress: Engine pick (own Canvas-2D warp), native-core rung (builders plus `PDFPageView`) and responsive model decided in GitHub tickets #10 to #15 and #18, all closed. Open local tickets: `viewer-convergence/01` (ratify the spec), `viewer-convergence/02` (seam test suite spec).
 
-Open: the ADRs and V-invariants; N-up arrangement; image-fallback fate; toolbar dock side.
+Open: the invariant amendments; N-up arrangement; image-fallback fate; toolbar dock side.
 
-Blocked by: —  •  Interacts with: FW-1, FW-2, FW-5, FW-6, FW-7, FW-8, FW-11, FW-12, FW-13
+Blocked by: —  •  Interacts with: FW-1, FW-2, FW-5, FW-6, FW-7, FW-8, FW-11, FW-12, FW-13, FW-15
+
+#### FW-15 — Retire ADR-0003 into the invariants
+
+`docs/adr/0003-container-width-responsive.md` is the one ADR left in the repo, kept only because the arrangement-axis design replaces it. When that design ships, fold what still holds into V3 and V24 with a Rejected entry for the alternative that lost, delete the file and the draft, and mark it retired in `docs/adr/README.md`. If the replacement itself clears the six-rule bar there, it becomes the ADR instead.
+
+Detail home: `docs/design/adr-0003-supersede-draft.md`, `docs/design/responsive-model.md`
+
+Progress: Not started.
+
+Blocked by: code:the arrangement-axis design has shipped (V3 and V24 rewritten)  •  Interacts with: FW-14
 
 ### Naming and packaging
 
@@ -127,7 +137,7 @@ Two follow-ons to the `bws-viewer-engines.js` rename: (a) split the single bundl
 
 Detail home: `.scratch/plans/ideas.md` §FW-6
 
-Progress: The bundle rename (SPEC V26) shipped. Split and UMD rename not started.
+Progress: The bundle rename (V26) shipped. Split and UMD rename not started.
 
 Blocked by: decision:whether per-engine chunking survives convergence (one core, one bundle)  •  Interacts with: FW-12, FW-13, FW-14
 
@@ -145,9 +155,9 @@ Blocked by: —  •  Interacts with: FW-6, FW-14
 
 #### FW-13 — Dedup PDF.js internals bundled twice
 
-`dist/bws-viewer-engines.js` bundles a second copy of PDF.js display internals alongside `dist/pdf.js` (about +182KB). Functional, wasted wire bytes only. ADR-0008 accepts it for now; the convergence design resolves it as a side effect.
+`dist/bws-viewer-engines.js` bundles a second copy of PDF.js display internals alongside `dist/pdf.js` (about +182KB). Functional, wasted wire bytes only. It is accepted debt for now; the convergence design resolves it as a side effect.
 
-Detail home: `docs/adr/0008-pdfjs-double-bundle-debt.md`; `.scratch/plans/pdfjs-double-bundle.md` (the three dedup options)
+Detail home: `.scratch/plans/pdfjs-double-bundle.md` (the three dedup options)
 
 Progress: Not started. Migrated here from GitHub #4 on 2026-11-02.
 
@@ -183,7 +193,7 @@ The visible counter shows a spread's page range (`5–6 of 12`) but `announcePag
 
 Detail home: `.scratch/plans/ideas.md` §FW-10
 
-Progress: Not started. Deliberately out of scope for SPEC V33, which covers the visible counter only.
+Progress: Not started. Deliberately out of scope for V33, which covers the visible counter only.
 
 Blocked by: —  •  Interacts with: —
 
@@ -197,7 +207,7 @@ Detail home: `.scratch/plans/ideas.md` §FW-9
 
 Progress: Not started.
 
-Blocked by: decision:when the SPEC V8 shortcode attr surface is frozen  •  Interacts with: —
+Blocked by: decision:when the V8 shortcode attr surface is frozen  •  Interacts with: —
 
 ## Closed / retired
 
@@ -205,7 +215,7 @@ Append-only ledger. Ids are **permanent**: a retired `FW-N` is never reused or r
 
 | ID | Item | Outcome | Landed / detail home |
 |---|---|---|---|
-| FW-4 | First / last page jump buttons | Shipped in the toolbar-icons effort (SPEC T30, 2026-07-09); no separate GitHub issue. | `SPEC.md` V6 |
+| FW-4 | First / last page jump buttons | Shipped in the toolbar-icons effort (T30, 2026-07-09); no separate GitHub issue. | `docs/architecture.md` V6 |
 
 ## Maintenance
 

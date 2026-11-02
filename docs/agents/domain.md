@@ -4,48 +4,38 @@ How the engineering skills should consume this repo's domain documentation when 
 
 ## Before exploring, read these
 
-- **`CONTEXT.md`** at the repo root, or
-- **`CONTEXT-MAP.md`** at the repo root if it exists — it points at one `CONTEXT.md` per context. Read each one relevant to the topic.
-- **`docs/adr/`** — read ADRs that touch the area you're about to work in. In multi-context repos, also check `src/<context>/docs/adr/` for context-scoped decisions.
+- **`GLOSSARY.md`** at the repo root: the project's vocabulary, with a `Rejected:` line where a name lost.
+- **`docs/architecture.md`**: the architecture home. The goal, the file map (`I.*`) and the invariants (`V*`), each with a `Rejected:` list for the alternatives that lost. Read the invariants that touch the area you are about to work in.
+- **`docs/adr/README.md`**: the redirect map for retired ADRs, and the bar a new one must clear. Read an ADR file only if the map lists it as a survivor (today `0003`, pending retirement).
 
-If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The producer skill (`/grill-with-docs`) creates them lazily when terms or decisions actually get resolved.
+If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront.
 
-## File structure
+## Who owns what
 
-Single-context repo (most repos):
+| Concern | Owner |
+|---|---|
+| Vocabulary | `GLOSSARY.md` |
+| Goal, file map, invariants, rejected alternatives | `docs/architecture.md` |
+| Per-class enforced invariants | PHPDoc on the enforcing class |
+| Non-bug work (enhancements, open questions) | `docs/future-work.md` |
+| Bugs | GitHub Issues |
+| Tracker split, spec lifecycle | `docs/agents/issue-tracker.md` |
+| Public usage, install, shortcode examples | `README.md` |
+| Version history | the `readme.txt` changelog |
+| Finished specs | `docs/design-history/` |
 
-```
-/
-├── CONTEXT.md
-├── docs/adr/
-│   ├── 0001-event-sourced-orders.md
-│   └── 0002-postgres-for-write-model.md
-└── src/
-```
+## Where a decision lives
 
-Multi-context repo (presence of `CONTEXT-MAP.md` at the root):
+Cite the anchor, never a spec coordinate: an invariant by its id (`V28`), a term by its glossary entry. The table of where each kind of decision lives, and the six-rule bar an ADR must clear, are in `docs/adr/README.md`.
 
-```
-/
-├── CONTEXT-MAP.md
-├── docs/adr/                          ← system-wide decisions
-└── src/
-    ├── ordering/
-    │   ├── CONTEXT.md
-    │   └── docs/adr/                  ← context-specific decisions
-    └── billing/
-        ├── CONTEXT.md
-        └── docs/adr/
-```
+**Do not mint an ADR in ordinary work, and do not offer one for a rejected candidate or a settled choice**: add a `Rejected:` entry on the anchor instead.
 
 ## Use the glossary's vocabulary
 
-When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `CONTEXT.md`. Don't drift to synonyms the glossary explicitly avoids.
+When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `GLOSSARY.md`. Don't drift to a synonym the glossary rejects. If the concept isn't in the glossary yet, either you are inventing language the project doesn't use (reconsider) or there is a real gap (note it).
 
-If the concept you need isn't in the glossary yet, that's a signal — either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/grill-with-docs`).
+## Flag conflicts with a Rejected entry
 
-## Flag ADR conflicts
+If your output proposes an alternative that an invariant's `Rejected:` list or a glossary `Rejected:` line already names, surface it explicitly and argue against the recorded reason rather than restating the proposal:
 
-If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
-
-> _Contradicts ADR-0007 (event-sourced orders) — but worth reopening because…_
+> _Proposes the full PDF.js viewer, rejected under V15 (fights our toolbar and theming), but worth reopening because…_

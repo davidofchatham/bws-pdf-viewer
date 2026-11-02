@@ -14,7 +14,13 @@ const base = {
         umdNamedDefine: true,
       },
     },
-    // PDF.js library with automatic worker setup (zero-config webpack approach)
+    // PDF.js library with automatic worker setup (zero-config webpack approach).
+    // Import `pdfjs-dist/webpack.mjs`, NOT `pdfjs-dist/build/pdf.mjs`: it sets
+    // GlobalWorkerOptions.workerPort and emits the worker as the `pdf.worker.js`
+    // chunk (output.chunkFilename below), so there is no "Setting up fake worker"
+    // warning and no manual worker registration or enqueue. The `.mjs` rule below
+    // (`javascript/auto`) is required for it.
+    // https://github.com/mozilla/pdf.js/blob/master/examples/webpack/
     'pdf': {
       import: 'pdfjs-dist/webpack.mjs',
       library: {

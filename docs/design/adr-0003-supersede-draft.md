@@ -84,12 +84,12 @@ Each instance adapts independently.
   therefore pairs with `transition=none` until a dedicated flip-geometry spike
   exists (tracked in the map's Not-yet-specified). **Not a convergence blocker.**
 - **Downstream sweeps** (the convergence-spec ticket lands these, not this ADR):
-  - **SPEC V3** ("≥breakpoint(768)→spread") text dies → rewritten to the
+  - **V3** ("≥breakpoint(768)→spread") text dies → rewritten to the
     readability test.
-  - **SPEC V24 / B17** — canvas-dimension `pagesAcross` no longer keys off
+  - **V24 / B17** — canvas-dimension `pagesAcross` no longer keys off
     `numPages()===1`; it keys off the resolved arrangement. The vestigial
     `layout` string is fully retired.
-  - **ADR-0002** already superseded (builders-only → rung b) at #14; unrelated
+  - **V15 / ADR-0002 (now a Rejected line)** already superseded (builders-only → rung b) at #14; unrelated
     to this ADR, listed only to avoid re-questioning it.
 
 ### Escape hatch (reaffirmed)
