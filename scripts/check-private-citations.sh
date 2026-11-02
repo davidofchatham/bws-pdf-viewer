@@ -19,7 +19,7 @@
 # allowed to hold the path, which is exactly what lets every other file be held to
 # the rule.
 #
-# Copy-in template. Adapted from Site Views' scripts/check-private-citations.sh (read 2026-10-02);
+# Copy-in template. Adapted from a private project's scripts/check-private-citations.sh (read 2026-10-02);
 # the adaptations are listed in the body of the commit that added this file (git log -- scripts/).
 # Why each rule looks the way it does: the bws-reference tracker practice, section "The guards".
 # Usage: bash scripts/check-private-citations.sh

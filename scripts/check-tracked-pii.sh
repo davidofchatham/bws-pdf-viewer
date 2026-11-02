@@ -13,7 +13,7 @@
 # Convention to converge on: every fixture value uses a reserved domain, preferably
 # @example.test (the allowlist below also admits example.com, .org and .net).
 #
-# Copy-in template. Adapted from Site Views' scripts/check-tracked-pii.sh (read 2026-10-02);
+# Copy-in template. Adapted from a private project's scripts/check-tracked-pii.sh (read 2026-10-02);
 # the adaptations are listed in the body of the commit that added this file (git log -- scripts/).
 # Why each rule looks the way it does: the bws-reference tracker practice, section "The guards".
 # Usage: bash scripts/check-tracked-pii.sh
