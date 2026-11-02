@@ -21,7 +21,8 @@ each with ONE owner — read the owner, link to it, never copy its content here:
 | Cross-cutting decisions + rationale (`ADR-*`) | [docs/adr/](docs/adr/) | CLAUDE.md, SPEC.md |
 | Current cycle's tasks / bug ledger | [SPEC.md](SPEC.md) §T/§B | anywhere |
 | Public usage: install, shortcode examples, filter-hook cookbook, requirements | [README.md](README.md) | CLAUDE.md |
-| Enhancement parking lot | [docs/IDEAS.md](docs/IDEAS.md) | GitHub Issues |
+| Non-bug work index (enhancements, open questions, wayfinder efforts) | [docs/future-work.md](docs/future-work.md) | GitHub Issues |
+| The tracker split (GitHub vs `.scratch/` vs `future-work.md`), id forms, publication | [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md) | other docs (CLAUDE.md keeps only the spec-lifecycle pointer) |
 
 The **authoritative shortcode att list** (names, defaults, sanitizers) is
 `$default_options` / `shortcode_atts()` in `bws-pdf-viewer.php` — SPEC V8 tracks
@@ -163,18 +164,24 @@ Keep the doc set from drifting. When you touch code or docs:
    pointer may name a term (`ADR-0006`, `V28`) but MUST NOT restate its body.
 3. **New durable fact → route it.** Decision/rationale → new ADR (bump the
    `docs/adr/README.md` index). Behavioral guarantee → new `V*` in SPEC §V.
-   Domain term / surface → CONTEXT.md. How-to → here. Enhancement → IDEAS.md.
+   Domain term / surface → CONTEXT.md. How-to → here. Enhancement or open question → a new `FW-N` item in `docs/future-work.md`.
 4. **On any conflict, the owner wins.** This file is narrative and may lag;
    CONTEXT/ADR/SPEC are the source of truth. Reconcile toward the owner.
 5. **Recalled memory can be stale.** A `[[memory-slug]]` or MEMORY.md line
    reflects what was true when written; verify the named file/flag/att still
    exists before acting on it.
 
+## Spec lifecycle and tracked prose
+
+Specs and tickets are private working files (`.scratch/<slug>/`); they die at merge. At merge a finished spec is lifted into `docs/design-history/` (moved, not copied; the PR body is the second record), and its load-bearing parts migrate out: invariants → SPEC §V, decisions → ADRs, delta → `readme.txt` changelog, cause → commit body. An unbuilt plan is never lifted. Full rules: `docs/agents/issue-tracker.md` § Publication.
+
+Tracked prose is scanned. `scripts/check-private-citations.sh` fails any committed file other than `docs/future-work.md` that cites a literal `.scratch/` or `.claude/` path (cite the `FW-N` id instead); `scripts/check-tracked-pii.sh` fails local paths, emails and unlisted domains. Both run in CI (`.github/workflows/committed-content-guards.yml`) and are proven by `scripts/self-test-guards.sh`. The repo is public.
+
 ## Agent skills
 
 ### Issue tracker
 
-GitHub Issues in `davidofchatham/bws-pdf-viewer` (fork; `gh` default pinned to origin) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Hybrid, split on one question: must the record outlive the change? Bugs and anything an outsider waits on live in GitHub Issues in `davidofchatham/bws-pdf-viewer` (fork; `gh` default pinned to origin) via the `gh` CLI. Specs, build tickets and wayfinder efforts live in gitignored `.scratch/`, indexed by the committed `docs/future-work.md`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

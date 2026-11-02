@@ -1,7 +1,7 @@
 # Viewer Convergence: One Accessible Core, Flip as a Transition Effect
 
 **Status: parked design — direction agreed in discussion (2026-07-09), not scheduled.**
-Companion to [IDEAS.md idea #5](../IDEAS.md#two-axis-mode-taxonomy-proposed) (two-axis
+Companion to [FW-5](../future-work.md) (two-axis
 taxonomy); this doc goes further and proposes the target architecture that makes the
 full matrix buildable. Supersedes the taxonomy section's framing of `flip` as a
 *presentation* — flip is reclassified here as a *transition effect*.
@@ -41,7 +41,7 @@ independent. Unbundled:
 
 | Axis | Values | Notes |
 |------|--------|-------|
-| **Containment** | `flow` (grows into page, window scrolls) · `contain` (fixed-height box, internal scroll, pinned toolbar) | IDEAS #1. Layout wrapper, engine-independent. |
+| **Containment** | `flow` (grows into page, window scrolls) · `contain` (fixed-height box, internal scroll, pinned toolbar) | FW-1. Layout wrapper, engine-independent. |
 | **Arrangement** | `single` · `spread` · `auto` (container width picks, via existing ResizeObserver breakpoint) | Must work everywhere — including with flip. |
 | **Transition** | `none` (instant/scroll) · `flip` (page-curl) · (future: slide, fade) | **Flip is a decoration on page change, not a viewer.** |
 
@@ -182,15 +182,15 @@ existing harness/verify pattern, with baseline PNG artifacts as today.
   whatever the layout shows; a 1-up curl has no facing page but is the same
   snapshot-and-fold mechanic.
 - **Retires the flipbook lib** (eventually) — resolves the engine-convergence
-  open question in IDEAS #5 in favor of convergence.
-- **Kills the double-bundled PDF.js debt** (~+182KB, issue #4) — one engine,
-  one bundle; also advances IDEAS #6 (per-engine chunking becomes moot or
+  open question in FW-5 in favor of convergence.
+- **Kills the double-bundled PDF.js debt** (~+182KB, FW-13) — one engine,
+  one bundle; also advances FW-6 (per-engine chunking becomes moot or
   trivial).
 - **Accessibility everywhere** — text/annotation layers present in every mode
   on capable devices; the image engine remains only as a low-memory fallback,
   justified by performance, never by accessibility.
 - **Vocabulary cleanup** — the `document`/`singlepage`/`flipbook` renames
-  (IDEAS #2/#3) should land in *this* vocabulary (containment/arrangement/
+  (FW-2/FW-3) should land in *this* vocabulary (containment/arrangement/
   transition), not the old mode names.
 
 ## Open questions / risks
@@ -214,7 +214,7 @@ existing harness/verify pattern, with baseline PNG artifacts as today.
 6. **Portal context.** All of this must hold in the portal-system cross-origin
    asset setup (`bws_pdf_viewer_plugin_url` filter) — no new origin-bound
    assumptions in the overlay.
-7. **Flip-engine provenance (gates IDEAS #12).** If the warp survives as a
+7. **Flip-engine provenance (gates FW-12).** If the warp survives as a
    *separable* engine (option 4 porting source, now shown feasible incl.
    single-page — spike #17), its home should be a **clean fork** of
    `theproductiveprogrammer/flipbook-viewer`, not today's stranded embedded copy
@@ -222,17 +222,17 @@ existing harness/verify pattern, with baseline PNG artifacts as today.
    transparent-bg / HiDPI fixes can't flow either way). MIT, so an upstream PR of
    single-flip is clean *if* upstream is alive (no release since our original
    fork — pulse unknown). But if convergence **absorbs** the warp into the native
-   core, there is no standalone lib left to fork and IDEAS #12 is moot. So the
+   core, there is no standalone lib left to fork and FW-12 is moot. So the
    keep-as-lib-vs-absorb decision here **decides** whether the fork happens —
    resolve them together, don't fork first.
 
 ## Relationship to existing docs
 
-- **IDEAS #5 (two-axis taxonomy):** refined here — `flip` moves from the
+- **FW-5 (two-axis taxonomy):** refined here — `flip` moves from the
   presentation axis to a new transition axis; presentation reduces to
-  containment (`flow`/`contain`). IDEAS #5's engine-as-third-axis discussion
+  containment (`flow`/`contain`). FW-5's engine-as-third-axis discussion
   collapses: target is one engine (native) + image fallback.
-- **IDEAS #1 (contained continuous):** unchanged; `contain` is the same
+- **FW-1 (contained continuous):** unchanged; `contain` is the same
   wrapper, and is the natural home for flip (an unbounded flowing flip makes
   little sense).
 - **Issue #4 (double bundle):** resolved as a side effect of convergence.

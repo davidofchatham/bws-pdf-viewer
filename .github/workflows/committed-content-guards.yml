@@ -1,0 +1,28 @@
+name: Committed-content guards
+
+# This repo is public, so tracked prose is published the moment it is pushed.
+# The scripts live in scripts/; this workflow is their CI wiring.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  guards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan tracked files for PII
+        run: bash scripts/check-tracked-pii.sh
+
+      # A committed file citing .scratch/ resolves for one person and fails
+      # silently for everyone else. See docs/agents/issue-tracker.md.
+      - name: No committed file cites a private path
+        run: bash scripts/check-private-citations.sh
+
+      # Seeds a violation per guard in a throwaway repo and requires red, then
+      # requires green on a clean tree.
+      - name: Self-test -- guards must fail on seeded violations
+        run: bash scripts/self-test-guards.sh

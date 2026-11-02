@@ -15,7 +15,7 @@ viewport observation — reassessed by its own ticket, which this doc unblocks).
 
 - **Authored — never auto-changes at runtime:**
   - **Containment** (`flow` / `contain`). Declared by an explicit shortcode
-    attribute (attribute *naming* rides the rename tickets, IDEAS #2/#3).
+    attribute (attribute *naming* rides the rename tickets, FW-2/FW-3).
     Flipping an embed between page-flow and a bounded box at runtime would
     yank the host page's layout around; the author owns this choice. Device
     detection may pick an engine *fallback*, never a different containment.
@@ -166,7 +166,7 @@ assertion #5 in [viewer-convergence.md](viewer-convergence.md) § Testability.
 ## 7. Toolbar
 
 - **`contain`:** bar pinned to the box edge — visible while internal scroll
-  moves (IDEAS #1).
+  moves (FW-1).
 - **`flow`:** **sticky** — the bar sticks to the viewport edge while the
   viewer is in view (today's scroll-away top dock is retired with flow's
   demotion to opt-in).

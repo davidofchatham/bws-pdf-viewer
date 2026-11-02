@@ -40,7 +40,7 @@ Terms this project uses deliberately — do not drift to synonyms.
 - **document mode** — continuous vertical page stack. Stored/attr value is
   `document` (legacy alias `singlepage`); the admin dropdown labels it
   **Continuous**. Grows unbounded into page flow — NOT one-page-at-a-time
-  despite the `singlepage` internal name. See [docs/IDEAS.md](docs/IDEAS.md) #2.
+  despite the `singlepage` internal name. See FW-2 in [docs/future-work.md](docs/future-work.md).
 - **native engine** — `nativepageviewer.js`; real PDF.js with canvas + text +
   annotation layers (text-select, browser find, links). Desktop default for
   document mode.
@@ -52,7 +52,7 @@ Terms this project uses deliberately — do not drift to synonyms.
 - **traditional layout** — cover (page 1) alone in spread 0, then 2–3, 4–5, …
   (`book_layout="traditional"`, default). **spread layout** — 1–2, 3–4, …
 - **presentation / arrangement / transition** — proposed axis vocabulary for a
-  future mode taxonomy; NOT yet in the code. See docs/IDEAS.md #5 and
+  future mode taxonomy; NOT yet in the code. See FW-5 and
   [docs/design/viewer-convergence.md](docs/design/viewer-convergence.md).
 
 ## Where things live
@@ -61,8 +61,8 @@ Terms this project uses deliberately — do not drift to synonyms.
   must hold) + the current cycle's task/bug ledger.
 - **[docs/adr/](docs/adr/)** — cross-cutting decisions and their rationale
   (reuse-first, no-full-PDF.js-viewer, config precedence, att-revisability, …).
-- **[docs/IDEAS.md](docs/IDEAS.md)** — parking lot for enhancements not yet
-  promoted to work.
+- **[docs/future-work.md](docs/future-work.md)** — the visible index of non-bug
+  work (enhancements, open questions); bugs live in GitHub Issues.
 - **[docs/history/speckit/](docs/history/speckit/)** — archived SpecKit
   artifacts (full user stories / rationale) for the 001 + 002 cycles.
 - **[docs/design/](docs/design/)** — parked design docs (viewer convergence).

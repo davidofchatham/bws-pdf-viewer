@@ -12,8 +12,8 @@ history — full cycle detail lives in git and `docs/history/speckit/`.
   [CONTEXT.md](CONTEXT.md) — and decisions as `ADR-000N` — in
   [docs/adr/](docs/adr/).
 - Future / deferred items (zoom, in-viewer search, Gutenberg block, PDF.js
-  double-bundle dedup, true single-page flipbook) live in
-  [docs/IDEAS.md](docs/IDEAS.md), resumed individually as their own efforts.
+  double-bundle dedup, true single-page flipbook) are tracked in
+  [docs/future-work.md](docs/future-work.md) (FW-7, FW-8, FW-9, FW-13, FW-5), resumed individually as their own efforts.
 
 > **This file OWNS the §V behavioral contract + the current cycle's §T/§B
 > ledger.** It does NOT restate the goal/surface map (→ CONTEXT.md) or decision
@@ -51,7 +51,7 @@ history — full cycle detail lives in git and `docs/history/speckit/`.
   changelog it (ADR-0007). Before a 1.0 freeze, review the WHOLE att surface for vestigial/misleading
   controls. Known vestigial: `layout` (auto/single/double) does nothing in the flipbook renderer
   (which only draws spreads — V24/B17) and is dead in document mode; KEPT for now as the anchor for
-  the planned true single-page-flipbook feature (issue #1, IDEAS #5), NOT because it currently works. Cites
+  the planned true single-page-flipbook feature (issue #1, FW-5), NOT because it currently works. Cites
   I.php,I.admin,ADR-0007.
 - **V9. One control-set impl, all modes.** Exactly one toolbar component (I.controls, in WP layer)
   serves flipbook + native; no duplicate control code. Cites I.controls, ADR-0001.
@@ -152,7 +152,7 @@ history — full cycle detail lives in git and `docs/history/speckit/`.
   said flip, held 3 engines → reader greps "why native in flipbook file?", B18). ⊥ name a
   multi-engine bundle after one engine. Distinct from WP-layer `includes/bws-pdf-viewer.js`
   (integration glue) & Mozilla `dist/pdf.js` (PDF.js lib) — 3 delivered JS, 3 concerns, no
-  name overlap. UMD global still `flipbook` (legacy; rename = separate churn, IDEAS #6). On any
+  name overlap. UMD global still `flipbook` (legacy; rename = separate churn, FW-6). On any
   future asset rename: sweep PHP enqueue + test harnesses + `scripts/package.mjs` + docs, rebuild
   (webpack `clean:true` drops old file), changelog. Cites I.index,I.php,ADR-0008.
 

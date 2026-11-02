@@ -25,8 +25,7 @@ Every existing att is up for revision — the current set is NOT cemented. Befor
 
 Known vestigial: `layout` (auto/single/double) does nothing in the flipbook
 renderer (which only draws spreads — V24/B17) and is dead in document mode; kept
-for now as the anchor for the planned true single-page flipbook (docs/IDEAS.md
-#5), NOT because it currently works.
+for now as the anchor for the planned true single-page flipbook (FW-5), NOT because it currently works.
 
 ## Consequences
 

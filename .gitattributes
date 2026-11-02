@@ -1,3 +1,6 @@
 # PDFs are binary — never apply CRLF conversion (byte offsets / xref tables break).
 *.pdf binary
 *.png binary
+
+# Guard scripts run on Linux CI; CRLF would break bash.
+*.sh text eol=lf
